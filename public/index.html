@@ -219,6 +219,18 @@
                 <button onclick="mostrarSeccion('vehiculos')" class="nav-btn" data-section="vehiculos">
                     <i class="fas fa-parking mr-2"></i>Control Vehículos
                 </button>
+                <!-- Botones de Administración (solo visibles para admin) -->
+                <div id="admin-buttons" class="admin-only hidden">
+                    <button onclick="mostrarSeccion('admin-residentes')" class="nav-btn bg-red-600 text-white" data-section="admin-residentes">
+                        <i class="fas fa-users-cog mr-2"></i>Gestión Residentes
+                    </button>
+                    <button onclick="mostrarSeccion('admin-vehiculos-parqueaderos')" class="nav-btn bg-red-600 text-white" data-section="admin-vehiculos-parqueaderos">
+                        <i class="fas fa-car-side mr-2"></i>Vehículos Parqueaderos
+                    </button>
+                    <button onclick="mostrarSeccion('admin-recibos')" class="nav-btn bg-red-600 text-white" data-section="admin-recibos">
+                        <i class="fas fa-receipt mr-2"></i>Subir Recibos
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1066,6 +1078,107 @@
         </div>
     </div>
 
+    <!-- ================================ -->
+    <!-- SECCIONES DE ADMINISTRACIÓN -->
+    <!-- ================================ -->
+
+    <!-- Gestión de Residentes (Solo Admin) -->
+    <div id="admin-residentes-section" class="container mx-auto px-4 py-6 hidden admin-only">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-users-cog text-red-600 mr-3"></i>Gestión de Residentes
+            </h2>
+            <button onclick="abrirModalResidente()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">
+                <i class="fas fa-plus mr-2"></i>Agregar Residente
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-xl p-6">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Apartamento</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Propietario</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Teléfono</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-residentes" class="divide-y divide-gray-200">
+                        <!-- Se llena con JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vehículos por Parqueadero (Solo Admin) -->
+    <div id="admin-vehiculos-parqueaderos-section" class="container mx-auto px-4 py-6 hidden admin-only">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-car-side text-red-600 mr-3"></i>Vehículos por Parqueadero
+            </h2>
+            <button onclick="abrirModalVehiculoParqueadero()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">
+                <i class="fas fa-plus mr-2"></i>Asignar Vehículo
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-xl p-6">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Parqueadero</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nivel</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Propietario</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Apartamento</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vehículo</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha Asignación</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-vehiculos-parqueaderos" class="divide-y divide-gray-200">
+                        <!-- Se llena con JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subir Recibos de Pagos (Solo Admin) -->
+    <div id="admin-recibos-section" class="container mx-auto px-4 py-6 hidden admin-only">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-receipt text-red-600 mr-3"></i>Gestión de Recibos de Pago
+            </h2>
+            <button onclick="abrirModalReciboPago()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg shadow-lg transition-colors">
+                <i class="fas fa-upload mr-2"></i>Subir Recibo
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-xl p-6">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Apartamento</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Concepto</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valor</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha Pago</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Método</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">N° Recibo</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha Subida</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-recibos-pagos" class="divide-y divide-gray-200">
+                        <!-- Se llena con JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Nueva PQR -->
     <div id="modal-pqr" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white rounded-xl p-8 w-full max-w-lg mx-4">
@@ -1492,8 +1605,8 @@
                             <button onclick="generarParticipantesSorteo()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg">
                                 <i class="fas fa-users mr-2"></i>Generar Lista de Participantes
                             </button>
-                            <button onclick="realizarSorteoParqueaderos()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg">
-                                <i class="fas fa-dice mr-2"></i>Realizar Sorteo
+                            <button onclick="realizarSorteoParqueaderos()" class="admin-only w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg hidden">
+                                <i class="fas fa-dice mr-2"></i>Realizar Sorteo (Solo Admin)
                             </button>
                         </div>
                     </div>

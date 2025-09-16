@@ -7,12 +7,52 @@
       "nombre": "Carlos Andrés Santos Hernández",
       "apartamento": "Torre 2 - Apto 401A",
       "activo": true
+    },
+    {
+      "id": 2,
+      "email": "maria.gonzalez@email.com",
+      "password": "demo123",
+      "nombre": "María González",
+      "apartamento": "Torre 1 - Apto 301",
+      "activo": true
+    },
+    {
+      "id": 3,
+      "email": "carlos.ruiz@email.com",
+      "password": "demo123",
+      "nombre": "Carlos Ruiz",
+      "apartamento": "Torre 3 - Apto 205",
+      "activo": true
+    },
+    {
+      "id": 4,
+      "email": "ana.martinez@email.com",
+      "password": "demo123",
+      "nombre": "Ana Martínez",
+      "apartamento": "Torre 1 - Apto 102",
+      "activo": true
+    },
+    {
+      "id": 5,
+      "email": "luis.garcia@email.com",
+      "password": "demo123",
+      "nombre": "Luis García",
+      "apartamento": "Torre 2 - Apto 404",
+      "activo": true
+    },
+    {
+      "id": 6,
+      "email": "patricia.soto@email.com",
+      "password": "demo123",
+      "nombre": "Patricia Soto",
+      "apartamento": "Torre 3 - Apto 303",
+      "activo": true
     }
   ],
   "reservas": [
     {
       "id": 1,
-      "espacio": "Salón Comunal",
+      "espacio": "Salón Social",
       "fecha": "2025-08-15",
       "hora": "10:00",
       "usuario": "María García - Apto 202"
@@ -23,27 +63,6 @@
       "fecha": "2025-08-14",
       "hora": "06:00",
       "usuario": "Carlos López - Apto 305"
-    },
-    {
-      "id": 3,
-      "espacio": "Salón Social",
-      "fecha": "2025-09-21",
-      "hora": "12:00",
-      "usuario": "Carlos Andrés Santos Hernández - Torre 2 - Apto 401A"
-    },
-    {
-      "id": 4,
-      "espacio": "Salón Social",
-      "fecha": "2025-09-28",
-      "hora": "20:00",
-      "usuario": "Carlos Andrés Santos Hernández - Torre 2 - Apto 401A"
-    },
-    {
-      "id": 5,
-      "espacio": "Cancha de Fútbol",
-      "fecha": "2025-09-22",
-      "hora": "20:00",
-      "usuario": "Carlos Andrés Santos Hernández - Torre 2 - Apto 401A"
     }
   ],
   "pagos": [
@@ -86,6 +105,8 @@
       "fecha": "2025-08-12 14:30"
     }
   ],
+  "chatsPrivados": [],
+  "solicitudesChat": [],
   "emprendimientos": [
     {
       "id": 1,
@@ -135,6 +156,191 @@
       "objeto": "Televisor Samsung 55\"",
       "autorizado": "Juan Pérez",
       "fecha": "2025-08-11"
+    }
+  ],
+  "noticias": [
+    {
+      "id": 1,
+      "titulo": "Asamblea General Ordinaria 2025",
+      "contenido": "Se convoca a todos los propietarios y residentes del conjunto a la Asamblea General Ordinaria que se realizará el próximo 30 de septiembre de 2025 a las 3:00 PM en el salón social. Temas a tratar: aprobación de presupuesto anual, elección de nuevo consejo de administración y proyectos de mejoras.",
+      "categoria": "Administrativo",
+      "fecha": "2025-09-10",
+      "fechaEvento": "2025-09-30",
+      "horaEvento": "15:00",
+      "lugar": "Salón Social",
+      "prioridad": "alta",
+      "activa": true
+    },
+    {
+      "id": 2,
+      "titulo": "Fiesta de Integración Halloween 2025",
+      "contenido": "¡Prepárense para una noche de terror y diversión! El conjunto organizará la tradicional fiesta de Halloween para toda la familia. Habrá concurso de disfraces, juegos para niños, dulces y sorpresas. ¡No se lo pierdan!",
+      "categoria": "Social",
+      "fecha": "2025-09-12",
+      "fechaEvento": "2025-10-31",
+      "horaEvento": "18:00",
+      "lugar": "Zonas Comunes",
+      "prioridad": "media",
+      "activa": true
+    },
+    {
+      "id": 3,
+      "titulo": "Mantenimiento Preventivo Ascensores",
+      "contenido": "Se realizará mantenimiento preventivo en todos los ascensores del conjunto los días 20 y 21 de septiembre. Durante estas fechas los ascensores estarán fuera de servicio desde las 8:00 AM hasta las 4:00 PM. Agradecemos su comprensión.",
+      "categoria": "Mantenimiento",
+      "fecha": "2025-09-08",
+      "fechaEvento": "2025-09-20",
+      "horaEvento": "08:00",
+      "lugar": "Todas las Torres",
+      "prioridad": "alta",
+      "activa": true
+    },
+    {
+      "id": 4,
+      "titulo": "Nuevas Medidas de Seguridad",
+      "contenido": "A partir del 1 de octubre se implementarán nuevas medidas de seguridad: control de acceso con código QR, cámaras adicionales en parqueaderos y rondas nocturnas de vigilancia. Estas medidas buscan mejorar la seguridad de todos los residentes.",
+      "categoria": "Seguridad",
+      "fecha": "2025-09-14",
+      "fechaEvento": "2025-10-01",
+      "horaEvento": "00:00",
+      "lugar": "Todo el Conjunto",
+      "prioridad": "alta",
+      "activa": true
+    },
+    {
+      "id": 5,
+      "titulo": "Clausura Temporal de la Piscina",
+      "contenido": "La piscina estará cerrada del 25 al 29 de septiembre por trabajos de limpieza profunda y mantenimiento del sistema de filtrado. Volverá a estar disponible el 30 de septiembre.",
+      "categoria": "Mantenimiento",
+      "fecha": "2025-09-15",
+      "fechaEvento": "2025-09-25",
+      "horaEvento": "06:00",
+      "lugar": "Zona de Piscina",
+      "prioridad": "media",
+      "activa": true
+    }
+  ],
+  "apartamentosArriendo": [
+    {
+      "id": 1,
+      "torre": 1,
+      "apartamento": "301",
+      "precio": 1200000,
+      "disponible": true,
+      "caracteristicas": "3 habitaciones, 2 baños, balcón",
+      "contacto": "María González - 300-123-4567",
+      "fechaPublicacion": "2025-09-10"
+    },
+    {
+      "id": 2,
+      "torre": 2,
+      "apartamento": "505",
+      "precio": 1500000,
+      "disponible": true,
+      "caracteristicas": "4 habitaciones, 3 baños, terraza",
+      "contacto": "Carlos Ruiz - 301-987-6543",
+      "fechaPublicacion": "2025-09-12"
+    },
+    {
+      "id": 3,
+      "torre": 3,
+      "apartamento": "202",
+      "precio": 950000,
+      "disponible": false,
+      "caracteristicas": "2 habitaciones, 1 baño",
+      "contacto": "Ana Martínez - 302-456-7890",
+      "fechaPublicacion": "2025-09-05",
+      "fechaArrendado": "2025-09-14"
+    }
+  ],
+  "parqueaderos": [
+    {
+      "id": 1,
+      "numero": "A-01",
+      "torre": 1,
+      "tipo": "Carro",
+      "disponible": true,
+      "precio": 50000
+    },
+    {
+      "id": 2,
+      "numero": "A-02",
+      "torre": 1,
+      "tipo": "Carro",
+      "disponible": false,
+      "precio": 50000,
+      "ocupadoPor": "Residente - Apto 301"
+    },
+    {
+      "id": 3,
+      "numero": "B-01",
+      "torre": 2,
+      "tipo": "Moto",
+      "disponible": true,
+      "precio": 25000
+    },
+    {
+      "id": 4,
+      "numero": "B-02",
+      "torre": 2,
+      "tipo": "Carro",
+      "disponible": true,
+      "precio": 50000
+    },
+    {
+      "id": 5,
+      "numero": "C-01",
+      "torre": 3,
+      "tipo": "Carro",
+      "disponible": false,
+      "precio": 50000,
+      "ocupadoPor": "Visitante - Ticket #001"
+    }
+  ],
+  "vehiculosVisitantes": [
+    {
+      "id": 1,
+      "placa": "ABC123",
+      "fechaIngreso": "2025-09-15T08:30:00",
+      "fechaSalida": null,
+      "tipoVehiculo": "Carro",
+      "visitaA": "Torre 1 - Apto 301",
+      "activo": true,
+      "parqueadero": "C-01"
+    },
+    {
+      "id": 2,
+      "placa": "XYZ789",
+      "fechaIngreso": "2025-09-15T14:15:00",
+      "fechaSalida": "2025-09-15T16:30:00",
+      "tipoVehiculo": "Moto",
+      "visitaA": "Torre 2 - Apto 505",
+      "activo": false,
+      "totalHoras": 3,
+      "totalCobrado": 1000,
+      "recibo": "REC-001"
+    },
+    {
+      "id": 3,
+      "placa": "EJV664",
+      "fechaIngreso": "2025-09-16T04:13:00.039Z",
+      "fechaSalida": null,
+      "activo": true
+    }
+  ],
+  "recibosParqueadero": [
+    {
+      "id": "REC-001",
+      "placa": "XYZ789",
+      "fechaIngreso": "2025-09-15T14:15:00",
+      "fechaSalida": "2025-09-15T16:30:00",
+      "totalHoras": 3,
+      "horasGratis": 2,
+      "horasCobradas": 1,
+      "tarifaPorHora": 1000,
+      "totalCobrado": 1000,
+      "fechaGeneracion": "2025-09-15T16:30:00",
+      "visitaA": "Torre 2 - Apto 505"
     }
   ]
 }

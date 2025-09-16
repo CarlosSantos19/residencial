@@ -20,7 +20,17 @@ let data = {
       password: 'password1',
       nombre: 'Carlos Andrés Santos Hernández',
       apartamento: 'Torre 2 - Apto 401A',
-      activo: true
+      activo: true,
+      rol: 'residente'
+    },
+    {
+      id: 7,
+      email: 'shayoja@hotmail.com',
+      password: 'password2',
+      nombre: 'Administrador del Conjunto',
+      apartamento: 'Oficina Administración',
+      activo: true,
+      rol: 'admin'
     },
     {
       id: 2,
@@ -28,7 +38,8 @@ let data = {
       password: 'demo123',
       nombre: 'María González',
       apartamento: 'Torre 1 - Apto 301',
-      activo: true
+      activo: true,
+      rol: 'residente'
     },
     {
       id: 3,
@@ -36,7 +47,8 @@ let data = {
       password: 'demo123',
       nombre: 'Carlos Ruiz',
       apartamento: 'Torre 3 - Apto 205',
-      activo: true
+      activo: true,
+      rol: 'residente'
     },
     {
       id: 4,
@@ -44,7 +56,8 @@ let data = {
       password: 'demo123',
       nombre: 'Ana Martínez',
       apartamento: 'Torre 1 - Apto 102',
-      activo: true
+      activo: true,
+      rol: 'residente'
     },
     {
       id: 5,
@@ -52,7 +65,8 @@ let data = {
       password: 'demo123',
       nombre: 'Luis García',
       apartamento: 'Torre 2 - Apto 404',
-      activo: true
+      activo: true,
+      rol: 'residente'
     },
     {
       id: 6,
@@ -60,7 +74,59 @@ let data = {
       password: 'demo123',
       nombre: 'Patricia Soto',
       apartamento: 'Torre 3 - Apto 303',
+      activo: true,
+      rol: 'residente'
+    }
+  ],
+  residentes: [
+    // Datos de residentes por apartamento para administrador
+    {
+      id: 1,
+      apartamento: 'Torre 2 - Apto 401A',
+      propietario: 'Carlos Andrés Santos Hernández',
+      telefono: '300-123-4567',
+      email: 'car-cbs@hotmail.com',
+      tipoPropiedad: 'propietario',
+      fechaIngreso: '2023-01-15',
+      vehiculos: [
+        { placa: 'ABC123', marca: 'Toyota', modelo: 'Corolla', color: 'Blanco' }
+      ],
+      mascotas: [
+        { nombre: 'Max', tipo: 'Perro', raza: 'Golden Retriever' }
+      ]
+    }
+  ],
+  parqueaderosVehiculos: [
+    // Vehículos asignados a cada parqueadero
+    {
+      id: 1,
+      numeroParqueadero: 'P-001',
+      nivel: 'Sótano 1',
+      propietario: 'Carlos Andrés Santos Hernández',
+      apartamento: 'Torre 2 - Apto 401A',
+      vehiculo: {
+        placa: 'ABC123',
+        marca: 'Toyota',
+        modelo: 'Corolla',
+        color: 'Blanco'
+      },
+      fechaAsignacion: '2023-01-15',
       activo: true
+    }
+  ],
+  recibosPagos: [
+    // Recibos de administración subidos por admin
+    {
+      id: 1,
+      apartamento: 'Torre 2 - Apto 401A',
+      concepto: 'Administración - Agosto 2025',
+      valor: 450000,
+      fechaPago: '2025-08-15',
+      metodoPago: 'Transferencia',
+      numeroRecibo: 'REC-001-2025',
+      archivo: 'recibo_apto401A_agosto2025.pdf',
+      fechaSubida: '2025-08-15T10:30:00Z',
+      subidoPor: 'shayoja@hotmail.com'
     }
   ],
   reservas: [
@@ -294,7 +360,8 @@ app.post('/api/auth/login', (req, res) => {
         id: usuario.id,
         email: usuario.email,
         nombre: usuario.nombre,
-        apartamento: usuario.apartamento
+        apartamento: usuario.apartamento,
+        rol: usuario.rol
       }
     });
   } else {
@@ -856,6 +923,166 @@ app.get('/api/vehiculos-visitantes/hoy', (req, res) => {
 function guardarDatos() {
   console.log('💾 Datos guardados');
 }
+
+// ================================
+// ENDPOINTS DE ADMINISTRACIÓN
+// ================================
+
+// Middleware para verificar rol de administrador
+function verificarAdmin(req, res, next) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario || usuario.rol !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      mensaje: 'Acceso denegado. Solo administradores.'
+    });
+  }
+
+  req.usuario = usuario;
+  next();
+}
+
+// Obtener todos los residentes (solo admin)
+app.get('/api/admin/residentes', verificarAdmin, (req, res) => {
+  res.json({
+    success: true,
+    residentes: data.residentes
+  });
+});
+
+// Agregar/editar residente (solo admin)
+app.post('/api/admin/residentes', verificarAdmin, (req, res) => {
+  const { id, apartamento, propietario, telefono, email, tipoPropiedad, fechaIngreso, vehiculos, mascotas } = req.body;
+
+  if (id) {
+    // Editar residente existente
+    const index = data.residentes.findIndex(r => r.id === id);
+    if (index !== -1) {
+      data.residentes[index] = { id, apartamento, propietario, telefono, email, tipoPropiedad, fechaIngreso, vehiculos: vehiculos || [], mascotas: mascotas || [] };
+    }
+  } else {
+    // Agregar nuevo residente
+    const nuevoId = Math.max(0, ...data.residentes.map(r => r.id)) + 1;
+    data.residentes.push({
+      id: nuevoId,
+      apartamento,
+      propietario,
+      telefono,
+      email,
+      tipoPropiedad,
+      fechaIngreso,
+      vehiculos: vehiculos || [],
+      mascotas: mascotas || []
+    });
+  }
+
+  guardarDatos();
+  res.json({ success: true });
+});
+
+// Eliminar residente (solo admin)
+app.delete('/api/admin/residentes/:id', verificarAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  data.residentes = data.residentes.filter(r => r.id !== id);
+  guardarDatos();
+  res.json({ success: true });
+});
+
+// Obtener vehículos por parqueadero (solo admin)
+app.get('/api/admin/parqueaderos-vehiculos', verificarAdmin, (req, res) => {
+  res.json({
+    success: true,
+    parqueaderosVehiculos: data.parqueaderosVehiculos
+  });
+});
+
+// Asignar vehículo a parqueadero (solo admin)
+app.post('/api/admin/parqueaderos-vehiculos', verificarAdmin, (req, res) => {
+  const { numeroParqueadero, nivel, propietario, apartamento, vehiculo, fechaAsignacion } = req.body;
+
+  const nuevoId = Math.max(0, ...data.parqueaderosVehiculos.map(p => p.id)) + 1;
+  data.parqueaderosVehiculos.push({
+    id: nuevoId,
+    numeroParqueadero,
+    nivel,
+    propietario,
+    apartamento,
+    vehiculo,
+    fechaAsignacion,
+    activo: true
+  });
+
+  guardarDatos();
+  res.json({ success: true });
+});
+
+// Obtener recibos de pagos (solo admin)
+app.get('/api/admin/recibos-pagos', verificarAdmin, (req, res) => {
+  res.json({
+    success: true,
+    recibos: data.recibosPagos
+  });
+});
+
+// Subir recibo de pago (solo admin)
+app.post('/api/admin/recibos-pagos', verificarAdmin, (req, res) => {
+  const { apartamento, concepto, valor, fechaPago, metodoPago, numeroRecibo, archivo } = req.body;
+
+  const nuevoId = Math.max(0, ...data.recibosPagos.map(r => r.id)) + 1;
+  data.recibosPagos.push({
+    id: nuevoId,
+    apartamento,
+    concepto,
+    valor,
+    fechaPago,
+    metodoPago,
+    numeroRecibo,
+    archivo,
+    fechaSubida: new Date().toISOString(),
+    subidoPor: req.usuario.email
+  });
+
+  guardarDatos();
+  res.json({ success: true });
+});
+
+// Realizar sorteo de parqueaderos (solo admin)
+app.post('/api/admin/sorteo-parqueaderos', verificarAdmin, (req, res) => {
+  const { participantes } = req.body;
+
+  // Generar 100 parqueaderos
+  const parqueaderos = [];
+  for (let i = 1; i <= 100; i++) {
+    const nivel = i <= 33 ? 'Sótano 1' : i <= 66 ? 'Sótano 2' : 'Sótano 3';
+    parqueaderos.push({
+      numero: `P-${i.toString().padStart(3, '0')}`,
+      nivel: nivel
+    });
+  }
+
+  // Mezclar participantes y asignar
+  const participantesMezclados = [...participantes].sort(() => Math.random() - 0.5);
+  const resultados = parqueaderos.slice(0, participantesMezclados.length).map((parqueadero, index) => ({
+    participante: participantesMezclados[index],
+    parqueadero: parqueadero.numero,
+    nivel: parqueadero.nivel
+  }));
+
+  // Guardar resultado del sorteo
+  data.ultimoSorteo = {
+    fecha: new Date().toISOString(),
+    realizadoPor: req.usuario.email,
+    resultados: resultados
+  };
+
+  guardarDatos();
+  res.json({
+    success: true,
+    resultados: resultados
+  });
+});
 
 function obtenerUsuarioPorToken(token) {
   try {
