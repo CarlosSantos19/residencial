@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conjunto Aralia de Castilla - App Residencial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'bounce-in': 'bounceIn 0.6s ease-out',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        bounceIn: {
+                            '0%': { transform: 'scale(0.3)', opacity: '0' },
+                            '50%': { transform: 'scale(1.05)' },
+                            '70%': { transform: 'scale(0.9)' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)' },
+                            '50%': { boxShadow: '0 0 30px rgba(59, 130, 246, 0.6)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <!-- Pantalla de Login -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 transform transition-all duration-300">
+            <div class="text-center mb-8">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-home text-2xl text-white"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Conjunto Aralia de Castilla</h1>
+                <p class="text-gray-600">Accede a tu portal residencial</p>
+            </div>
+
+            <!-- Tabs de Login/Registro -->
+            <div class="flex bg-gray-100 rounded-lg p-1 mb-6">
+                <button id="login-tab" onclick="switchTab('login')" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white text-blue-600 shadow-sm">
+                    Iniciar Sesión
+                </button>
+                <button id="register-tab" onclick="switchTab('register')" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800">
+                    Registrarse
+                </button>
+            </div>
+
+            <!-- Formulario de Login -->
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <div class="relative">
+                        <input type="email" id="login-email" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="tu-email@ejemplo.com">
+                        <i class="fas fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                    <div class="relative">
+                        <input type="password" id="login-password" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="Tu contraseña">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
+                </button>
+            </form>
+
+            <!-- Formulario de Registro -->
+            <form id="register-form" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                    <div class="relative">
+                        <input type="text" id="register-nombre" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="Tu nombre completo">
+                        <i class="fas fa-user absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <div class="relative">
+                        <input type="email" id="register-email" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="tu-email@ejemplo.com">
+                        <i class="fas fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Apartamento</label>
+                    <div class="relative">
+                        <input type="text" id="register-apartamento" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="Ej: Torre 1 - Apto 101">
+                        <i class="fas fa-building absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                    <div class="relative">
+                        <input type="password" id="register-password" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="Tu contraseña">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg">
+                    <i class="fas fa-user-plus mr-2"></i>Registrarse
+                </button>
+            </form>
+
+            <!-- Mensaje de error/éxito -->
+            <div id="auth-message" class="mt-4 p-3 rounded-lg hidden">
+                <span id="auth-message-text"></span>
+            </div>
+
+            <!-- Datos de demo -->
+            <div class="mt-6 p-4 bg-gray-50 rounded-lg border">
+                <p class="text-xs text-gray-600 mb-2"><strong>Usuario de prueba:</strong></p>
+                <p class="text-xs text-gray-600">Email: car-cbs@hotmail.com</p>
+                <p class="text-xs text-gray-600">Contraseña: password1</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aplicación Principal -->
+    <div id="main-app" class="hidden">
+    <!-- Header mejorado -->
+    <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white shadow-2xl">
+        <div class="p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white/10 p-3 rounded-xl backdrop-blur-sm">
+                        <i class="fas fa-home text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">Conjunto Aralia de Castilla</h1>
+                        <p class="text-blue-100 text-sm flex items-center">
+                            <i class="fas fa-user-circle mr-2"></i>
+                            Bienvenido, Carlos Andrés Santos Hernández - Torre2 - Apto 401A
+                        </p>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-4">
+                    <div class="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
+                        <span class="text-sm" id="current-time"></span>
+                    </div>
+                    <button class="bg-white/10 p-2 rounded-lg hover:bg-white/20 transition-colors">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <button onclick="logout()" class="bg-red-500/80 hover:bg-red-600 px-3 py-2 rounded-lg transition-colors text-sm">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Salir
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation mejorada -->
+        <div class="bg-white/10 backdrop-blur-sm">
+            <div class="flex overflow-x-auto scrollbar-hide">
+                <button onclick="mostrarSeccion('dashboard')" class="nav-btn active" data-section="dashboard">
+                    <i class="fas fa-chart-pie mr-2"></i>Dashboard
+                </button>
+                <button onclick="mostrarSeccion('reservas')" class="nav-btn" data-section="reservas">
+                    <i class="fas fa-calendar mr-2"></i>Reservas
+                </button>
+                <button onclick="mostrarSeccion('pagos')" class="nav-btn" data-section="pagos">
+                    <i class="fas fa-credit-card mr-2"></i>Pagos
+                </button>
+                <button onclick="mostrarSeccion('chat')" class="nav-btn" data-section="chat">
+                    <i class="fas fa-comments mr-2"></i>Chat
+                    <span id="chat-badge" class="ml-1 bg-red-500 text-xs px-1.5 py-0.5 rounded-full hidden">3</span>
+                </button>
+                <button onclick="mostrarSeccion('emprendimientos')" class="nav-btn" data-section="emprendimientos">
+                    <i class="fas fa-store mr-2"></i>Emprendimientos
+                </button>
+                <button onclick="mostrarSeccion('pqr')" class="nav-btn" data-section="pqr">
+                    <i class="fas fa-file-alt mr-2"></i>PQR
+                </button>
+                <button onclick="mostrarSeccion('permisos')" class="nav-btn" data-section="permisos">
+                    <i class="fas fa-shield-alt mr-2"></i>Permisos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-xl p-6 shadow-2xl text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">Cargando...</p>
+        </div>
+    </div>
+
+    <!-- Notification system -->
+    <div id="notifications" class="fixed top-4 right-4 z-40 space-y-2"></div>
+
+    <!-- Content -->
+    <div class="p-4 md:p-6 max-w-7xl mx-auto">
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="seccion active">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                <i class="fas fa-chart-pie mr-3 text-blue-600"></i>
+                Dashboard
+            </h2>
+            
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-100 text-sm">Reservas Activas</p>
+                            <p class="text-3xl font-bold" id="stats-reservas">0</p>
+                        </div>
+                        <i class="fas fa-calendar text-3xl text-blue-200"></i>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-green-100 text-sm">Pagos al Día</p>
+                            <p class="text-3xl font-bold" id="stats-pagos">0</p>
+                        </div>
+                        <i class="fas fa-check-circle text-3xl text-green-200"></i>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-yellow-100 text-sm">PQRs Pendientes</p>
+                            <p class="text-3xl font-bold" id="stats-pqrs">0</p>
+                        </div>
+                        <i class="fas fa-exclamation-triangle text-3xl text-yellow-200"></i>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-purple-100 text-sm">Permisos Activos</p>
+                            <p class="text-3xl font-bold" id="stats-permisos">0</p>
+                        </div>
+                        <i class="fas fa-shield-alt text-3xl text-purple-200"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-rocket mr-2 text-blue-600"></i>
+                        Acciones Rápidas
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="mostrarSeccion('reservas')" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                            <i class="fas fa-plus mb-2 block text-xl"></i>
+                            <span class="text-sm font-medium">Nueva Reserva</span>
+                        </button>
+                        <button onclick="mostrarSeccion('pagos')" class="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                            <i class="fas fa-credit-card mb-2 block text-xl"></i>
+                            <span class="text-sm font-medium">Ver Pagos</span>
+                        </button>
+                        <button onclick="mostrarSeccion('pqr')" class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white p-4 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                            <i class="fas fa-file-alt mb-2 block text-xl"></i>
+                            <span class="text-sm font-medium">Nueva PQR</span>
+                        </button>
+                        <button onclick="mostrarSeccion('permisos')" class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                            <i class="fas fa-shield-alt mb-2 block text-xl"></i>
+                            <span class="text-sm font-medium">Nuevo Permiso</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-bullhorn mr-2 text-red-600"></i>
+                        Avisos Importantes
+                    </h3>
+                    <div class="space-y-3" id="avisos-importantes">
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
+                            <p class="text-blue-800 text-sm">Mantenimiento de piscina programado para el sábado 15 de agosto</p>
+                        </div>
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
+                            <p class="text-yellow-800 text-sm">Reunión de propietarios: 20 de agosto a las 7:00 PM</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección Reservas mejorada -->
+        <div id="reservas" class="seccion">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                <i class="fas fa-calendar mr-3 text-blue-600"></i>
+                Reservas de Espacios Comunes
+            </h2>
+            
+            <!-- Nueva Reserva con mejor diseño -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
+                <h3 class="text-xl font-semibold mb-6 flex items-center">
+                    <i class="fas fa-plus-circle mr-2 text-green-600"></i>
+                    Nueva Reserva
+                </h3>
+                <div class="grid md:grid-cols-3 gap-4 mb-4">
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Espacio</label>
+                        <select id="nuevo-espacio" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                            <option value="">Seleccionar espacio</option>
+                            <option value="Salón Comunal">🏛️ Salón Comunal</option>
+                            <option value="Gimnasio">💪 Gimnasio</option>
+                            <option value="Piscina">🏊 Piscina</option>
+                            <option value="Juegos/Star">🎮 Juegos/Star</option>
+                            <option value="BBQ Area">🔥 Área BBQ</option>
+                        </select>
+                    </div>
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                        <input type="date" id="nueva-fecha" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                    </div>
+                    <div class="relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Hora</label>
+                        <select id="nueva-hora" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                            <option value="">Seleccionar hora</option>
+                            <option value="06:00">🌅 06:00 AM</option>
+                            <option value="07:00">🌅 07:00 AM</option>
+                            <option value="08:00">🌄 08:00 AM</option>
+                            <option value="09:00">🌄 09:00 AM</option>
+                            <option value="10:00">☀️ 10:00 AM</option>
+                            <option value="11:00">☀️ 11:00 AM</option>
+                            <option value="14:00">🌞 02:00 PM</option>
+                            <option value="15:00">🌞 03:00 PM</option>
+                            <option value="16:00">🌅 04:00 PM</option>
+                            <option value="17:00">🌅 05:00 PM</option>
+                            <option value="18:00">🌆 06:00 PM</option>
+                            <option value="19:00">🌆 07:00 PM</option>
+                            <option value="20:00">🌙 08:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="crearReserva()" class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 flex items-center">
+                    <i class="fas fa-calendar-plus mr-2"></i>
+                    Crear Reserva
+                </button>
+            </div>
+
+            <!-- Lista de Reservas mejorada -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                <h3 class="text-xl font-semibold mb-6 flex items-center">
+                    <i class="fas fa-list mr-2 text-purple-600"></i>
+                    Mis Reservas
+                </h3>
+                <div id="lista-reservas" class="space-y-4">
+                    <!-- Se llena con JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección Pagos mejorada -->
+        <div id="pagos" class="seccion">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                <i class="fas fa-credit-card mr-3 text-green-600"></i>
+                Estado de Pagos
+            </h2>
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                    <h3 class="text-xl font-semibold mb-6 text-red-600 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        Pagos Pendientes
+                    </h3>
+                    <div id="pagos-pendientes" class="space-y-4">
+                        <!-- Se llena con JavaScript -->
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                    <h3 class="text-xl font-semibold mb-6 text-green-600 flex items-center">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Pagos Realizados
+                    </h3>
+                    <div id="pagos-realizados" class="space-y-4">
+                        <!-- Se llena con JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección Chat mejorada -->
+        <div id="chat" class="seccion">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                <i class="fas fa-comments mr-3 text-blue-600"></i>
+                Chat de Propietarios
+            </h2>
+            
+            <!-- Selector de Chat -->
+            <div class="grid lg:grid-cols-4 gap-6 mb-6">
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
+                        <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-users mr-2 text-purple-600"></i>
+                            Seleccionar Chat
+                        </h3>
+                        
+                        <!-- Tipos de Chat -->
+                        <div class="space-y-2 mb-4">
+                            <button onclick="seleccionarTipoChat('general')" class="chat-type-btn active w-full text-left px-3 py-2 rounded-lg transition-all" data-type="general">
+                                <i class="fas fa-globe mr-2 text-blue-500"></i>
+                                <span class="font-medium">Chat General</span>
+                                <div class="text-xs text-gray-500">Todos los propietarios</div>
+                            </button>
+                            <button onclick="seleccionarTipoChat('torre')" class="chat-type-btn w-full text-left px-3 py-2 rounded-lg transition-all" data-type="torre">
+                                <i class="fas fa-building mr-2 text-green-500"></i>
+                                <span class="font-medium">Chat por Torre</span>
+                                <div class="text-xs text-gray-500">Solo tu torre</div>
+                            </button>
+                            <button onclick="seleccionarTipoChat('privado')" class="chat-type-btn w-full text-left px-3 py-2 rounded-lg transition-all" data-type="privado">
+                                <i class="fas fa-user mr-2 text-yellow-500"></i>
+                                <span class="font-medium">Mensaje Privado</span>
+                                <div class="text-xs text-gray-500">A un apartamento</div>
+                            </button>
+                            <button onclick="seleccionarTipoChat('admin')" class="chat-type-btn w-full text-left px-3 py-2 rounded-lg transition-all" data-type="admin">
+                                <i class="fas fa-shield-alt mr-2 text-red-500"></i>
+                                <span class="font-medium">Administración</span>
+                                <div class="text-xs text-gray-500">Solo admin</div>
+                            </button>
+                        </div>
+
+                        <!-- Selector de Torre (para chat por torre) -->
+                        <div id="selector-torre" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Torre:</label>
+                            <select id="chat-torre" onchange="chatState.torreSeleccionada = this.value; actualizarInterfazChat(); renderizarChat();" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                <option value="">Seleccionar torre</option>
+                                <option value="1">Torre 1</option>
+                                <option value="2">Torre 2</option>
+                                <option value="3">Torre 3</option>
+                                <option value="4">Torre 4 (Tu torre)</option>
+                                <option value="5">Torre 5</option>
+                                <option value="6">Torre 6</option>
+                                <option value="7">Torre 7</option>
+                                <option value="8">Torre 8</option>
+                                <option value="9">Torre 9</option>
+                                <option value="10">Torre 10</option>
+                            </select>
+                        </div>
+
+                        <!-- Selector de Apartamento (para mensaje privado) -->
+                        <div id="selector-apartamento" class="hidden space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Torre:</label>
+                                <select id="privado-torre" onchange="actualizarApartamentos()" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                    <option value="">Seleccionar torre</option>
+                                    <option value="1">Torre 1</option>
+                                    <option value="2">Torre 2</option>
+                                    <option value="3">Torre 3</option>
+                                    <option value="4">Torre 4</option>
+                                    <option value="5">Torre 5</option>
+                                    <option value="6">Torre 6</option>
+                                    <option value="7">Torre 7</option>
+                                    <option value="8">Torre 8</option>
+                                    <option value="9">Torre 9</option>
+                                    <option value="10">Torre 10</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Apartamento:</label>
+                                <select id="privado-apartamento" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                    <option value="">Primero selecciona una torre</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Estado del chat actual -->
+                        <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                            <div class="text-xs font-medium text-blue-800" id="chat-estado">
+                                📢 Chat General Activo
+                            </div>
+                            <div class="text-xs text-blue-600 mt-1" id="chat-participantes">
+                                240 propietarios conectados
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Principal -->
+                <div class="lg:col-span-3">
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-700" id="chat-titulo">Chat General</span>
+                                        <div class="text-xs text-gray-500" id="chat-descripcion">Comunicación con todos los propietarios</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button onclick="limpiarChat()" class="text-gray-400 hover:text-gray-600 p-1">
+                                        <i class="fas fa-trash text-sm"></i>
+                                    </button>
+                                    <button onclick="buscarEnChat()" class="text-gray-400 hover:text-gray-600 p-1">
+                                        <i class="fas fa-search text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6 h-96 overflow-y-auto" id="chat-mensajes">
+                            <!-- Se llena con JavaScript -->
+                        </div>
+                        
+                        <div class="p-4 bg-gray-50 border-t">
+                            <div class="flex space-x-3">
+                                <input type="text" id="nuevo-mensaje" placeholder="Escribe tu mensaje..." 
+                                       class="flex-1 border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                       onkeypress="if(event.key==='Enter') enviarMensaje()">
+                                <button onclick="adjuntarArchivo()" class="bg-gray-200 text-gray-600 px-4 py-3 rounded-xl hover:bg-gray-300 transition-all">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <button onclick="enviarMensaje()" class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                            <div class="mt-2 text-xs text-gray-500" id="escribiendo-indicador"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección Emprendimientos mejorada -->
+        <div id="emprendimientos" class="seccion">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                <i class="fas fa-store mr-3 text-purple-600"></i>
+                Emprendimientos del Conjunto
+            </h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="lista-emprendimientos">
+                <!-- Se llena con JavaScript -->
+            </div>
+        </div>
+
+        <!-- Sección PQR mejorada -->
+        <div id="pqr" class="seccion">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                <i class="fas fa-file-alt mr-3 text-yellow-600"></i>
+                Peticiones, Quejas y Reclamos
+            </h2>
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center">
+                        <i class="fas fa-plus-circle mr-2 text-green-600"></i>
+                        Nueva PQR
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
+                            <select id="pqr-tipo" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                <option value="Petición">📝 Petición</option>
+                                <option value="Queja">😠 Queja</option>
+                                <option value="Reclamo">⚠️ Reclamo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Asunto</label>
+                            <input type="text" id="pqr-asunto" placeholder="Asunto" 
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                            <textarea id="pqr-descripcion" placeholder="Descripción detallada" rows="4"
+                                      class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"></textarea>
+                        </div>
+                        <button onclick="enviarPqr()" class="w-full bg-gradient-to-r from-yellow-600 to-orange-600 text-white py-3 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-center">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Enviar PQR
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center">
+                        <i class="fas fa-list mr-2 text-blue-600"></i>
+                        Mis PQRs
+                    </h3>
+                    <div id="lista-pqrs" class="space-y-4">
+                        <!-- Se llena con JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección Permisos mejorada -->
+        <div id="permisos" class="seccion">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                <i class="fas fa-shield-alt mr-3 text-indigo-600"></i>
+                Control de Accesos
+            </h2>
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center">
+                        <i class="fas fa-plus-circle mr-2 text-green-600"></i>
+                        Nuevo Permiso
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Permiso</label>
+                            <select id="permiso-tipo" onchange="cambiarTipoPermiso()" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                <option value="Entrada Personal">🚶 Entrada Personal</option>
+                                <option value="Salida Objeto">📦 Salida Objeto</option>
+                            </select>
+                        </div>
+                        <div id="campos-entrada">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                                    <input type="text" id="permiso-nombre" placeholder="Nombre completo" 
+                                           class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Número de Cédula</label>
+                                    <input type="text" id="permiso-cedula" placeholder="Número de cédula" 
+                                           class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Vigencia</label>
+                                    <input type="date" id="permiso-vigencia" 
+                                           class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                </div>
+                            </div>
+                        </div>
+                        <div id="campos-salida" style="display: none;">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Descripción del Objeto</label>
+                                <input type="text" id="permiso-objeto" placeholder="Descripción del objeto" 
+                                       class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                            </div>
+                        </div>
+                        <button onclick="crearPermiso()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-center">
+                            <i class="fas fa-shield-alt mr-2"></i>
+                            Crear Permiso
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center">
+                        <i class="fas fa-list mr-2 text-purple-600"></i>
+                        Permisos Activos
+                    </h3>
+                    <div id="lista-permisos" class="space-y-4">
+                        <!-- Se llena con JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .nav-btn {
+            padding: 1rem 1.5rem;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: inherit;
+            font-weight: 500;
+            position: relative;
+        }
+        .nav-btn:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .nav-btn.active {
+            border-bottom-color: #fbbf24;
+            color: white;
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        .seccion {
+            display: none;
+            animation: fade-in 0.5s ease-in-out;
+        }
+        .seccion.active {
+            display: block;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .chat-type-btn {
+            border: 1px solid transparent;
+            color: #6b7280;
+        }
+        .chat-type-btn:hover {
+            background-color: #f3f4f6;
+            border-color: #d1d5db;
+        }
+        .chat-type-btn.active {
+            background-color: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+        }
+        .mensaje-privado {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+        }
+        .mensaje-admin {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-left: 4px solid #ef4444;
+        }
+        .mensaje-torre {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-left: 4px solid #10b981;
+        }
+    </style>
+
+    <script>
+        // Estado global de la aplicación con datos de ejemplo
+        let appData = {
+            // Datos existentes...
+            reservas: [
+                {
+                    id: 1,
+                    espacio: "Piscina",
+                    fecha: "2025-08-15",
+                    hora: "10:00",
+                    usuario: "Juan Pérez - Apto 401A",
+                    estado: "activa"
+                },
+                {
+                    id: 2,
+                    espacio: "Gimnasio",
+                    fecha: "2025-08-18",
+                    hora: "07:00",
+                    usuario: "María García - Apto 302B",
+                    estado: "activa"
+                }
+            ],
+            pagos: [
+                {
+                    id: 1,
+                    concepto: "Administración",
+                    valor: 150000,
+                    mes: "Agosto 2025",
+                    vencimiento: "2025-08-15",
+                    estado: "pendiente"
+                },
+                {
+                    id: 2,
+                    concepto: "Administración",
+                    valor: 150000,
+                    mes: "Julio 2025",
+                    vencimiento: "2025-07-15",
+                    estado: "pagado"
+                },
+                {
+                    id: 3,
+                    concepto: "Cuota Extraordinaria",
+                    valor: 80000,
+                    mes: "Agosto 2025",
+                    vencimiento: "2025-08-20",
+                    estado: "pendiente"
+                }
+            ],
+            mensajes: [
+                {
+                    id: 1,
+                    usuario: "María García",
+                    mensaje: "¿A qué hora es el mantenimiento de la piscina?",
+                    fecha: "12/08/2025 09:30",
+                    apartamento: "302B",
+                    torre: "3",
+                    tipo: "general"
+                },
+                {
+                    id: 2,
+                    usuario: "Carlos López",
+                    mensaje: "Recordar que mañana hay reunión de propietarios",
+                    fecha: "12/08/2025 14:15",
+                    apartamento: "201A",
+                    torre: "2",
+                    tipo: "general"
+                },
+                {
+                    id: 3,
+                    usuario: "Ana Martín",
+                    mensaje: "¿Alguien sabe si funciona el gimnasio?",
+                    fecha: "12/08/2025 16:45",
+                    apartamento: "105C",
+                    torre: "1",
+                    tipo: "general"
+                },
+                {
+                    id: 4,
+                    usuario: "Administración",
+                    mensaje: "Estimados propietarios, les informamos que el mantenimiento de la piscina se realizará el sábado de 8:00 AM a 12:00 PM",
+                    fecha: "12/08/2025 17:00",
+                    apartamento: "Admin",
+                    torre: "admin",
+                    tipo: "admin"
+                },
+                {
+                    id: 5,
+                    usuario: "Pedro Ramírez",
+                    mensaje: "Hola Juan, ¿podrías ayudarme con el tema del parqueadero?",
+                    fecha: "12/08/2025 18:30",
+                    apartamento: "403A",
+                    torre: "4",
+                    tipo: "privado",
+                    destinatario: "401A"
+                },
+                {
+                    id: 6,
+                    usuario: "Luis Fernández",
+                    mensaje: "Torre 4: Recordar mantener cerrada la puerta del primer piso",
+                    fecha: "12/08/2025 19:15",
+                    apartamento: "412C",
+                    torre: "4",
+                    tipo: "torre",
+                    destinatarioTorre: "4"
+                }
+            ],
+            emprendimientos: [
+                {
+                    id: 1,
+                    nombre: "Delicias Caseras",
+                    tipo: "Comida",
+                    propietario: "María García - Apto 302B",
+                    telefono: "300-123-4567",
+                    descripcion: "Comida casera y postres artesanales. Menús diarios y domicilios.",
+                    rating: 4.8
+                },
+                {
+                    id: 2,
+                    nombre: "Reparaciones Express",
+                    tipo: "Servicios",
+                    propietario: "Carlos López - Apto 201A",
+                    telefono: "315-987-6543",
+                    descripcion: "Reparaciones eléctricas, plomería y mantenimiento general.",
+                    rating: 4.5
+                }
+            ],
+            pqrs: [
+                {
+                    id: 1,
+                    tipo: "Queja",
+                    asunto: "Ruido excesivo en horas nocturnas",
+                    descripcion: "Vecino del apartamento contiguo hace ruido después de las 10 PM",
+                    fecha: "10/08/2025",
+                    estado: "En proceso"
+                },
+                {
+                    id: 2,
+                    tipo: "Petición",
+                    asunto: "Solicitud de nueva zona WiFi",
+                    descripcion: "Solicito la instalación de un punto de acceso WiFi en la zona de parqueaderos",
+                    fecha: "08/08/2025",
+                    estado: "Resuelta"
+                }
+            ],
+            permisos: [
+                {
+                    id: 1,
+                    tipo: "Entrada Personal",
+                    nombre: "Pedro Rodríguez",
+                    cedula: "12345678",
+                    vigencia: "2025-08-20",
+                    autorizado: "Juan Pérez",
+                    fecha: "12/08/2025 08:30"
+                },
+                {
+                    id: 2,
+                    tipo: "Salida Objeto",
+                    objeto: "Televisor 55 pulgadas",
+                    autorizado: "Juan Pérez",
+                    fecha: "11/08/2025 15:20"
+                }
+            ]
+        };
+
+        // Estado del chat
+        let chatState = {
+            tipoActual: 'general',
+            torreSeleccionada: null,
+            apartamentoSeleccionado: null,
+            apartamentoUsuario: '401A', // Apartamento del usuario actual
+            torreUsuario: '4' // Torre del usuario actual
+        };
+                {
+                    id: 1,
+                    espacio; "Piscina",
+                    fecha; "2025-08-15",
+                    hora; "10:00",
+                    usuario; "Juan Pérez - Apto 401A",
+                    estado; "activa"
+                }
+                {
+                    id: 2,
+                    espacio; "Gimnasio",
+                    fecha; "2025-08-18",
+                    hora; "07:00",
+                    usuario; "María García - Apto 302B",
+                    estado; "activa"
+                }
+            pagos: [
+                {
+                    id: 1,
+                    concepto: "Administración",
+                    valor: 150000,
+                    mes: "Agosto 2025",
+                    vencimiento: "2025-08-15",
+                    estado: "pendiente"
+                },
+                {
+                    id: 2,
+                    concepto: "Administración",
+                    valor: 150000,
+                    mes: "Julio 2025",
+                    vencimiento: "2025-07-15",
+                    estado: "pagado"
+                },
+                {
+                    id: 3,
+                    concepto: "Cuota Extraordinaria",
+                    valor: 80000,
+                    mes: "Agosto 2025",
+                    vencimiento: "2025-08-20",
+                    estado: "pendiente"
+                }
+            ],
+            mensajes; [
+                {
+                    id: 1,
+                    usuario: "María García",
+                    mensaje: "¿A qué hora es el mantenimiento de la piscina?",
+                    fecha: "12/08/2025 09:30",
+                    apartamento: "302B",
+                    torre: "3",
+                    tipo: "general"
+                },
+                {
+                    id: 2,
+                    usuario: "Carlos López",
+                    mensaje: "Recordar que mañana hay reunión de propietarios",
+                    fecha: "12/08/2025 14:15",
+                    apartamento: "201A",
+                    torre: "2",
+                    tipo: "general"
+                },
+                {
+                    id: 3,
+                    usuario: "Ana Martín",
+                    mensaje: "¿Alguien sabe si funciona el gimnasio?",
+                    fecha: "12/08/2025 16:45",
+                    apartamento: "105C",
+                    torre: "1",
+                    tipo: "general"
+                },
+                {
+                    id: 4,
+                    usuario: "Administración",
+                    mensaje: "Estimados propietarios, les informamos que el mantenimiento de la piscina se realizará el sábado de 8:00 AM a 12:00 PM",
+                    fecha: "12/08/2025 17:00",
+                    apartamento: "Admin",
+                    torre: "admin",
+                    tipo: "admin"
+                },
+                {
+                    id: 5,
+                    usuario: "Pedro Ramírez",
+                    mensaje: "Hola Juan, ¿podrías ayudarme con el tema del parqueadero?",
+                    fecha: "12/08/2025 18:30",
+                    apartamento: "403A",
+                    torre: "4",
+                    tipo: "privado",
+                    destinatario: "401A"
+                },
+                {
+                    id: 6,
+                    usuario: "Luis Fernández",
+                    mensaje: "Torre 4: Recordar mantener cerrada la puerta del primer piso",
+                    fecha: "12/08/2025 19:15",
+                    apartamento: "412C",
+                    torre: "4",
+                    tipo: "torre",
+                    destinatarioTorre: "4"
+                }
+            ],
+            emprendimientos; [
+                {
+                    id: 1,
+                    nombre: "Delicias Caseras",
+                    tipo: "Comida",
+                    propietario: "María García - Apto 302B",
+                    telefono: "300-123-4567",
+                    descripcion: "Comida casera y postres artesanales. Menús diarios y domicilios.",
+                    rating: 4.8
+                },
+                {
+                    id: 2,
+                    nombre: "Reparaciones Express",
+                    tipo: "Servicios",
+                    propietario: "Carlos López - Apto 201A",
+                    telefono: "315-987-6543",
+                    descripcion: "Reparaciones eléctricas, plomería y mantenimiento general.",
+                    rating: 4.5
+                }
+            ],
+            pqrs; [
+                {
+                    id: 1,
+                    tipo: "Queja",
+                    asunto: "Ruido excesivo en horas nocturnas",
+                    descripcion: "Vecino del apartamento contiguo hace ruido después de las 10 PM",
+                    fecha: "10/08/2025",
+                    estado: "En proceso"
+                },
+                {
+                    id: 2,
+                    tipo: "Petición",
+                    asunto: "Solicitud de nueva zona WiFi",
+                    descripcion: "Solicito la instalación de un punto de acceso WiFi en la zona de parqueaderos",
+                    fecha: "08/08/2025",
+                    estado: "Resuelta"
+                }
+            ],
+            permisos; [
+                {
+                    id: 1,
+                    tipo: "Entrada Personal",
+                    nombre: "Pedro Rodríguez",
+                    cedula: "12345678",
+                    vigencia: "2025-08-20",
+                    autorizado: "Juan Pérez",
+                    fecha: "12/08/2025 08:30"
+                },
+                {
+                    id: 2,
+                    tipo: "Salida Objeto",
+                    objeto: "Televisor 55 pulgadas",
+                    autorizado: "Juan Pérez",
+                    fecha: "11/08/2025 15:20"
+                }
+            ]
+        
+
+        // Inicializar reloj
+        function actualizarReloj() {
+            const now = new Date();
+            const options = { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short'
+            };
+            document.getElementById('current-time').textContent = now.toLocaleDateString('es-CO', options);
+        }
+
+        // Sistema de notificaciones
+        function mostrarNotificacion(mensaje, tipo = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `bg-white border-l-4 ${
+                tipo === 'success' ? 'border-green-500' : 
+                tipo === 'error' ? 'border-red-500' : 
+                'border-blue-500'
+            } p-4 rounded-lg shadow-lg mb-2 animate-slide-up`;
+            
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${
+                        tipo === 'success' ? 'fa-check-circle text-green-500' : 
+                        tipo === 'error' ? 'fa-exclamation-circle text-red-500' : 
+                        'fa-info-circle text-blue-500'
+                    } mr-3"></i>
+                    <p class="text-gray-800">${mensaje}</p>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-auto text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('notifications').appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Funciones de navegación
+        function mostrarSeccion(seccion) {
+            // Mostrar loading
+            mostrarLoading();
+            
+            setTimeout(() => {
+                // Ocultar todas las secciones
+                document.querySelectorAll('.seccion').forEach(sec => sec.classList.remove('active'));
+                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+                
+                // Mostrar sección seleccionada
+                document.getElementById(seccion).classList.add('active');
+                document.querySelector(`[data-section="${seccion}"]`).classList.add('active');
+                
+                // Cargar datos de la sección
+                renderizarSeccion(seccion);
+                actualizarStats();
+                
+                // Ocultar loading
+                ocultarLoading();
+            }, 300);
+        }
+
+        function mostrarLoading() {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('loading-overlay').classList.add('flex');
+        }
+
+        function ocultarLoading() {
+            document.getElementById('loading-overlay').classList.add('hidden');
+            document.getElementById('loading-overlay').classList.remove('flex');
+        }
+
+        // Actualizar estadísticas del dashboard
+        function actualizarStats() {
+            document.getElementById('stats-reservas').textContent = appData.reservas.length;
+            document.getElementById('stats-pagos').textContent = appData.pagos.filter(p => p.estado === 'pagado').length;
+            document.getElementById('stats-pqrs').textContent = appData.pqrs.filter(p => p.estado === 'En proceso').length;
+            document.getElementById('stats-permisos').textContent = appData.permisos.length;
+        }
+
+        // Renderizar secciones
+        function renderizarSeccion(seccion) {
+            switch(seccion) {
+                case 'dashboard':
+                    // Dashboard ya se maneja con actualizarStats
+                    break;
+                case 'reservas':
+                    renderizarReservas();
+                    break;
+                case 'pagos':
+                    renderizarPagos();
+                    break;
+                case 'chat':
+                    renderizarChat();
+                    break;
+                case 'emprendimientos':
+                    renderizarEmprendimientos();
+                    break;
+                case 'pqr':
+                    renderizarPqrs();
+                    break;
+                case 'permisos':
+                    renderizarPermisos();
+                    break;
+            }
+        }
+
+        // Funciones de renderizado mejoradas
+        function renderizarReservas() {
+            const container = document.getElementById('lista-reservas');
+            if (appData.reservas.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-calendar-times text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No tienes reservas activas</p>
+                        <p class="text-sm text-gray-400">¡Crea tu primera reserva!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = appData.reservas.map(reserva => `
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300 card-hover">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-2">
+                                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white mr-4">
+                                    <i class="fas ${
+                                        reserva.espacio === 'Piscina' ? 'fa-swimming-pool' :
+                                        reserva.espacio === 'Gimnasio' ? 'fa-dumbbell' :
+                                        reserva.espacio === 'Salón Comunal' ? 'fa-users' :
+                                        'fa-gamepad'
+                                    }"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-lg text-gray-800">${reserva.espacio}</h4>
+                                    <p class="text-blue-600 font-medium">
+                                        <i class="fas fa-calendar mr-2"></i>
+                                        ${new Date(reserva.fecha).toLocaleDateString('es-CO')} a las ${reserva.hora}
+                                    </p>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600">${reserva.usuario}</p>
+                        </div>
+                        <div class="flex flex-col items-end space-y-2">
+                            <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Activa
+                            </div>
+                            <button onclick="cancelarReserva(${reserva.id})" class="text-red-600 hover:text-red-800 text-sm">
+                                <i class="fas fa-times mr-1"></i>
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderizarPagos() {
+            const pendientes = document.getElementById('pagos-pendientes');
+            const realizados = document.getElementById('pagos-realizados');
+            
+            const pagosPendientes = appData.pagos.filter(p => p.estado === 'pendiente');
+            const pagosRealizados = appData.pagos.filter(p => p.estado === 'pagado');
+
+            if (pagosPendientes.length === 0) {
+                pendientes.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-check-circle text-4xl text-green-400 mb-3"></i>
+                        <p class="text-gray-500">¡Excelente! No tienes pagos pendientes</p>
+                    </div>
+                `;
+            } else {
+                pendientes.innerHTML = pagosPendientes.map(pago => `
+                    <div class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="font-bold text-lg text-gray-800">${pago.concepto}</h4>
+                                <p class="text-gray-600 text-sm">${pago.mes}</p>
+                                <p class="text-red-500 text-sm font-medium">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    Vence: ${new Date(pago.vencimiento).toLocaleDateString('es-CO')}
+                                </p>
+                            </div>
+                            <span class="text-2xl font-bold text-red-600">$${pago.valor.toLocaleString('es-CO')}</span>
+                        </div>
+                        <button onclick="pagarFactura(${pago.id})" class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 flex items-center justify-center">
+                            <i class="fas fa-credit-card mr-2"></i>
+                            Pagar Ahora
+                        </button>
+                    </div>
+                `).join('');
+            }
+
+            if (pagosRealizados.length === 0) {
+                realizados.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-receipt text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">No hay pagos realizados</p>
+                    </div>
+                `;
+            } else {
+                realizados.innerHTML = pagosRealizados.map(pago => `
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-bold text-lg text-gray-800">${pago.concepto}</h4>
+                                <p class="text-gray-600 text-sm">${pago.mes}</p>
+                            </div>
+                            <span class="text-2xl font-bold text-green-600">$${pago.valor.toLocaleString('es-CO')}</span>
+                        </div>
+                        <div class="flex items-center text-green-600 font-medium">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Pagado exitosamente
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Funciones del sistema de chat
+        function seleccionarTipoChat(tipo) {
+            // Actualizar botones
+            document.querySelectorAll('.chat-type-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-type="${tipo}"]`).classList.add('active');
+
+            // Actualizar estado
+            chatState.tipoActual = tipo;
+
+            // Mostrar/ocultar selectores
+            document.getElementById('selector-torre').classList.add('hidden');
+            document.getElementById('selector-apartamento').classList.add('hidden');
+
+            if (tipo === 'torre') {
+                document.getElementById('selector-torre').classList.remove('hidden');
+                // Preseleccionar la torre del usuario
+                document.getElementById('chat-torre').value = chatState.torreUsuario;
+                chatState.torreSeleccionada = chatState.torreUsuario;
+            } else if (tipo === 'privado') {
+                document.getElementById('selector-apartamento').classList.remove('hidden');
+            }
+
+            // Actualizar interfaz
+            actualizarInterfazChat();
+            
+            // Filtrar y mostrar mensajes
+            renderizarChat();
+        }
+
+        function actualizarInterfazChat() {
+            const titulo = document.getElementById('chat-titulo');
+            const descripcion = document.getElementById('chat-descripcion');
+            const estado = document.getElementById('chat-estado');
+            const participantes = document.getElementById('chat-participantes');
+
+            switch(chatState.tipoActual) {
+                case 'general':
+                    titulo.textContent = 'Chat General';
+                    descripcion.textContent = 'Comunicación con todos los propietarios';
+                    estado.innerHTML = '📢 Chat General Activo';
+                    participantes.textContent = '240 propietarios conectados';
+                    break;
+                case 'torre':
+                    const torreNum = chatState.torreSeleccionada || chatState.torreUsuario;
+                    titulo.textContent = `Chat Torre ${torreNum}`;
+                    descripcion.textContent = `Solo propietarios de la Torre ${torreNum}`;
+                    estado.innerHTML = `🏢 Chat Torre ${torreNum} Activo`;
+                    participantes.textContent = '24 propietarios de la torre conectados';
+                    break;
+                case 'privado':
+                    if (chatState.apartamentoSeleccionado) {
+                        titulo.textContent = `Mensaje Privado`;
+                        descripcion.textContent = `Conversación con Apto ${chatState.apartamentoSeleccionado}`;
+                        estado.innerHTML = '💬 Mensaje Privado Activo';
+                        participantes.textContent = 'Conversación privada';
+                    } else {
+                        titulo.textContent = 'Mensaje Privado';
+                        descripcion.textContent = 'Selecciona un apartamento';
+                        estado.innerHTML = '💬 Selecciona destinatario';
+                        participantes.textContent = 'Ningún destinatario seleccionado';
+                    }
+                    break;
+                case 'admin':
+                    titulo.textContent = 'Chat Administración';
+                    descripcion.textContent = 'Comunicación directa con administración';
+                    estado.innerHTML = '🛡️ Chat Administración Activo';
+                    participantes.textContent = 'Administración disponible';
+                    break;
+            }
+        }
+
+        function actualizarApartamentos() {
+            const torre = document.getElementById('privado-torre').value;
+            const selectApto = document.getElementById('privado-apartamento');
+            
+            selectApto.innerHTML = '<option value="">Seleccionar apartamento</option>';
+            
+            if (torre) {
+                // Generar apartamentos para la torre seleccionada
+                for (let piso = 1; piso <= 12; piso++) {
+                    for (let apto = 1; apto <= 4; apto++) {
+                        const numeroApto = `${torre}${piso.toString().padStart(2, '0')}${apto.toString().padStart(2, '0')}`;
+                        const pisoStr = piso.toString().padStart(2, '0');
+                        const aptoStr = apto.toString().padStart(2, '0');
+                        
+                        // No mostrar el propio apartamento del usuario
+                        if (numeroApto !== chatState.apartamentoUsuario.replace(/\D/g, '')) {
+                            selectApto.innerHTML += `<option value="${numeroApto}">Piso ${pisoStr} - Apto ${aptoStr} (${numeroApto})</option>`;
+                        }
+                    }
+                }
+                
+                selectApto.onchange = function() {
+                    chatState.apartamentoSeleccionado = this.value;
+                    actualizarInterfazChat();
+                    renderizarChat();
+                };
+            }
+        }
+
+        function obtenerMensajesFiltrados() {
+            const miTorre = chatState.torreUsuario;
+            const miApto = chatState.apartamentoUsuario;
+            
+            return appData.mensajes.filter(mensaje => {
+                switch(chatState.tipoActual) {
+                    case 'general':
+                        return mensaje.tipo === 'general';
+                    case 'torre':
+                        const torreSeleccionada = chatState.torreSeleccionada || miTorre;
+                        return (mensaje.tipo === 'torre' && mensaje.destinatarioTorre === torreSeleccionada) ||
+                               (mensaje.tipo === 'general' && mensaje.torre === torreSeleccionada);
+                    case 'privado':
+                        return (mensaje.tipo === 'privado') && 
+                               ((mensaje.destinatario === miApto && mensaje.apartamento.includes(chatState.apartamentoSeleccionado)) ||
+                                (mensaje.destinatario === chatState.apartamentoSeleccionado && mensaje.apartamento === miApto));
+                    case 'admin':
+                        return mensaje.tipo === 'admin' || mensaje.torre === 'admin';
+                    default:
+                        return false;
+                }
+            });
+        }
+
+        function limpiarChat() {
+            if (confirm('¿Estás seguro de que quieres limpiar el historial del chat?')) {
+                document.getElementById('chat-mensajes').innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-comments text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">Chat limpio</p>
+                        <p class="text-sm text-gray-400">Los mensajes aparecerán aquí</p>
+                    </div>
+                `;
+                mostrarNotificacion('Chat limpiado', 'info');
+            }
+        }
+
+        function buscarEnChat() {
+            const busqueda = prompt('¿Qué quieres buscar en el chat?');
+            if (busqueda) {
+                mostrarNotificacion(`Buscando: "${busqueda}"`, 'info');
+                // Aquí iría la lógica de búsqueda
+            }
+        }
+
+        function adjuntarArchivo() {
+            mostrarNotificacion('Funcionalidad de archivos próximamente', 'info');
+        }
+
+        // Funciones de renderizado mejoradas
+        function renderizarChat() {
+            const container = document.getElementById('chat-mensajes');
+            const mensajesFiltrados = obtenerMensajesFiltrados();
+            
+            if (mensajesFiltrados.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-comments text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No hay mensajes en este chat</p>
+                        <p class="text-sm text-gray-400">¡Sé el primero en escribir!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = mensajesFiltrados.map(mensaje => {
+                const esMensajePropio = mensaje.apartamento === chatState.apartamentoUsuario;
+                const claseExtra = mensaje.tipo === 'privado' ? 'mensaje-privado' : 
+                                 mensaje.tipo === 'admin' ? 'mensaje-admin' : 
+                                 mensaje.tipo === 'torre' ? 'mensaje-torre' : '';
+                
+                return `
+                    <div class="bg-white border border-gray-100 rounded-xl p-4 mb-4 hover:shadow-md transition-all duration-300 ${claseExtra}">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-gradient-to-br ${
+                                    mensaje.tipo === 'admin' ? 'from-red-500 to-red-600' :
+                                    mensaje.tipo === 'privado' ? 'from-yellow-500 to-orange-600' :
+                                    mensaje.tipo === 'torre' ? 'from-green-500 to-green-600' :
+                                    'from-blue-500 to-indigo-600'
+                                } rounded-full flex items-center justify-center text-white font-bold">
+                                    ${mensaje.tipo === 'admin' ? '🛡️' : mensaje.usuario.charAt(0)}
+                                </div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="font-semibold ${
+                                            mensaje.tipo === 'admin' ? 'text-red-600' :
+                                            mensaje.tipo === 'privado' ? 'text-yellow-600' :
+                                            mensaje.tipo === 'torre' ? 'text-green-600' :
+                                            'text-blue-600'
+                                        }">${mensaje.usuario}</h4>
+                                        ${mensaje.tipo === 'privado' ? '<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Privado</span>' : ''}
+                                        ${mensaje.tipo === 'admin' ? '<span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">Admin</span>' : ''}
+                                        ${mensaje.tipo === 'torre' ? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Torre</span>' : ''}
+                                        ${esMensajePropio ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Tú</span>' : ''}
+                                    </div>
+                                    <span class="text-xs text-gray-500">${mensaje.apartamento}</span>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-400">${mensaje.fecha}</span>
+                        </div>
+                        <p class="text-gray-700 ml-13 ${mensaje.tipo === 'admin' ? 'font-medium' : ''}">${mensaje.mensaje}</p>
+                        ${mensaje.tipo === 'privado' && !esMensajePropio ? `
+                            <div class="ml-13 mt-2">
+                                <button onclick="responderMensajePrivado('${mensaje.apartamento}')" class="text-xs text-yellow-600 hover:text-yellow-800">
+                                    <i class="fas fa-reply mr-1"></i>Responder
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+            const container = document.getElementById('chat-mensajes');
+        function renderizarChat() {
+            const container = document.getElementById('chat-mensajes');
+            const mensajesFiltrados = obtenerMensajesFiltrados();
+            
+            if (mensajesFiltrados.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-comments text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No hay mensajes en este chat</p>
+                        <p class="text-sm text-gray-400">¡Sé el primero en escribir!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = mensajesFiltrados.map(mensaje => {
+                const esMensajePropio = mensaje.apartamento === chatState.apartamentoUsuario;
+                const claseExtra = mensaje.tipo === 'privado' ? 'mensaje-privado' : 
+                                 mensaje.tipo === 'admin' ? 'mensaje-admin' : 
+                                 mensaje.tipo === 'torre' ? 'mensaje-torre' : '';
+                
+                return `
+                    <div class="bg-white border border-gray-100 rounded-xl p-4 mb-4 hover:shadow-md transition-all duration-300 ${claseExtra}">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-gradient-to-br ${
+                                    mensaje.tipo === 'admin' ? 'from-red-500 to-red-600' :
+                                    mensaje.tipo === 'privado' ? 'from-yellow-500 to-orange-600' :
+                                    mensaje.tipo === 'torre' ? 'from-green-500 to-green-600' :
+                                    'from-blue-500 to-indigo-600'
+                                } rounded-full flex items-center justify-center text-white font-bold">
+                                    ${mensaje.tipo === 'admin' ? '🛡️' : mensaje.usuario.charAt(0)}
+                                </div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="font-semibold ${
+                                            mensaje.tipo === 'admin' ? 'text-red-600' :
+                                            mensaje.tipo === 'privado' ? 'text-yellow-600' :
+                                            mensaje.tipo === 'torre' ? 'text-green-600' :
+                                            'text-blue-600'
+                                        }">${mensaje.usuario}</h4>
+                                        ${mensaje.tipo === 'privado' ? '<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Privado</span>' : ''}
+                                        ${mensaje.tipo === 'admin' ? '<span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">Admin</span>' : ''}
+                                        ${mensaje.tipo === 'torre' ? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Torre</span>' : ''}
+                                        ${esMensajePropio ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Tú</span>' : ''}
+                                    </div>
+                                    <span class="text-xs text-gray-500">${mensaje.apartamento}</span>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-400">${mensaje.fecha}</span>
+                        </div>
+                        <p class="text-gray-700 ml-13 ${mensaje.tipo === 'admin' ? 'font-medium' : ''}">${mensaje.mensaje}</p>
+                        ${mensaje.tipo === 'privado' && !esMensajePropio ? `
+                            <div class="ml-13 mt-2">
+                                <button onclick="responderMensajePrivado('${mensaje.apartamento}')" class="text-xs text-yellow-600 hover:text-yellow-800">
+                                    <i class="fas fa-reply mr-1"></i>Responder
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function responderMensajePrivado(apartamento) {
+            // Cambiar a modo privado y seleccionar el apartamento
+            seleccionarTipoChat('privado');
+            
+            // Extraer torre y apartamento del formato
+            const torre = apartamento.charAt(0);
+            const aptoCompleto = apartamento.replace(/\D/g, '');
+            
+            document.getElementById('privado-torre').value = torre;
+            actualizarApartamentos();
+            
+            setTimeout(() => {
+                document.getElementById('privado-apartamento').value = aptoCompleto;
+                chatState.apartamentoSeleccionado = aptoCompleto;
+                actualizarInterfazChat();
+                renderizarChat();
+                
+                // Enfocar el input de mensaje
+                document.getElementById('nuevo-mensaje').focus();
+                document.getElementById('nuevo-mensaje').placeholder = `Responder a ${apartamento}...`;
+            }, 100);
+        }
+
+        function renderizarEmprendimientos() {
+            const container = document.getElementById('lista-emprendimientos');
+            if (appData.emprendimientos.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-store text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No hay emprendimientos registrados</p>
+                        <p class="text-sm text-gray-400">¡Sé el primero en registrar tu emprendimiento!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = appData.emprendimientos.map(emp => `
+                <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 card-hover border border-gray-100">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center text-white text-2xl">
+                            <i class="fas fa-store"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-bold text-xl text-gray-800">${emp.nombre}</h3>
+                            <span class="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">${emp.tipo}</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="flex items-center text-yellow-500">
+                                <i class="fas fa-star mr-1"></i>
+                                <span class="font-bold">${emp.rating}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-user mr-3 text-gray-400"></i>
+                            ${emp.propietario}
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-phone mr-3 text-gray-400"></i>
+                            <a href="tel:${emp.telefono}" class="text-blue-600 hover:text-blue-800">${emp.telefono}</a>
+                        </div>
+                        <p class="text-gray-700 text-sm leading-relaxed">${emp.descripcion}</p>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <button class="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-xl hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+                            <i class="fas fa-phone mr-2"></i>
+                            Contactar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderizarPqrs() {
+            const container = document.getElementById('lista-pqrs');
+            if (appData.pqrs.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-file-alt text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">No tienes PQRs registradas</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = appData.pqrs.map(pqr => `
+                <div class="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-medium ${
+                            pqr.tipo === 'Petición' ? 'bg-blue-100 text-blue-800' :
+                            pqr.tipo === 'Queja' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                        }">
+                            ${pqr.tipo === 'Petición' ? '📝' : pqr.tipo === 'Queja' ? '😠' : '⚠️'} ${pqr.tipo}
+                        </span>
+                        <span class="px-3 py-1 rounded-full text-xs font-medium ${
+                            pqr.estado === 'En proceso' ? 'bg-orange-100 text-orange-800' :
+                            'bg-green-100 text-green-800'
+                        }">
+                            ${pqr.estado === 'En proceso' ? '⏳' : '✅'} ${pqr.estado}
+                        </span>
+                    </div>
+                    <h4 class="font-bold text-lg text-gray-800 mb-2">${pqr.asunto}</h4>
+                    <p class="text-gray-600 text-sm mb-3">${pqr.descripcion}</p>
+                    <p class="text-xs text-gray-400">
+                        <i class="fas fa-clock mr-1"></i>
+                        ${pqr.fecha}
+                    </p>
+                </div>
+            `).join('');
+        }
+
+        function renderizarPermisos() {
+            const container = document.getElementById('lista-permisos');
+            if (appData.permisos.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-shield-alt text-4xl text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">No tienes permisos activos</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = appData.permisos.map(permiso => `
+                <div class="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-medium ${
+                            permiso.tipo === 'Entrada Personal' ? 'bg-green-100 text-green-800' :
+                            'bg-orange-100 text-orange-800'
+                        }">
+                            ${permiso.tipo === 'Entrada Personal' ? '🚶' : '📦'} ${permiso.tipo}
+                        </span>
+                        <button onclick="eliminarPermiso(${permiso.id})" class="text-red-600 hover:text-red-800 text-sm">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    ${permiso.tipo === 'Entrada Personal' ? `
+                        <h4 class="font-bold text-lg text-gray-800">${permiso.nombre}</h4>
+                        <p class="text-sm text-gray-600 mb-1">
+                            <i class="fas fa-id-card mr-2"></i>
+                            CC: ${permiso.cedula}
+                        </p>
+                        ${permiso.vigencia ? `
+                            <p class="text-sm text-gray-600 mb-2">
+                                <i class="fas fa-calendar mr-2"></i>
+                                Vigencia: ${new Date(permiso.vigencia).toLocaleDateString('es-CO')}
+                            </p>
+                        ` : ''}
+                    ` : `
+                        <h4 class="font-bold text-lg text-gray-800">${permiso.objeto}</h4>
+                    `}
+                    <div class="mt-3 pt-3 border-t border-gray-100">
+                        <p class="text-sm text-gray-500">
+                            <i class="fas fa-user mr-2"></i>
+                            Autorizado por: ${permiso.autorizado}
+                        </p>
+                        <p class="text-xs text-gray-400">
+                            <i class="fas fa-clock mr-1"></i>
+                            ${permiso.fecha}
+                        </p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Funciones de acción mejoradas
+        async function crearReserva() {
+            const espacio = document.getElementById('nuevo-espacio').value;
+            const fecha = document.getElementById('nueva-fecha').value;
+            const hora = document.getElementById('nueva-hora').value;
+
+            if (!espacio || !fecha || !hora) {
+                mostrarNotificacion('Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            // Validar que la fecha sea futura
+            const fechaSeleccionada = new Date(fecha);
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+
+            if (fechaSeleccionada < hoy) {
+                mostrarNotificacion('La fecha debe ser posterior a hoy', 'error');
+                return;
+            }
+
+            mostrarLoading();
+
+            // Simular llamada a API
+            setTimeout(() => {
+                const nuevaReserva = {
+                    id: appData.reservas.length + 1,
+                    espacio,
+                    fecha,
+                    hora,
+                    usuario: "Carlos Andrés Santos Hernández - Torre2 Apto 1102",
+                    estado: "activa"
+                };
+
+                appData.reservas.push(nuevaReserva);
+
+                // Limpiar formulario
+                document.getElementById('nuevo-espacio').value = '';
+                document.getElementById('nueva-fecha').value = '';
+                document.getElementById('nueva-hora').value = '';
+
+                renderizarReservas();
+                actualizarStats();
+                ocultarLoading();
+                mostrarNotificacion('¡Reserva creada exitosamente!', 'success');
+            }, 1000);
+        }
+
+        async function cancelarReserva(id) {
+            if (!confirm('¿Estás seguro de que deseas cancelar esta reserva?')) {
+                return;
+            }
+
+            mostrarLoading();
+
+            setTimeout(() => {
+                appData.reservas = appData.reservas.filter(r => r.id !== id);
+                renderizarReservas();
+                actualizarStats();
+                ocultarLoading();
+                mostrarNotificacion('Reserva cancelada exitosamente', 'success');
+            }, 500);
+        }
+
+        async function pagarFactura(id) {
+            if (!confirm('¿Proceder con el pago de esta factura?')) {
+                return;
+            }
+
+            mostrarLoading();
+
+            setTimeout(() => {
+                const pagoIndex = appData.pagos.findIndex(p => p.id === id);
+                if (pagoIndex !== -1) {
+                    appData.pagos[pagoIndex].estado = 'pagado';
+                }
+
+                renderizarPagos();
+                actualizarStats();
+                ocultarLoading();
+                mostrarNotificacion('¡Pago procesado exitosamente!', 'success');
+            }, 2000);
+        }
+
+        async function enviarMensaje() {
+            const mensaje = document.getElementById('nuevo-mensaje').value.trim();
+            
+            if (!mensaje) {
+                mostrarNotificacion('Escribe un mensaje', 'error');
+                return;
+            }
+
+            // Validaciones según el tipo de chat
+            if (chatState.tipoActual === 'privado' && !chatState.apartamentoSeleccionado) {
+                mostrarNotificacion('Selecciona un apartamento para enviar el mensaje privado', 'error');
+                return;
+            }
+
+            if (chatState.tipoActual === 'torre' && !chatState.torreSeleccionada) {
+                chatState.torreSeleccionada = chatState.torreUsuario;
+            }
+
+            // Crear el nuevo mensaje según el tipo
+            let nuevoMensaje = {
+                id: appData.mensajes.length + 1,
+                usuario: "Carlos Andrés Santos Hernández",
+                mensaje,
+                fecha: new Date().toLocaleString('es-CO'),
+                apartamento: chatState.apartamentoUsuario,
+                torre: chatState.torreUsuario,
+                tipo: chatState.tipoActual
+            };
+
+            // Agregar propiedades específicas según el tipo
+            switch(chatState.tipoActual) {
+                case 'privado':
+                    nuevoMensaje.destinatario = chatState.apartamentoSeleccionado;
+                    break;
+                case 'torre':
+                    nuevoMensaje.destinatarioTorre = chatState.torreSeleccionada;
+                    break;
+                case 'admin':
+                    // Los mensajes a admin mantienen el tipo 'admin'
+                    break;
+                case 'general':
+                    // Los mensajes generales mantienen el tipo 'general'
+                    break;
+            }
+
+            appData.mensajes.push(nuevoMensaje);
+            document.getElementById('nuevo-mensaje').value = '';
+            
+            // Actualizar placeholder
+            document.getElementById('nuevo-mensaje').placeholder = 'Escribe tu mensaje...';
+            
+            renderizarChat();
+            
+            // Mostrar notificación según el tipo
+            const tipoTexto = {
+                'general': 'al chat general',
+                'torre': `a la Torre ${chatState.torreSeleccionada}`,
+                'privado': `al apartamento ${chatState.apartamentoSeleccionado}`,
+                'admin': 'a administración'
+            };
+            
+            mostrarNotificacion(`Mensaje enviado ${tipoTexto[chatState.tipoActual]}`, 'success');
+        }
+
+        async function enviarPqr() {
+            const tipo = document.getElementById('pqr-tipo').value;
+            const asunto = document.getElementById('pqr-asunto').value.trim();
+            const descripcion = document.getElementById('pqr-descripcion').value.trim();
+
+            if (!asunto || !descripcion) {
+                mostrarNotificacion('Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            mostrarLoading();
+
+            setTimeout(() => {
+                const nuevaPqr = {
+                    id: appData.pqrs.length + 1,
+                    tipo,
+                    asunto,
+                    descripcion,
+                    fecha: new Date().toLocaleDateString('es-CO'),
+                    estado: "En proceso"
+                };
+
+                appData.pqrs.push(nuevaPqr);
+
+                // Limpiar formulario
+                document.getElementById('pqr-asunto').value = '';
+                document.getElementById('pqr-descripcion').value = '';
+
+                renderizarPqrs();
+                actualizarStats();
+                ocultarLoading();
+                mostrarNotificacion('PQR enviada exitosamente', 'success');
+            }, 1000);
+        }
+
+        function cambiarTipoPermiso() {
+            const tipo = document.getElementById('permiso-tipo').value;
+            const camposEntrada = document.getElementById('campos-entrada');
+            const camposSalida = document.getElementById('campos-salida');
+
+            if (tipo === 'Entrada Personal') {
+                camposEntrada.style.display = 'block';
+                camposSalida.style.display = 'none';
+            } else {
+                camposEntrada.style.display = 'none';
+                camposSalida.style.display = 'block';
+            }
+        }
+
+        async function crearPermiso() {
+            const tipo = document.getElementById('permiso-tipo').value;
+            let datos = { tipo };
+
+            if (tipo === 'Entrada Personal') {
+                datos.nombre = document.getElementById('permiso-nombre').value.trim();
+                datos.cedula = document.getElementById('permiso-cedula').value.trim();
+                datos.vigencia = document.getElementById('permiso-vigencia').value;
+                
+                if (!datos.nombre || !datos.cedula) {
+                    mostrarNotificacion('Por favor completa todos los campos obligatorios', 'error');
+                    return;
+                }
+            } else {
+                datos.objeto = document.getElementById('permiso-objeto').value.trim();
+                
+                if (!datos.objeto) {
+                    mostrarNotificacion('Por favor describe el objeto', 'error');
+                    return;
+                }
+            }
+
+            mostrarLoading();
+
+            setTimeout(() => {
+                const nuevoPermiso = {
+                    id: appData.permisos.length + 1,
+                    ...datos,
+                    autorizado: "Carlos Andrés Santos Hernández",
+                    fecha: new Date().toLocaleString('es-CO')
+                };
+
+                appData.permisos.push(nuevoPermiso);
+
+                // Limpiar formulario
+                document.getElementById('permiso-nombre').value = '';
+                document.getElementById('permiso-cedula').value = '';
+                document.getElementById('permiso-vigencia').value = '';
+                document.getElementById('permiso-objeto').value = '';
+
+                renderizarPermisos();
+                actualizarStats();
+                ocultarLoading();
+                mostrarNotificacion('Permiso creado exitosamente', 'success');
+            }, 1000);
+        }
+
+        async function eliminarPermiso(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este permiso?')) {
+                return;
+            }
+
+            appData.permisos = appData.permisos.filter(p => p.id !== id);
+            renderizarPermisos();
+            actualizarStats();
+            mostrarNotificacion('Permiso eliminado', 'success');
+        }
+
+        // Inicializar aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar fecha mínima para reservas (hoy)
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('nueva-fecha').setAttribute('min', hoy);
+            
+            // Configurar fecha mínima para permisos (hoy)
+            document.getElementById('permiso-vigencia').setAttribute('min', hoy);
+
+            // Inicializar chat
+            seleccionarTipoChat('general');
+
+            // Mostrar dashboard por defecto
+            mostrarSeccion('dashboard');
+            
+            // Actualizar reloj cada minuto
+            actualizarReloj();
+            setInterval(actualizarReloj, 60000);
+            
+            // Mostrar badge de notificaciones en chat
+            document.getElementById('chat-badge').classList.remove('hidden');
+            
+            // Mensaje de bienvenida
+            setTimeout(() => {
+                mostrarNotificacion('¡Bienvenido a la nueva experiencia de Aralia de Castilla!', 'info');
+            }, 1000);
+        });
+
+        // Sistema de Autenticación
+        let currentUser = null;
+
+        function switchTab(tab) {
+            const loginTab = document.getElementById('login-tab');
+            const registerTab = document.getElementById('register-tab');
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+
+            if (tab === 'login') {
+                loginTab.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white text-blue-600 shadow-sm";
+                registerTab.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800";
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+            } else {
+                registerTab.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white text-green-600 shadow-sm";
+                loginTab.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800";
+                registerForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+            }
+        }
+
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('auth-message');
+            const messageText = document.getElementById('auth-message-text');
+
+            messageText.textContent = message;
+            messageDiv.className = `mt-4 p-3 rounded-lg ${type === 'error' ? 'bg-red-100 text-red-700 border border-red-300' : 'bg-green-100 text-green-700 border border-green-300'}`;
+            messageDiv.classList.remove('hidden');
+
+            setTimeout(() => {
+                messageDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        async function login(email, password) {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.usuario));
+                    currentUser = data.usuario;
+
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+
+                    // Actualizar información del usuario en el header
+                    updateUserInfo();
+
+                    showMessage('¡Bienvenido!', 'success');
+                } else {
+                    showMessage(data.mensaje || 'Error al iniciar sesión', 'error');
+                }
+            } catch (error) {
+                showMessage('Error de conexión', 'error');
+            }
+        }
+
+        async function register(nombre, email, apartamento, password) {
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nombre, email, apartamento, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('Usuario registrado exitosamente. Ahora puedes iniciar sesión.', 'success');
+                    switchTab('login');
+                } else {
+                    showMessage(data.mensaje || 'Error al registrar usuario', 'error');
+                }
+            } catch (error) {
+                showMessage('Error de conexión', 'error');
+            }
+        }
+
+        function updateUserInfo() {
+            if (currentUser) {
+                const userInfoElement = document.querySelector('.text-blue-100');
+                if (userInfoElement) {
+                    userInfoElement.innerHTML = `
+                        <i class="fas fa-user-circle mr-2"></i>
+                        Bienvenido, ${currentUser.nombre} - ${currentUser.apartamento}
+                    `;
+                }
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            currentUser = null;
+
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        // Event listeners para los formularios
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            login(email, password);
+        });
+
+        document.getElementById('register-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('register-nombre').value;
+            const email = document.getElementById('register-email').value;
+            const apartamento = document.getElementById('register-apartamento').value;
+            const password = document.getElementById('register-password').value;
+            register(nombre, email, apartamento, password);
+        });
+
+        // Verificar autenticación al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+
+            if (token && user) {
+                currentUser = JSON.parse(user);
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                updateUserInfo();
+            }
+        });
+    </script>
+    </div> <!-- Cierre del main-app -->
+</body>
+</html>
