@@ -39,3 +39,16 @@ pids
 # Temporary folders
 tmp/
 temp/
+
+# Flutter
+conjunto_residencial_flutter/.dart_tool/
+conjunto_residencial_flutter/build/
+conjunto_residencial_flutter/.flutter-plugins
+conjunto_residencial_flutter/.flutter-plugins-dependencies
+conjunto_residencial_flutter/pubspec.lock
+
+# Archivos temporales
+nul
+
+# Archivos de respaldo
+*.backup

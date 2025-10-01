@@ -6,7 +6,17 @@
       "password": "password1",
       "nombre": "Carlos Andrés Santos Hernández",
       "apartamento": "Torre 2 - Apto 401A",
-      "activo": true
+      "activo": true,
+      "rol": "residente"
+    },
+    {
+      "id": 7,
+      "email": "shayoja@hotmail.com",
+      "password": "password2",
+      "nombre": "Administrador del Conjunto",
+      "apartamento": "Oficina Administración",
+      "activo": true,
+      "rol": "admin"
     },
     {
       "id": 2,
@@ -14,7 +24,8 @@
       "password": "demo123",
       "nombre": "María González",
       "apartamento": "Torre 1 - Apto 301",
-      "activo": true
+      "activo": true,
+      "rol": "residente"
     },
     {
       "id": 3,
@@ -22,7 +33,8 @@
       "password": "demo123",
       "nombre": "Carlos Ruiz",
       "apartamento": "Torre 3 - Apto 205",
-      "activo": true
+      "activo": true,
+      "rol": "residente"
     },
     {
       "id": 4,
@@ -30,7 +42,8 @@
       "password": "demo123",
       "nombre": "Ana Martínez",
       "apartamento": "Torre 1 - Apto 102",
-      "activo": true
+      "activo": true,
+      "rol": "residente"
     },
     {
       "id": 5,
@@ -38,7 +51,17 @@
       "password": "demo123",
       "nombre": "Luis García",
       "apartamento": "Torre 2 - Apto 404",
-      "activo": true
+      "activo": true,
+      "rol": "residente"
+    },
+    {
+      "id": 8,
+      "email": "car02cbs@gmail.com",
+      "password": "password3",
+      "nombre": "Vigilante de Seguridad",
+      "apartamento": "Portería Principal",
+      "activo": true,
+      "rol": "vigilante"
     },
     {
       "id": 6,
@@ -46,7 +69,74 @@
       "password": "demo123",
       "nombre": "Patricia Soto",
       "apartamento": "Torre 3 - Apto 303",
+      "activo": true,
+      "rol": "residente"
+    },
+    {
+      "id": 9,
+      "email": "alcaldia@conjunto.com",
+      "password": "alcaldia123",
+      "nombre": "Oficial de Alcaldía",
+      "apartamento": "Oficina Alcaldía",
+      "activo": true,
+      "rol": "alcaldia"
+    }
+  ],
+  "residentes": [
+    {
+      "id": 1,
+      "apartamento": "Torre 2 - Apto 401A",
+      "propietario": "Carlos Andrés Santos Hernández",
+      "telefono": "300-123-4567",
+      "email": "car-cbs@hotmail.com",
+      "tipoPropiedad": "propietario",
+      "fechaIngreso": "2023-01-15",
+      "vehiculos": [
+        {
+          "placa": "ABC123",
+          "marca": "Toyota",
+          "modelo": "Corolla",
+          "color": "Blanco"
+        }
+      ],
+      "mascotas": [
+        {
+          "nombre": "Max",
+          "tipo": "Perro",
+          "raza": "Golden Retriever"
+        }
+      ]
+    }
+  ],
+  "parqueaderosVehiculos": [
+    {
+      "id": 1,
+      "numeroParqueadero": "P-001",
+      "nivel": "Sótano 1",
+      "propietario": "Carlos Andrés Santos Hernández",
+      "apartamento": "Torre 2 - Apto 401A",
+      "vehiculo": {
+        "placa": "ABC123",
+        "marca": "Toyota",
+        "modelo": "Corolla",
+        "color": "Blanco"
+      },
+      "fechaAsignacion": "2023-01-15",
       "activo": true
+    }
+  ],
+  "recibosPagos": [
+    {
+      "id": 1,
+      "apartamento": "Torre 2 - Apto 401A",
+      "concepto": "Administración - Agosto 2025",
+      "valor": 450000,
+      "fechaPago": "2025-08-15",
+      "metodoPago": "Transferencia",
+      "numeroRecibo": "REC-001-2025",
+      "archivo": "recibo_apto401A_agosto2025.pdf",
+      "fechaSubida": "2025-08-15T10:30:00Z",
+      "subidoPor": "shayoja@hotmail.com"
     }
   ],
   "reservas": [
@@ -91,71 +181,117 @@
       "vencimiento": "2025-07-15"
     }
   ],
-  "mensajes": [
+  "solicitudesChat": [],
+  "chats": {
+    "general": [
+      {
+        "id": 1,
+        "usuario": "Carlos Andrés Santos Hernández",
+        "apartamento": "Torre 2 - Apto 401A",
+        "mensaje": "¡Hola a todos! Buenos días",
+        "fecha": "2025-10-01T22:31:47.264Z",
+        "tipo": "general"
+      }
+    ],
+    "admin": [],
+    "vigilantes": [],
+    "privados": {}
+  },
+  "incidentes": [
     {
       "id": 1,
-      "usuario": "Admin Conjunto",
-      "mensaje": "Recordamos que mañana habrá mantenimiento del ascensor Torre B",
-      "fecha": "2025-08-12 09:00"
+      "tipo": "Infraestructura",
+      "titulo": "Daño en vía principal",
+      "descripcion": "Hueco grande en la entrada del conjunto",
+      "ubicacion": "Entrada Principal",
+      "prioridad": "Alta",
+      "estado": "Reportado",
+      "reportadoPor": "Administrador del Conjunto",
+      "fecha": "2025-10-01T22:31:47.266Z",
+      "fotos": [],
+      "respuestaAlcaldia": null,
+      "fechaRespuesta": null
     },
     {
       "id": 2,
-      "usuario": "Ana Martínez - 501B",
-      "mensaje": "¿Alguien sabe hasta qué hora estará cerrada la piscina?",
-      "fecha": "2025-08-12 14:30"
+      "tipo": "Seguridad",
+      "titulo": "Problema con el señor Pedro Manrique",
+      "descripcion": "Señor indeseado",
+      "ubicacion": "Aralia de castilla torre 2 2052",
+      "prioridad": "Alta",
+      "estado": "Reportado",
+      "reportadoPor": "Administrador del Conjunto",
+      "fecha": "2025-10-01T22:33:38.825Z",
+      "fotos": [],
+      "respuestaAlcaldia": null,
+      "fechaRespuesta": null
     }
   ],
-  "chatsPrivados": [],
-  "solicitudesChat": [],
   "emprendimientos": [
     {
       "id": 1,
       "nombre": "Delicias Caseras",
-      "propietario": "Laura Ruiz - 203A",
+      "propietario": "Laura Ruiz - Torre 2 Apto 203A",
       "tipo": "Comida",
       "telefono": "300-123-4567",
-      "descripcion": "Postres y comida casera"
+      "descripcion": "Postres artesanales, tortas personalizadas y comida casera. Hacemos delivery dentro del conjunto.",
+      "imagen": "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop",
+      "calificacion": 4.8,
+      "horario": "Lun-Sáb 9am-7pm"
     },
     {
       "id": 2,
       "nombre": "TecniFix",
-      "propietario": "Miguel Santos - 302B",
+      "propietario": "Miguel Santos - Torre 1 Apto 302B",
       "tipo": "Técnico",
       "telefono": "301-987-6543",
-      "descripcion": "Reparación de electrodomésticos"
+      "descripcion": "Reparación y mantenimiento de electrodomésticos, aires acondicionados, neveras, lavadoras. Servicio a domicilio.",
+      "imagen": "https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=400&h=300&fit=crop",
+      "calificacion": 4.5,
+      "horario": "Lun-Vie 8am-6pm"
+    },
+    {
+      "id": 3,
+      "nombre": "CodeFlow Solutions",
+      "propietario": "Carlos Andrés Santos Hernández - Torre 2 Apto 401A",
+      "tipo": "Tecnología",
+      "telefono": "310-555-7890",
+      "descripcion": "Desarrollo de aplicaciones web y móviles, automatizaciones, sistemas de gestión. Soluciones tecnológicas personalizadas para negocios y emprendimientos.",
+      "imagen": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=300&fit=crop",
+      "calificacion": 5,
+      "horario": "Lun-Vie 9am-6pm, Sáb 10am-2pm"
     }
   ],
+  "arriendos": [],
+  "permisos": [],
+  "ultimoSorteo": null,
+  "paquetes": [],
   "pqrs": [
     {
       "id": 1,
       "tipo": "Reclamo",
       "asunto": "Ruido nocturno Torre B",
+      "descripcion": "Constantemente hay ruido después de las 10pm en el apartamento 301B",
       "estado": "En proceso",
-      "fecha": "2025-08-10"
+      "fecha": "2025-08-10",
+      "residente": "Carlos Andrés Santos Hernández",
+      "apartamento": "Torre 2 - Apto 401A",
+      "respuesta": null,
+      "fechaRespuesta": null,
+      "respondidoPor": null
     },
     {
       "id": 2,
       "tipo": "Petición",
       "asunto": "Solicitud nueva máquina gimnasio",
+      "descripcion": "Se solicita la compra de una caminadora adicional para el gimnasio",
       "estado": "Pendiente",
-      "fecha": "2025-08-08"
-    }
-  ],
-  "permisos": [
-    {
-      "id": 1,
-      "tipo": "Entrada Personal",
-      "nombre": "María Trabajadora",
-      "cedula": "12345678",
-      "fecha": "2025-08-12",
-      "vigencia": "2025-08-15"
-    },
-    {
-      "id": 2,
-      "tipo": "Salida Objeto",
-      "objeto": "Televisor Samsung 55\"",
-      "autorizado": "Juan Pérez",
-      "fecha": "2025-08-11"
+      "fecha": "2025-08-08",
+      "residente": "María González",
+      "apartamento": "Torre 1 - Apto 301",
+      "respuesta": null,
+      "fechaRespuesta": null,
+      "respondidoPor": null
     }
   ],
   "noticias": [
@@ -319,15 +455,106 @@
       "totalHoras": 3,
       "totalCobrado": 1000,
       "recibo": "REC-001"
+    }
+  ],
+  "solicitudesPermisos": [],
+  "camaras": [
+    {
+      "id": 1,
+      "nombre": "Entrada Principal",
+      "ubicacion": "Portería",
+      "url": "rtsp://camera1",
+      "tipo": "fija",
+      "visible_residentes": true,
+      "activa": true
+    },
+    {
+      "id": 2,
+      "nombre": "Parqueadero Sótano 1",
+      "ubicacion": "Parqueadero",
+      "url": "rtsp://camera2",
+      "tipo": "PTZ",
+      "visible_residentes": false,
+      "activa": true
     },
     {
       "id": 3,
-      "placa": "EJV664",
-      "fechaIngreso": "2025-09-16T04:13:00.039Z",
-      "fechaSalida": null,
-      "activo": true
+      "nombre": "Zona Social",
+      "ubicacion": "Zonas Comunes",
+      "url": "rtsp://camera3",
+      "tipo": "fija",
+      "visible_residentes": true,
+      "activa": true
     }
   ],
+  "encuestas": [
+    {
+      "id": 1,
+      "titulo": "Horario de uso de la piscina",
+      "descripcion": "¿Cuál horario prefieres para el uso de la piscina?",
+      "opciones": [
+        {
+          "id": 1,
+          "texto": "6:00 AM - 12:00 PM",
+          "votos": 15
+        },
+        {
+          "id": 2,
+          "texto": "12:00 PM - 6:00 PM",
+          "votos": 28
+        },
+        {
+          "id": 3,
+          "texto": "6:00 PM - 10:00 PM",
+          "votos": 42
+        }
+      ],
+      "votantes": [],
+      "estado": "activa",
+      "fechaCreacion": "2025-10-01T22:31:47.266Z",
+      "fechaCierre": null,
+      "creadoPor": "Administrador del Conjunto"
+    }
+  ],
+  "documentos": [
+    {
+      "id": 1,
+      "titulo": "Manual de Convivencia",
+      "descripcion": "Reglamento interno del conjunto residencial Aralia de Castilla",
+      "categoria": "Reglamento",
+      "archivo": "#",
+      "fechaPublicacion": "2024-01-15",
+      "publicadoPor": "Administración"
+    },
+    {
+      "id": 2,
+      "titulo": "Balance Financiero 2024 - Primer Trimestre",
+      "descripcion": "Estado financiero del conjunto correspondiente a Enero - Marzo 2024",
+      "categoria": "Balance",
+      "archivo": "#",
+      "fechaPublicacion": "2024-04-10",
+      "publicadoPor": "Administración"
+    },
+    {
+      "id": 3,
+      "titulo": "Balance Financiero 2024 - Segundo Trimestre",
+      "descripcion": "Estado financiero del conjunto correspondiente a Abril - Junio 2024",
+      "categoria": "Balance",
+      "archivo": "#",
+      "fechaPublicacion": "2024-07-10",
+      "publicadoPor": "Administración"
+    },
+    {
+      "id": 4,
+      "titulo": "Balance Financiero 2024 - Tercer Trimestre",
+      "descripcion": "Estado financiero del conjunto correspondiente a Julio - Septiembre 2024",
+      "categoria": "Balance",
+      "archivo": "#",
+      "fechaPublicacion": "2024-10-10",
+      "publicadoPor": "Administración"
+    }
+  ],
+  "asignacionesParqueaderos": [],
   "recibosParqueadero": [
     {
       "id": "REC-001",

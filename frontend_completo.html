@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conjunto Aralia de Castilla - Sistema Completo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'bounce-in': 'bounceIn 0.6s ease-out',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        bounceIn: {
+                            '0%': { transform: 'scale(0.3)', opacity: '0' },
+                            '50%': { transform: 'scale(1.05)' },
+                            '70%': { transform: 'scale(0.9)' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)' },
+                            '50%': { boxShadow: '0 0 30px rgba(59, 130, 246, 0.6)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <!-- Pantalla de Login -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 transform transition-all duration-300">
+            <div class="text-center mb-8">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-home text-2xl text-white"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Conjunto Aralia de Castilla</h1>
+                <p class="text-gray-600">Sistema Completo de Gestión</p>
+            </div>
+
+            <!-- Tabs de Login/Registro -->
+            <div class="flex bg-gray-100 rounded-lg p-1 mb-6">
+                <button id="login-tab" onclick="switchTab('login')" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white text-blue-600 shadow-sm">
+                    Iniciar Sesión
+                </button>
+                <button id="register-tab" onclick="switchTab('register')" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800">
+                    Registrarse
+                </button>
+            </div>
+
+            <!-- Formulario de Login -->
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <div class="relative">
+                        <input type="email" id="login-email" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="tu-email@ejemplo.com">
+                        <i class="fas fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                    <div class="relative">
+                        <input type="password" id="login-password" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="Tu contraseña">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
+                </button>
+            </form>
+
+            <!-- Formulario de Registro -->
+            <form id="register-form" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                    <div class="relative">
+                        <input type="text" id="register-nombre" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="Tu nombre completo">
+                        <i class="fas fa-user absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <div class="relative">
+                        <input type="email" id="register-email" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="tu-email@ejemplo.com">
+                        <i class="fas fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Apartamento</label>
+                    <div class="relative">
+                        <input type="text" id="register-apartamento" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="Ej: Torre 1 - Apto 101">
+                        <i class="fas fa-building absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                    <div class="relative">
+                        <input type="password" id="register-password" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="Tu contraseña">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg">
+                    <i class="fas fa-user-plus mr-2"></i>Registrarse
+                </button>
+            </form>
+
+            <!-- Mensaje de error/éxito -->
+            <div id="auth-message" class="mt-4 p-3 rounded-lg hidden">
+                <span id="auth-message-text"></span>
+            </div>
+
+            <!-- Usuarios de prueba -->
+            <div class="mt-6 p-4 bg-gray-50 rounded-lg border">
+                <p class="text-xs text-gray-600 mb-2"><strong>Usuarios de prueba:</strong></p>
+                <div class="text-xs text-gray-600 space-y-1">
+                    <div><strong>Residente:</strong> car-cbs@hotmail.com / password1</div>
+                    <div><strong>Admin:</strong> shayoja@hotmail.com / password2</div>
+                    <div><strong>Vigilante:</strong> car02cbs@gmail.com / password3</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aplicación Principal -->
+    <div id="main-app" class="hidden">
+        <!-- Header dinámico según el rol -->
+        <div id="app-header" class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white shadow-2xl">
+            <div class="p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-white/10 p-3 rounded-xl backdrop-blur-sm">
+                            <i id="header-icon" class="fas fa-home text-2xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold">Conjunto Aralia de Castilla</h1>
+                            <p id="header-user-info" class="text-blue-100 text-sm flex items-center">
+                                <i class="fas fa-user-circle mr-2"></i>
+                                Cargando usuario...
+                            </p>
+                        </div>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-4">
+                        <div class="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
+                            <span class="text-sm" id="current-time"></span>
+                        </div>
+                        <button class="bg-white/10 p-2 rounded-lg hover:bg-white/20 transition-colors">
+                            <i class="fas fa-bell"></i>
+                        </button>
+                        <button onclick="logout()" class="bg-red-500/80 hover:bg-red-600 px-3 py-2 rounded-lg transition-colors text-sm">
+                            <i class="fas fa-sign-out-alt mr-1"></i>Salir
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation dinámico por rol -->
+            <div id="app-navigation" class="bg-white/10 backdrop-blur-sm">
+                <div class="flex overflow-x-auto scrollbar-hide" id="nav-buttons">
+                    <!-- Se llena dinámicamente según el rol -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading overlay -->
+        <div id="loading-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+            <div class="bg-white rounded-xl p-6 shadow-2xl text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p class="text-gray-600">Cargando...</p>
+            </div>
+        </div>
+
+        <!-- Notification system -->
+        <div id="notifications" class="fixed top-4 right-4 z-40 space-y-2"></div>
+
+        <!-- Content -->
+        <div class="p-4 md:p-6 max-w-7xl mx-auto">
+            <!-- Dashboard Dinámico por Rol -->
+            <div id="dashboard" class="seccion active">
+                <div id="dashboard-content">
+                    <!-- Se llena dinámicamente según el rol -->
+                </div>
+            </div>
+
+            <!-- Secciones para RESIDENTE -->
+            <div id="reservas" class="seccion">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                    <i class="fas fa-calendar mr-3 text-blue-600"></i>
+                    Reservas de Espacios Comunes
+                </h2>
+                <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+                    <h3 class="text-xl font-semibold mb-6">Nueva Reserva</h3>
+                    <div class="grid md:grid-cols-3 gap-4 mb-4">
+                        <select id="nuevo-espacio" class="border border-gray-300 rounded-lg px-3 py-2">
+                            <option value="">Seleccionar espacio</option>
+                            <option value="Piscina">🏊 Piscina</option>
+                            <option value="Gimnasio">💪 Gimnasio</option>
+                            <option value="Salón Social">🏛️ Salón Social</option>
+                            <option value="BBQ">🔥 Área BBQ</option>
+                        </select>
+                        <input type="date" id="nueva-fecha" class="border border-gray-300 rounded-lg px-3 py-2">
+                        <select id="nueva-hora" class="border border-gray-300 rounded-lg px-3 py-2">
+                            <option value="">Seleccionar hora</option>
+                            <option value="06:00">06:00 AM</option>
+                            <option value="08:00">08:00 AM</option>
+                            <option value="10:00">10:00 AM</option>
+                            <option value="14:00">02:00 PM</option>
+                            <option value="16:00">04:00 PM</option>
+                            <option value="18:00">06:00 PM</option>
+                        </select>
+                    </div>
+                    <button onclick="crearReserva()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">
+                        <i class="fas fa-plus mr-2"></i>Crear Reserva
+                    </button>
+                </div>
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Mis Reservas</h3>
+                    <div id="lista-reservas"></div>
+                </div>
+            </div>
+
+            <div id="pagos" class="seccion">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8">Estado de Pagos</h2>
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <h3 class="text-xl font-semibold mb-4 text-red-600">Pagos Pendientes</h3>
+                        <div id="pagos-pendientes"></div>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <h3 class="text-xl font-semibold mb-4 text-green-600">Pagos Realizados</h3>
+                        <div id="pagos-realizados"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secciones para VIGILANTE -->
+            <div id="vehiculos-visitantes" class="seccion">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                    <i class="fas fa-car mr-3 text-green-600"></i>
+                    Control de Vehículos Visitantes
+                </h2>
+
+                <!-- Registro de Ingreso -->
+                <div class="grid lg:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <h3 class="text-xl font-semibold mb-6 text-green-600">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Registro de Ingreso
+                        </h3>
+                        <div class="space-y-4">
+                            <input type="text" id="ingreso-placa" placeholder="Placa del vehículo" class="w-full border border-gray-300 rounded-lg px-4 py-3" style="text-transform: uppercase;">
+                            <select id="ingreso-tipo" class="w-full border border-gray-300 rounded-lg px-4 py-3">
+                                <option value="Carro">🚗 Carro</option>
+                                <option value="Moto">🏍️ Moto</option>
+                                <option value="Camioneta">🚙 Camioneta</option>
+                            </select>
+                            <input type="text" id="ingreso-apartamento" placeholder="Apartamento que visita (ej: Torre 1 - Apto 301)" class="w-full border border-gray-300 rounded-lg px-4 py-3">
+                            <select id="ingreso-parqueadero" class="w-full border border-gray-300 rounded-lg px-4 py-3">
+                                <option value="">Seleccionar parqueadero</option>
+                                <option value="V-01">V-01 - Visitantes</option>
+                                <option value="V-02">V-02 - Visitantes</option>
+                                <option value="V-03">V-03 - Visitantes</option>
+                                <option value="V-04">V-04 - Visitantes</option>
+                                <option value="V-05">V-05 - Visitantes</option>
+                            </select>
+                            <button onclick="registrarIngresoVehiculo()" class="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 rounded-lg font-medium">
+                                <i class="fas fa-plus mr-2"></i>Registrar Ingreso
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Registro de Salida -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <h3 class="text-xl font-semibold mb-6 text-red-600">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Registro de Salida
+                        </h3>
+                        <div class="space-y-4">
+                            <input type="text" id="salida-placa" placeholder="Placa del vehículo" class="w-full border border-gray-300 rounded-lg px-4 py-3" style="text-transform: uppercase;">
+                            <button onclick="buscarVehiculoSalida()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-medium">
+                                <i class="fas fa-search mr-2"></i>Buscar Vehículo
+                            </button>
+                            <div id="info-vehiculo-salida" class="hidden p-4 bg-gray-50 rounded-lg">
+                                <!-- Se llena al buscar vehículo -->
+                            </div>
+                            <button onclick="registrarSalidaVehiculo()" class="w-full bg-gradient-to-r from-red-600 to-red-700 text-white py-3 rounded-lg font-medium hidden" id="btn-registrar-salida">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Registrar Salida y Generar Ticket
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vehículos del día -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold text-blue-600">
+                            <i class="fas fa-list mr-2"></i>Vehículos del Día
+                        </h3>
+                        <button onclick="cargarVehiculosDelDia()" class="bg-blue-600 text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-refresh mr-2"></i>Actualizar
+                        </button>
+                    </div>
+                    <div id="vehiculos-del-dia" class="space-y-4">
+                        <!-- Se llena con JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secciones para ADMIN -->
+            <div id="admin-usuarios" class="seccion">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                    <i class="fas fa-users mr-3 text-purple-600"></i>
+                    Gestión de Usuarios
+                </h2>
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-semibold">Usuarios del Sistema</h3>
+                        <button onclick="cargarUsuarios()" class="bg-purple-600 text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-refresh mr-2"></i>Actualizar
+                        </button>
+                    </div>
+                    <div id="lista-usuarios-admin"></div>
+                </div>
+            </div>
+
+            <div id="admin-parqueaderos" class="seccion">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                    <i class="fas fa-car mr-3 text-indigo-600"></i>
+                    Gestión de Parqueaderos
+                </h2>
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-6">Sorteo de Parqueaderos</h3>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Número de Parqueaderos a Sortear:</label>
+                            <input type="number" id="num-parqueaderos" value="5" min="1" max="20" class="border border-gray-300 rounded-lg px-3 py-2 w-full">
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="realizarSorteoParqueaderos()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg">
+                                <i class="fas fa-random mr-2"></i>Realizar Sorteo
+                            </button>
+                        </div>
+                    </div>
+                    <div id="resultado-sorteo" class="mt-6"></div>
+                </div>
+            </div>
+
+            <div id="admin-reportes" class="seccion">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                    <i class="fas fa-chart-bar mr-3 text-orange-600"></i>
+                    Reportes y Estadísticas
+                </h2>
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Stats Cards -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+                        <i class="fas fa-users text-4xl text-blue-600 mb-4"></i>
+                        <h4 class="text-lg font-semibold mb-2">Total Usuarios</h4>
+                        <p id="stat-total-usuarios" class="text-3xl font-bold text-blue-600">0</p>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+                        <i class="fas fa-car text-4xl text-green-600 mb-4"></i>
+                        <h4 class="text-lg font-semibold mb-2">Vehículos Hoy</h4>
+                        <p id="stat-vehiculos-hoy" class="text-3xl font-bold text-green-600">0</p>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
+                        <i class="fas fa-calendar text-4xl text-purple-600 mb-4"></i>
+                        <h4 class="text-lg font-semibold mb-2">Reservas Activas</h4>
+                        <p id="stat-reservas-activas" class="text-3xl font-bold text-purple-600">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secciones comunes -->
+            <div id="chat" class="seccion">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8">Chat de Propietarios</h2>
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div id="chat-mensajes" class="h-96 overflow-y-auto border border-gray-200 rounded-lg p-4 mb-4"></div>
+                    <div class="flex space-x-3">
+                        <input type="text" id="nuevo-mensaje" placeholder="Escribe tu mensaje..." class="flex-1 border border-gray-300 rounded-lg px-4 py-2">
+                        <button onclick="enviarMensaje()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="emprendimientos" class="seccion">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8">Emprendimientos</h2>
+                <div id="lista-emprendimientos" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+
+            <div id="noticias" class="seccion">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8">Noticias del Conjunto</h2>
+                <div id="lista-noticias" class="space-y-6"></div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .nav-btn {
+            padding: 1rem 1.5rem;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: inherit;
+            font-weight: 500;
+        }
+        .nav-btn:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .nav-btn.active {
+            border-bottom-color: #fbbf24;
+            color: white;
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        .seccion {
+            display: none;
+            animation: fade-in 0.5s ease-in-out;
+        }
+        .seccion.active {
+            display: block;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+
+    <script>
+        // Variables globales
+        let currentUser = null;
+        let appData = {
+            reservas: [],
+            pagos: [],
+            mensajes: [],
+            emprendimientos: [],
+            vehiculosVisitantes: [],
+            usuarios: []
+        };
+
+        // Configuraciones por rol
+        const roleConfigs = {
+            residente: {
+                icon: 'fa-home',
+                title: 'Panel de Residente',
+                color: 'from-blue-600 via-blue-700 to-indigo-700',
+                navigation: [
+                    { id: 'dashboard', name: 'Dashboard', icon: 'fa-chart-pie' },
+                    { id: 'reservas', name: 'Reservas', icon: 'fa-calendar' },
+                    { id: 'pagos', name: 'Pagos', icon: 'fa-credit-card' },
+                    { id: 'chat', name: 'Chat', icon: 'fa-comments' },
+                    { id: 'emprendimientos', name: 'Emprendimientos', icon: 'fa-store' },
+                    { id: 'noticias', name: 'Noticias', icon: 'fa-newspaper' }
+                ]
+            },
+            admin: {
+                icon: 'fa-shield-alt',
+                title: 'Panel de Administración',
+                color: 'from-red-600 via-red-700 to-red-800',
+                navigation: [
+                    { id: 'dashboard', name: 'Dashboard', icon: 'fa-chart-pie' },
+                    { id: 'admin-usuarios', name: 'Usuarios', icon: 'fa-users' },
+                    { id: 'admin-parqueaderos', name: 'Parqueaderos', icon: 'fa-car' },
+                    { id: 'admin-reportes', name: 'Reportes', icon: 'fa-chart-bar' },
+                    { id: 'chat', name: 'Chat', icon: 'fa-comments' },
+                    { id: 'noticias', name: 'Noticias', icon: 'fa-newspaper' }
+                ]
+            },
+            vigilante: {
+                icon: 'fa-shield-alt',
+                title: 'Panel de Vigilancia',
+                color: 'from-green-600 via-green-700 to-green-800',
+                navigation: [
+                    { id: 'dashboard', name: 'Dashboard', icon: 'fa-chart-pie' },
+                    { id: 'vehiculos-visitantes', name: 'Vehículos Visitantes', icon: 'fa-car' },
+                    { id: 'chat', name: 'Chat', icon: 'fa-comments' }
+                ]
+            }
+        };
+
+        // Inicialización de la aplicación
+        function initializeApp() {
+            // Configurar fecha mínima para reservas
+            const hoy = new Date().toISOString().split('T')[0];
+            const fechaInput = document.getElementById('nueva-fecha');
+            if (fechaInput) {
+                fechaInput.setAttribute('min', hoy);
+            }
+
+            // Actualizar reloj
+            actualizarReloj();
+            setInterval(actualizarReloj, 60000);
+
+            // Mostrar dashboard por defecto
+            mostrarSeccion('dashboard');
+        }
+
+        // Función para actualizar el reloj
+        function actualizarReloj() {
+            const now = new Date();
+            const options = {
+                hour: '2-digit',
+                minute: '2-digit',
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short'
+            };
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                timeElement.textContent = now.toLocaleDateString('es-CO', options);
+            }
+        }
+
+        // Sistema de notificaciones
+        function mostrarNotificacion(mensaje, tipo = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `bg-white border-l-4 ${
+                tipo === 'success' ? 'border-green-500' :
+                tipo === 'error' ? 'border-red-500' :
+                'border-blue-500'
+            } p-4 rounded-lg shadow-lg mb-2 animate-slide-up`;
+
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${
+                        tipo === 'success' ? 'fa-check-circle text-green-500' :
+                        tipo === 'error' ? 'fa-exclamation-circle text-red-500' :
+                        'fa-info-circle text-blue-500'
+                    } mr-3"></i>
+                    <p class="text-gray-800">${mensaje}</p>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-auto text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('notifications').appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Configurar interfaz según el rol
+        function configurarInterfazPorRol(rol) {
+            const config = roleConfigs[rol];
+            if (!config) return;
+
+            // Actualizar header
+            document.getElementById('header-icon').className = `fas ${config.icon} text-2xl`;
+            document.querySelector('.bg-gradient-to-r').className = `bg-gradient-to-r ${config.color} text-white shadow-2xl`;
+
+            // Actualizar navegación
+            const navContainer = document.getElementById('nav-buttons');
+            navContainer.innerHTML = config.navigation.map(nav => `
+                <button onclick="mostrarSeccion('${nav.id}')" class="nav-btn ${nav.id === 'dashboard' ? 'active' : ''}" data-section="${nav.id}">
+                    <i class="fas ${nav.icon} mr-2"></i>${nav.name}
+                </button>
+            `).join('');
+
+            // Configurar dashboard específico
+            configurarDashboard(rol);
+        }
+
+        // Configurar dashboard por rol
+        function configurarDashboard(rol) {
+            const dashboardContent = document.getElementById('dashboard-content');
+
+            switch(rol) {
+                case 'residente':
+                    dashboardContent.innerHTML = `
+                        <h2 class="text-3xl font-bold text-gray-800 mb-8">
+                            <i class="fas fa-home mr-3 text-blue-600"></i>Dashboard de Residente
+                        </h2>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl p-6">
+                                <i class="fas fa-calendar text-3xl mb-4"></i>
+                                <h4 class="text-lg font-semibold mb-2">Reservas</h4>
+                                <p class="text-2xl font-bold" id="dash-reservas">0</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl p-6">
+                                <i class="fas fa-credit-card text-3xl mb-4"></i>
+                                <h4 class="text-lg font-semibold mb-2">Pagos al Día</h4>
+                                <p class="text-2xl font-bold" id="dash-pagos">0</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl p-6">
+                                <i class="fas fa-comments text-3xl mb-4"></i>
+                                <h4 class="text-lg font-semibold mb-2">Mensajes</h4>
+                                <p class="text-2xl font-bold" id="dash-mensajes">0</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-2xl p-6">
+                                <i class="fas fa-newspaper text-3xl mb-4"></i>
+                                <h4 class="text-lg font-semibold mb-2">Noticias</h4>
+                                <p class="text-2xl font-bold" id="dash-noticias">0</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'admin':
+                    dashboardContent.innerHTML = `
+                        <h2 class="text-3xl font-bold text-gray-800 mb-8">
+                            <i class="fas fa-shield-alt mr-3 text-red-600"></i>Panel de Administración
+                        </h2>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-2xl p-6">
+                                <i class="fas fa-users text-3xl mb-4"></i>
+                                <h4 class="text-lg font-semibold mb-2">Usuarios</h4>
+                                <p class="text-2xl font-bold" id="dash-usuarios">0</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl p-6">
+                                <i class="fas fa-car text-3xl mb-4"></i>
+                                <h4 class="text-lg font-semibold mb-2">Parqueaderos</h4>
+                                <p class="text-2xl font-bold" id="dash-parqueaderos">100</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl p-6">
+                                <i class="fas fa-chart-bar text-3xl mb-4"></i>
+                                <h4 class="text-lg font-semibold mb-2">Reportes</h4>
+                                <p class="text-2xl font-bold" id="dash-reportes">12</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl p-6">
+                                <i class="fas fa-cog text-3xl mb-4"></i>
+                                <h4 class="text-lg font-semibold mb-2">Sistema</h4>
+                                <p class="text-2xl font-bold text-green-300">Activo</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+
+                case 'vigilante':
+                    dashboardContent.innerHTML = `
+                        <h2 class="text-3xl font-bold text-gray-800 mb-8">
+                            <i class="fas fa-shield-alt mr-3 text-green-600"></i>Panel de Vigilancia
+                        </h2>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl p-6">
+                                <i class="fas fa-car text-3xl mb-4"></i>
+                                <h4 class="text-lg font-semibold mb-2">Vehículos Hoy</h4>
+                                <p class="text-2xl font-bold" id="dash-vehiculos-hoy">0</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl p-6">
+                                <i class="fas fa-sign-in-alt text-3xl mb-4"></i>
+                                <h4 class="text-lg font-semibold mb-2">Ingresos</h4>
+                                <p class="text-2xl font-bold" id="dash-ingresos">0</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-red-500 to-red-600 text-white rounded-2xl p-6">
+                                <i class="fas fa-sign-out-alt text-3xl mb-4"></i>
+                                <h4 class="text-lg font-semibold mb-2">Salidas</h4>
+                                <p class="text-2xl font-bold" id="dash-salidas">0</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white rounded-2xl p-6">
+                                <i class="fas fa-clock text-3xl mb-4"></i>
+                                <h4 class="text-lg font-semibold mb-2">Activos</h4>
+                                <p class="text-2xl font-bold" id="dash-activos">0</p>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-lg p-6">
+                            <h3 class="text-xl font-semibold mb-4">Acciones Rápidas</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <button onclick="mostrarSeccion('vehiculos-visitantes')" class="bg-green-600 text-white p-4 rounded-xl hover:bg-green-700 transition-colors">
+                                    <i class="fas fa-plus mb-2 block text-xl"></i>
+                                    <span>Registrar Ingreso</span>
+                                </button>
+                                <button onclick="mostrarSeccion('vehiculos-visitantes'); setTimeout(() => document.getElementById('salida-placa').focus(), 300)" class="bg-red-600 text-white p-4 rounded-xl hover:bg-red-700 transition-colors">
+                                    <i class="fas fa-sign-out-alt mb-2 block text-xl"></i>
+                                    <span>Registrar Salida</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    cargarEstadisticasVigilante();
+                    break;
+            }
+        }
+
+        // Función para mostrar/ocultar secciones
+        function mostrarSeccion(seccionId) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.seccion').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+            // Mostrar la sección seleccionada
+            const seccion = document.getElementById(seccionId);
+            if (seccion) {
+                seccion.classList.add('active');
+            }
+
+            // Activar el botón de navegación correspondiente
+            const navBtn = document.querySelector(`[data-section="${seccionId}"]`);
+            if (navBtn) {
+                navBtn.classList.add('active');
+            }
+
+            // Cargar datos específicos de la sección
+            cargarDatosSeccion(seccionId);
+        }
+
+        // Función para cargar datos específicos de cada sección
+        function cargarDatosSeccion(seccionId) {
+            switch(seccionId) {
+                case 'vehiculos-visitantes':
+                    cargarVehiculosDelDia();
+                    break;
+                case 'admin-usuarios':
+                    cargarUsuarios();
+                    break;
+                case 'reservas':
+                    cargarReservas();
+                    break;
+                case 'pagos':
+                    cargarPagos();
+                    break;
+                case 'emprendimientos':
+                    cargarEmprendimientos();
+                    break;
+                case 'noticias':
+                    cargarNoticias();
+                    break;
+            }
+        }
+
+        // FUNCIONES DEL VIGILANTE
+        async function registrarIngresoVehiculo() {
+            const placa = document.getElementById('ingreso-placa').value.trim().toUpperCase();
+            const tipo = document.getElementById('ingreso-tipo').value;
+            const apartamento = document.getElementById('ingreso-apartamento').value.trim();
+            const parqueadero = document.getElementById('ingreso-parqueadero').value;
+
+            if (!placa || !apartamento || !parqueadero) {
+                mostrarNotificacion('Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/vehiculos-visitantes/ingreso', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        placa,
+                        tipoVehiculo: tipo,
+                        visitaA: apartamento,
+                        parqueadero
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    mostrarNotificacion('Vehículo registrado exitosamente', 'success');
+
+                    // Limpiar formulario
+                    document.getElementById('ingreso-placa').value = '';
+                    document.getElementById('ingreso-apartamento').value = '';
+                    document.getElementById('ingreso-parqueadero').value = '';
+
+                    // Recargar lista
+                    cargarVehiculosDelDia();
+                    cargarEstadisticasVigilante();
+                } else {
+                    mostrarNotificacion(data.error || 'Error al registrar vehículo', 'error');
+                }
+            } catch (error) {
+                mostrarNotificacion('Error de conexión', 'error');
+            }
+        }
+
+        async function buscarVehiculoSalida() {
+            const placa = document.getElementById('salida-placa').value.trim().toUpperCase();
+            if (!placa) {
+                mostrarNotificacion('Ingresa la placa del vehículo', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/vehiculos-visitantes/hoy');
+                const vehiculos = await response.json();
+                const vehiculo = vehiculos.find(v => v.placa === placa && v.activo);
+
+                if (vehiculo) {
+                    const infoDiv = document.getElementById('info-vehiculo-salida');
+                    const horasEstacionado = Math.ceil((new Date() - new Date(vehiculo.fechaIngreso)) / (1000 * 60 * 60));
+                    const horasGratis = 2;
+                    const horasCobrar = Math.max(0, horasEstacionado - horasGratis);
+                    const totalCobrar = horasCobrar * 1000;
+
+                    infoDiv.innerHTML = `
+                        <div class="space-y-2">
+                            <p><strong>Placa:</strong> ${vehiculo.placa}</p>
+                            <p><strong>Tipo:</strong> ${vehiculo.tipoVehiculo}</p>
+                            <p><strong>Visita a:</strong> ${vehiculo.visitaA}</p>
+                            <p><strong>Ingreso:</strong> ${new Date(vehiculo.fechaIngreso).toLocaleString()}</p>
+                            <p><strong>Tiempo:</strong> ${horasEstacionado} hora(s)</p>
+                            <p><strong>Parqueadero:</strong> ${vehiculo.parqueadero}</p>
+                            <div class="bg-yellow-50 p-3 rounded mt-3">
+                                <p><strong>Horas gratis:</strong> ${horasGratis}</p>
+                                <p><strong>Horas a cobrar:</strong> ${horasCobrar}</p>
+                                <p><strong>Total a cobrar:</strong> $${totalCobrar.toLocaleString()}</p>
+                            </div>
+                        </div>
+                    `;
+                    infoDiv.classList.remove('hidden');
+                    document.getElementById('btn-registrar-salida').classList.remove('hidden');
+                } else {
+                    mostrarNotificacion('Vehículo no encontrado o ya procesado', 'error');
+                    document.getElementById('info-vehiculo-salida').classList.add('hidden');
+                    document.getElementById('btn-registrar-salida').classList.add('hidden');
+                }
+            } catch (error) {
+                mostrarNotificacion('Error al buscar vehículo', 'error');
+            }
+        }
+
+        async function registrarSalidaVehiculo() {
+            const placa = document.getElementById('salida-placa').value.trim().toUpperCase();
+
+            try {
+                const response = await fetch('/api/vehiculos-visitantes/salida', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ placa })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    mostrarNotificacion('Salida registrada y ticket generado', 'success');
+
+                    // Mostrar ticket
+                    mostrarTicket(data.ticket);
+
+                    // Limpiar formulario
+                    document.getElementById('salida-placa').value = '';
+                    document.getElementById('info-vehiculo-salida').classList.add('hidden');
+                    document.getElementById('btn-registrar-salida').classList.add('hidden');
+
+                    // Recargar datos
+                    cargarVehiculosDelDia();
+                    cargarEstadisticasVigilante();
+                } else {
+                    mostrarNotificacion(data.error || 'Error al registrar salida', 'error');
+                }
+            } catch (error) {
+                mostrarNotificacion('Error de conexión', 'error');
+            }
+        }
+
+        function mostrarTicket(ticket) {
+            const ticketHtml = `
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white p-8 rounded-lg max-w-md w-full mx-4">
+                        <div class="text-center mb-6">
+                            <h3 class="text-xl font-bold mb-2">🎫 TICKET DE PARQUEADERO</h3>
+                            <p class="text-sm text-gray-600">Conjunto Aralia de Castilla</p>
+                        </div>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>Ticket:</span>
+                                <span class="font-mono">${ticket.id}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Placa:</span>
+                                <span class="font-mono">${ticket.placa}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Ingreso:</span>
+                                <span>${new Date(ticket.fechaIngreso).toLocaleString()}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Salida:</span>
+                                <span>${new Date(ticket.fechaSalida).toLocaleString()}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Total horas:</span>
+                                <span>${ticket.totalHoras}</span>
+                            </div>
+                            <hr class="my-3">
+                            <div class="flex justify-between">
+                                <span>Horas gratis:</span>
+                                <span>${ticket.horasGratis}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Horas cobradas:</span>
+                                <span>${ticket.horasCobradas}</span>
+                            </div>
+                            <div class="flex justify-between font-bold text-lg">
+                                <span>TOTAL:</span>
+                                <span>$${ticket.totalCobrado.toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div class="mt-6 text-center">
+                            <button onclick="this.closest('.fixed').remove()" class="bg-green-600 text-white px-6 py-2 rounded-lg">
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', ticketHtml);
+        }
+
+        async function cargarVehiculosDelDia() {
+            try {
+                const response = await fetch('/api/vehiculos-visitantes/hoy');
+                const vehiculos = await response.json();
+
+                const container = document.getElementById('vehiculos-del-dia');
+                if (vehiculos.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500 text-center py-8">No hay vehículos registrados hoy</p>';
+                    return;
+                }
+
+                container.innerHTML = vehiculos.map(vehiculo => `
+                    <div class="border border-gray-200 rounded-lg p-4 ${vehiculo.activo ? 'bg-green-50' : 'bg-gray-50'}">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-semibold text-lg">${vehiculo.placa}</h4>
+                                <p class="text-sm text-gray-600">${vehiculo.tipoVehiculo} • ${vehiculo.visitaA}</p>
+                                <p class="text-sm text-gray-500">Parqueadero: ${vehiculo.parqueadero}</p>
+                                <p class="text-sm text-gray-500">Ingreso: ${new Date(vehiculo.fechaIngreso).toLocaleString()}</p>
+                                ${!vehiculo.activo && vehiculo.fechaSalida ?
+                                    `<p class="text-sm text-gray-500">Salida: ${new Date(vehiculo.fechaSalida).toLocaleString()}</p>` :
+                                    ''
+                                }
+                            </div>
+                            <div class="text-right">
+                                <span class="px-3 py-1 rounded-full text-xs font-medium ${
+                                    vehiculo.activo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                }">
+                                    ${vehiculo.activo ? 'Activo' : 'Finalizado'}
+                                </span>
+                                ${vehiculo.totalCobrado !== undefined ?
+                                    `<p class="text-sm font-semibold mt-1">$${vehiculo.totalCobrado.toLocaleString()}</p>` :
+                                    ''
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                mostrarNotificacion('Error al cargar vehículos', 'error');
+            }
+        }
+
+        async function cargarEstadisticasVigilante() {
+            try {
+                const response = await fetch('/api/vehiculos-visitantes/hoy');
+                const vehiculos = await response.json();
+
+                const vehiculosHoy = vehiculos.length;
+                const ingresos = vehiculos.length;
+                const salidas = vehiculos.filter(v => !v.activo).length;
+                const activos = vehiculos.filter(v => v.activo).length;
+
+                document.getElementById('dash-vehiculos-hoy').textContent = vehiculosHoy;
+                document.getElementById('dash-ingresos').textContent = ingresos;
+                document.getElementById('dash-salidas').textContent = salidas;
+                document.getElementById('dash-activos').textContent = activos;
+            } catch (error) {
+                console.error('Error al cargar estadísticas:', error);
+            }
+        }
+
+        // FUNCIONES DEL ADMIN
+        async function cargarUsuarios() {
+            try {
+                const response = await fetch('/api/admin/usuarios', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                const usuarios = await response.json();
+
+                const container = document.getElementById('lista-usuarios-admin');
+                container.innerHTML = usuarios.map(usuario => `
+                    <div class="border border-gray-200 rounded-lg p-4 mb-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-semibold">${usuario.nombre}</h4>
+                                <p class="text-sm text-gray-600">${usuario.email}</p>
+                                <p class="text-sm text-gray-600">${usuario.apartamento}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="px-3 py-1 rounded-full text-xs font-medium ${
+                                    usuario.rol === 'admin' ? 'bg-red-100 text-red-800' :
+                                    usuario.rol === 'vigilante' ? 'bg-green-100 text-green-800' :
+                                    'bg-blue-100 text-blue-800'
+                                }">
+                                    ${usuario.rol}
+                                </span>
+                                <p class="text-xs mt-1 ${usuario.activo ? 'text-green-600' : 'text-red-600'}">
+                                    ${usuario.activo ? 'Activo' : 'Inactivo'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Actualizar estadística
+                document.getElementById('dash-usuarios').textContent = usuarios.length;
+            } catch (error) {
+                mostrarNotificacion('Error al cargar usuarios', 'error');
+            }
+        }
+
+        function realizarSorteoParqueaderos() {
+            const numParqueaderos = parseInt(document.getElementById('num-parqueaderos').value);
+            const parqueaderosDisponibles = [];
+
+            // Generar parqueaderos P-001 a P-100
+            for (let i = 1; i <= 100; i++) {
+                parqueaderosDisponibles.push(`P-${i.toString().padStart(3, '0')}`);
+            }
+
+            // Realizar sorteo
+            const sorteados = [];
+            const parqueaderosCopia = [...parqueaderosDisponibles];
+
+            for (let i = 0; i < numParqueaderos; i++) {
+                const randomIndex = Math.floor(Math.random() * parqueaderosCopia.length);
+                sorteados.push(parqueaderosCopia.splice(randomIndex, 1)[0]);
+            }
+
+            // Mostrar resultado
+            const resultadoDiv = document.getElementById('resultado-sorteo');
+            resultadoDiv.innerHTML = `
+                <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+                    <h4 class="text-lg font-semibold text-green-800 mb-4">
+                        <i class="fas fa-trophy mr-2"></i>Resultado del Sorteo
+                    </h4>
+                    <div class="grid grid-cols-5 gap-2">
+                        ${sorteados.map(p => `
+                            <div class="bg-white border border-green-300 rounded-lg p-3 text-center">
+                                <span class="font-bold text-green-700">${p}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <p class="text-sm text-green-600 mt-4">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Sorteo realizado el ${new Date().toLocaleString()}
+                    </p>
+                </div>
+            `;
+
+            mostrarNotificacion(`Sorteo completado: ${numParqueaderos} parqueaderos asignados`, 'success');
+        }
+
+        // FUNCIONES COMUNES
+        async function cargarReservas() {
+            // Implementar carga de reservas
+        }
+
+        async function cargarPagos() {
+            // Implementar carga de pagos
+        }
+
+        async function cargarEmprendimientos() {
+            try {
+                const response = await fetch('/api/emprendimientos');
+                const emprendimientos = await response.json();
+
+                const container = document.getElementById('lista-emprendimientos');
+                container.innerHTML = emprendimientos.map(emp => `
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="font-bold text-xl mb-2">${emp.nombre}</h3>
+                        <p class="text-gray-600 mb-2">${emp.propietario}</p>
+                        <p class="text-gray-700 mb-3">${emp.descripcion}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">${emp.tipo}</span>
+                            <a href="tel:${emp.telefono}" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-phone mr-1"></i>${emp.telefono}
+                            </a>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                mostrarNotificacion('Error al cargar emprendimientos', 'error');
+            }
+        }
+
+        async function cargarNoticias() {
+            try {
+                const response = await fetch('/api/noticias');
+                const noticias = await response.json();
+
+                const container = document.getElementById('lista-noticias');
+                container.innerHTML = noticias.map(noticia => `
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="font-bold text-xl">${noticia.titulo}</h3>
+                            <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">${noticia.categoria}</span>
+                        </div>
+                        <p class="text-gray-700 mb-4">${noticia.contenido}</p>
+                        <div class="text-sm text-gray-500">
+                            <p><i class="fas fa-calendar mr-1"></i>Publicado: ${noticia.fecha}</p>
+                            ${noticia.fechaEvento ? `<p><i class="fas fa-clock mr-1"></i>Evento: ${noticia.fechaEvento} a las ${noticia.horaEvento}</p>` : ''}
+                            ${noticia.lugar ? `<p><i class="fas fa-map-marker-alt mr-1"></i>Lugar: ${noticia.lugar}</p>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                mostrarNotificacion('Error al cargar noticias', 'error');
+            }
+        }
+
+        // SISTEMA DE AUTENTICACIÓN
+        function switchTab(tab) {
+            const loginTab = document.getElementById('login-tab');
+            const registerTab = document.getElementById('register-tab');
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+
+            if (tab === 'login') {
+                loginTab.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white text-blue-600 shadow-sm";
+                registerTab.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800";
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+            } else {
+                registerTab.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white text-green-600 shadow-sm";
+                loginTab.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800";
+                registerForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+            }
+        }
+
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('auth-message');
+            const messageText = document.getElementById('auth-message-text');
+
+            messageText.textContent = message;
+            messageDiv.className = `mt-4 p-3 rounded-lg ${type === 'error' ? 'bg-red-100 text-red-700 border border-red-300' : 'bg-green-100 text-green-700 border border-green-300'}`;
+            messageDiv.classList.remove('hidden');
+
+            setTimeout(() => {
+                messageDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        async function login(email, password) {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.usuario));
+                    currentUser = data.usuario;
+
+                    // Configurar interfaz según el rol
+                    configurarInterfazPorRol(data.usuario.rol);
+
+                    // Actualizar información del usuario
+                    document.getElementById('header-user-info').innerHTML = `
+                        <i class="fas fa-user-circle mr-2"></i>
+                        ${data.usuario.nombre} - ${data.usuario.apartamento} (${data.usuario.rol.toUpperCase()})
+                    `;
+
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+
+                    initializeApp();
+                    showMessage('¡Bienvenido!', 'success');
+
+                    setTimeout(() => {
+                        mostrarNotificacion(`¡Bienvenido ${data.usuario.nombre}!`, 'success');
+                    }, 500);
+                } else {
+                    showMessage(data.mensaje || 'Error al iniciar sesión', 'error');
+                }
+            } catch (error) {
+                showMessage('Error de conexión', 'error');
+            }
+        }
+
+        async function register(nombre, email, apartamento, password) {
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nombre, email, apartamento, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('Usuario registrado exitosamente. Ahora puedes iniciar sesión.', 'success');
+                    switchTab('login');
+                } else {
+                    showMessage(data.mensaje || 'Error al registrar usuario', 'error');
+                }
+            } catch (error) {
+                showMessage('Error de conexión', 'error');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            currentUser = null;
+
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Event listeners para formularios
+            document.getElementById('login-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                login(email, password);
+            });
+
+            document.getElementById('register-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const nombre = document.getElementById('register-nombre').value;
+                const email = document.getElementById('register-email').value;
+                const apartamento = document.getElementById('register-apartamento').value;
+                const password = document.getElementById('register-password').value;
+                register(nombre, email, apartamento, password);
+            });
+
+            // Verificar autenticación al cargar
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+
+            if (token && user) {
+                currentUser = JSON.parse(user);
+                configurarInterfazPorRol(currentUser.rol);
+
+                document.getElementById('header-user-info').innerHTML = `
+                    <i class="fas fa-user-circle mr-2"></i>
+                    ${currentUser.nombre} - ${currentUser.apartamento} (${currentUser.rol.toUpperCase()})
+                `;
+
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                initializeApp();
+            }
+
+            // Event listeners para campos de placa (convertir a mayúsculas)
+            const placaInputs = ['ingreso-placa', 'salida-placa'];
+            placaInputs.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.addEventListener('input', function() {
+                        this.value = this.value.toUpperCase();
+                    });
+                }
+            });
+        });
+
+        // Funciones adicionales del residente
+        async function crearReserva() {
+            const espacio = document.getElementById('nuevo-espacio').value;
+            const fecha = document.getElementById('nueva-fecha').value;
+            const hora = document.getElementById('nueva-hora').value;
+
+            if (!espacio || !fecha || !hora) {
+                mostrarNotificacion('Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/reservas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ espacio, fecha, hora })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    mostrarNotificacion('Reserva creada exitosamente', 'success');
+
+                    // Limpiar formulario
+                    document.getElementById('nuevo-espacio').value = '';
+                    document.getElementById('nueva-fecha').value = '';
+                    document.getElementById('nueva-hora').value = '';
+
+                    cargarReservas();
+                } else {
+                    mostrarNotificacion(data.error || 'Error al crear reserva', 'error');
+                }
+            } catch (error) {
+                mostrarNotificacion('Error de conexión', 'error');
+            }
+        }
+
+        async function enviarMensaje() {
+            const mensaje = document.getElementById('nuevo-mensaje').value.trim();
+
+            if (!mensaje) {
+                mostrarNotificacion('Escribe un mensaje', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/mensajes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ mensaje })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('nuevo-mensaje').value = '';
+                    cargarMensajes();
+                } else {
+                    mostrarNotificacion('Error al enviar mensaje', 'error');
+                }
+            } catch (error) {
+                mostrarNotificacion('Error de conexión', 'error');
+            }
+        }
+
+        async function cargarMensajes() {
+            try {
+                const response = await fetch('/api/mensajes');
+                const mensajes = await response.json();
+
+                const container = document.getElementById('chat-mensajes');
+                container.innerHTML = mensajes.map(mensaje => `
+                    <div class="mb-4 p-3 border-b">
+                        <div class="flex justify-between">
+                            <strong>${mensaje.usuario}</strong>
+                            <span class="text-sm text-gray-500">${mensaje.fecha}</span>
+                        </div>
+                        <p class="mt-1">${mensaje.mensaje}</p>
+                    </div>
+                `).join('');
+
+                container.scrollTop = container.scrollHeight;
+            } catch (error) {
+                console.error('Error al cargar mensajes:', error);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conjunto Aralia de Castilla - App Residencial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3B82F6">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'bounce-in': 'bounceIn 0.6s ease-out',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        bounceIn: {
+                            '0%': { transform: 'scale(0.3)', opacity: '0' },
+                            '50%': { transform: 'scale(1.05)' },
+                            '70%': { transform: 'scale(0.9)' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)' },
+                            '50%': { boxShadow: '0 0 30px rgba(59, 130, 246, 0.6)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <!-- Pantalla de Login -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 transform transition-all duration-300">
+            <div class="text-center mb-8">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-home text-2xl text-white"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Conjunto Aralia de Castilla</h1>
+                <p class="text-gray-600">Accede a tu portal residencial</p>
+            </div>
+
+            <!-- Tabs de Login/Registro -->
+            <div class="flex bg-gray-100 rounded-lg p-1 mb-6">
+                <button id="login-tab" onclick="switchTab('login')" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white text-blue-600 shadow-sm">
+                    Iniciar Sesión
+                </button>
+                <button id="register-tab" onclick="switchTab('register')" class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800">
+                    Registrarse
+                </button>
+            </div>
+
+            <!-- Formulario de Login -->
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <div class="relative">
+                        <input type="email" id="login-email" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="tu-email@ejemplo.com">
+                        <i class="fas fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                    <div class="relative">
+                        <input type="password" id="login-password" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="Tu contraseña">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
+                </button>
+            </form>
+
+            <!-- Formulario de Registro -->
+            <form id="register-form" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                    <div class="relative">
+                        <input type="text" id="register-nombre" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="Tu nombre completo">
+                        <i class="fas fa-user absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <div class="relative">
+                        <input type="email" id="register-email" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="tu-email@ejemplo.com">
+                        <i class="fas fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Apartamento</label>
+                    <div class="relative">
+                        <input type="text" id="register-apartamento" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="Ej: Torre 1 - Apto 301">
+                        <i class="fas fa-building absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                    <div class="relative">
+                        <input type="password" id="register-password" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent pl-11"
+                               placeholder="Tu contraseña">
+                        <i class="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg">
+                    <i class="fas fa-user-plus mr-2"></i>Registrarse
+                </button>
+            </form>
+
+            <!-- Mensaje de respuesta -->
+            <div id="auth-message" class="mt-4 p-3 rounded-lg hidden">
+                <p id="auth-message-text"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aplicación Principal -->
+    <div id="main-app" class="min-h-screen hidden">
+        <!-- Header con Colores Dinámicos por Rol -->
+        <div id="app-header" class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-xl">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                            <i class="fas fa-home text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold">Conjunto Aralia de Castilla</h1>
+                            <p id="user-info" class="text-blue-100">
+                                <i class="fas fa-user-circle mr-2"></i>
+                                Cargando información del usuario...
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div id="role-indicator" class="px-3 py-1 rounded-full text-sm font-medium bg-white bg-opacity-20">
+                            <i id="role-icon" class="fas fa-user mr-1"></i>
+                            <span id="role-text">Residente</span>
+                        </div>
+                        <button onclick="logout()" class="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navegación con Tabs Específicos por Rol -->
+        <div id="main-navigation" class="bg-white shadow-lg border-b">
+            <div class="container mx-auto px-4">
+                <nav class="flex space-x-8 overflow-x-auto">
+                    <!-- Tabs Comunes -->
+                    <button onclick="showSection('dashboard')" class="nav-tab py-4 px-6 text-blue-600 border-b-2 border-blue-500 font-medium whitespace-nowrap">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </button>
+
+                    <!-- Tabs para Residentes -->
+                    <div id="residente-tabs" class="flex space-x-8">
+                        <button onclick="showSection('reservas')" class="nav-tab py-4 px-6 text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-calendar-alt mr-2"></i>Reservas
+                        </button>
+                        <button onclick="showSection('pagos')" class="nav-tab py-4 px-6 text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-credit-card mr-2"></i>Pagos
+                        </button>
+                        <button onclick="showSection('chat')" class="nav-tab py-4 px-6 text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-comments mr-2"></i>Chat
+                        </button>
+                        <button onclick="showSection('emprendimientos')" class="nav-tab py-4 px-6 text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-store mr-2"></i>Emprendimientos
+                        </button>
+                        <button onclick="showSection('pqrs')" class="nav-tab py-4 px-6 text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-clipboard-list mr-2"></i>PQRS
+                        </button>
+                        <button onclick="showSection('permisos')" class="nav-tab py-4 px-6 text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-key mr-2"></i>Permisos
+                        </button>
+                        <button onclick="showSection('noticias')" class="nav-tab py-4 px-6 text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-newspaper mr-2"></i>Noticias
+                        </button>
+                        <button onclick="showSection('arriendos')" class="nav-tab py-4 px-6 text-gray-600 hover:text-blue-600 border-b-2 border-transparent hover:border-blue-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-home mr-2"></i>Arriendos
+                        </button>
+                    </div>
+
+                    <!-- Tabs para Vigilantes -->
+                    <div id="vigilante-tabs" class="flex space-x-8 hidden">
+                        <button onclick="showSection('control-vehiculos')" class="nav-tab py-4 px-6 text-gray-600 hover:text-yellow-600 border-b-2 border-transparent hover:border-yellow-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-car mr-2"></i>Control de Vehículos
+                        </button>
+                        <button onclick="showSection('permisos')" class="nav-tab py-4 px-6 text-gray-600 hover:text-yellow-600 border-b-2 border-transparent hover:border-yellow-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-key mr-2"></i>Permisos
+                        </button>
+                        <button onclick="showSection('noticias')" class="nav-tab py-4 px-6 text-gray-600 hover:text-yellow-600 border-b-2 border-transparent hover:border-yellow-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-newspaper mr-2"></i>Noticias
+                        </button>
+                    </div>
+
+                    <!-- Tabs para Administradores -->
+                    <div id="admin-tabs" class="flex space-x-8 hidden">
+                        <button onclick="showSection('usuarios')" class="nav-tab py-4 px-6 text-gray-600 hover:text-red-600 border-b-2 border-transparent hover:border-red-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-users mr-2"></i>Usuarios
+                        </button>
+                        <button onclick="showSection('control-vehiculos')" class="nav-tab py-4 px-6 text-gray-600 hover:text-red-600 border-b-2 border-transparent hover:border-red-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-car mr-2"></i>Control de Vehículos
+                        </button>
+                        <button onclick="showSection('pagos')" class="nav-tab py-4 px-6 text-gray-600 hover:text-red-600 border-b-2 border-transparent hover:border-red-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-credit-card mr-2"></i>Pagos
+                        </button>
+                        <button onclick="showSection('chat')" class="nav-tab py-4 px-6 text-gray-600 hover:text-red-600 border-b-2 border-transparent hover:border-red-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-comments mr-2"></i>Chat
+                        </button>
+                        <button onclick="showSection('emprendimientos')" class="nav-tab py-4 px-6 text-gray-600 hover:text-red-600 border-b-2 border-transparent hover:border-red-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-store mr-2"></i>Emprendimientos
+                        </button>
+                        <button onclick="showSection('pqrs')" class="nav-tab py-4 px-6 text-gray-600 hover:text-red-600 border-b-2 border-transparent hover:border-red-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-clipboard-list mr-2"></i>PQRS
+                        </button>
+                        <button onclick="showSection('permisos')" class="nav-tab py-4 px-6 text-gray-600 hover:text-red-600 border-b-2 border-transparent hover:border-red-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-key mr-2"></i>Permisos
+                        </button>
+                        <button onclick="showSection('noticias')" class="nav-tab py-4 px-6 text-gray-600 hover:text-red-600 border-b-2 border-transparent hover:border-red-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-newspaper mr-2"></i>Noticias
+                        </button>
+                        <button onclick="showSection('arriendos')" class="nav-tab py-4 px-6 text-gray-600 hover:text-red-600 border-b-2 border-transparent hover:border-red-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-home mr-2"></i>Arriendos
+                        </button>
+                        <button onclick="showSection('sorteo-parqueaderos')" class="nav-tab py-4 px-6 text-gray-600 hover:text-red-600 border-b-2 border-transparent hover:border-red-500 font-medium whitespace-nowrap transition-all">
+                            <i class="fas fa-dice mr-2"></i>Sorteo Parqueaderos
+                        </button>
+                    </div>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="container mx-auto px-4 py-8">
+            <!-- Dashboard -->
+            <div id="dashboard-section" class="section">
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Reservas Activas</p>
+                                <p class="text-2xl font-bold text-blue-600">3</p>
+                            </div>
+                            <i class="fas fa-calendar-alt text-3xl text-blue-500"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Pagos al Día</p>
+                                <p class="text-2xl font-bold text-green-600">2</p>
+                            </div>
+                            <i class="fas fa-check-circle text-3xl text-green-500"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">PQRS Pendientes</p>
+                                <p class="text-2xl font-bold text-orange-600">1</p>
+                            </div>
+                            <i class="fas fa-exclamation-triangle text-3xl text-orange-500"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Mensajes Nuevos</p>
+                                <p class="text-2xl font-bold text-purple-600">5</p>
+                            </div>
+                            <i class="fas fa-envelope text-3xl text-purple-500"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold mb-4 text-gray-800">
+                            <i class="fas fa-bell mr-2 text-blue-500"></i>Noticias Recientes
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="border-l-4 border-blue-400 pl-4 py-2">
+                                <h4 class="font-semibold text-gray-800">Asamblea General Ordinaria 2025</h4>
+                                <p class="text-sm text-gray-600">Se realizará el 30 de septiembre...</p>
+                                <span class="text-xs text-blue-600">Hace 1 día</span>
+                            </div>
+                            <div class="border-l-4 border-yellow-400 pl-4 py-2">
+                                <h4 class="font-semibold text-gray-800">Mantenimiento Ascensores</h4>
+                                <p class="text-sm text-gray-600">Próximamente los días 20 y 21...</p>
+                                <span class="text-xs text-yellow-600">Hace 2 días</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold mb-4 text-gray-800">
+                            <i class="fas fa-chart-line mr-2 text-green-500"></i>Resumen de Actividad
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center py-2 border-b">
+                                <span class="text-gray-600">Reservas este mes</span>
+                                <span class="font-semibold text-green-600">8</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b">
+                                <span class="text-gray-600">Pagos realizados</span>
+                                <span class="font-semibold text-blue-600">$1.250.000</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2">
+                                <span class="text-gray-600">PQRS resueltas</span>
+                                <span class="font-semibold text-purple-600">3</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control de Vehículos (Solo Vigilantes y Administradores) -->
+            <div id="control-vehiculos-section" class="section hidden">
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">
+                        <i class="fas fa-car mr-2 text-yellow-500"></i>Control de Vehículos Visitantes
+                    </h2>
+
+                    <!-- Formulario de Ingreso -->
+                    <div class="grid md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-lg border border-green-200">
+                            <h3 class="text-lg font-semibold mb-4 text-green-800">
+                                <i class="fas fa-plus-circle mr-2"></i>Registrar Ingreso
+                            </h3>
+                            <form id="form-ingreso-vehiculo" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Placa del Vehículo</label>
+                                    <input type="text" id="placa-ingreso" required
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent uppercase"
+                                           placeholder="ABC123">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Vehículo</label>
+                                    <select id="tipo-vehiculo" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                                        <option value="">Seleccionar tipo</option>
+                                        <option value="Carro">Carro</option>
+                                        <option value="Moto">Moto</option>
+                                        <option value="Camioneta">Camioneta</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Visita a</label>
+                                    <input type="text" id="visita-a" required
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                           placeholder="Torre 1 - Apto 301">
+                                </div>
+                                <button type="submit" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-emerald-700 transition-all">
+                                    <i class="fas fa-car mr-2"></i>Registrar Ingreso
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Formulario de Salida -->
+                        <div class="bg-gradient-to-r from-red-50 to-pink-50 p-6 rounded-lg border border-red-200">
+                            <h3 class="text-lg font-semibold mb-4 text-red-800">
+                                <i class="fas fa-minus-circle mr-2"></i>Registrar Salida
+                            </h3>
+                            <form id="form-salida-vehiculo" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Placa del Vehículo</label>
+                                    <input type="text" id="placa-salida" required
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent uppercase"
+                                           placeholder="ABC123">
+                                </div>
+                                <button type="submit" class="w-full bg-gradient-to-r from-red-600 to-pink-600 text-white py-2 px-4 rounded-lg font-medium hover:from-red-700 hover:to-pink-700 transition-all">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>Registrar Salida
+                                </button>
+                            </form>
+
+                            <!-- Panel de información de tarifa -->
+                            <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <h4 class="font-medium text-yellow-800 mb-2">
+                                    <i class="fas fa-info-circle mr-2"></i>Información de Tarifa
+                                </h4>
+                                <ul class="text-sm text-yellow-700 space-y-1">
+                                    <li>• Primeras 2 horas: GRATIS</li>
+                                    <li>• Hora adicional: $1.000</li>
+                                    <li>• Cobro automático al registrar salida</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Vehículos Activos -->
+                    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-gray-50 px-6 py-3 border-b">
+                            <h3 class="text-lg font-semibold text-gray-800">
+                                <i class="fas fa-list mr-2"></i>Vehículos en el Conjunto
+                            </h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table id="tabla-vehiculos-activos" class="w-full">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Placa</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visita a</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingreso</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiempo</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parqueadero</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vehiculos-activos-tbody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Contenido dinámico -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Historial de Vehículos del Día -->
+                    <div class="mt-6 bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-gray-50 px-6 py-3 border-b">
+                            <h3 class="text-lg font-semibold text-gray-800">
+                                <i class="fas fa-history mr-2"></i>Historial del Día
+                            </h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table id="tabla-vehiculos-historial" class="w-full">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Placa</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visita a</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ingreso</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salida</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horas</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recibo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="vehiculos-historial-tbody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Contenido dinámico -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestión de Usuarios (Solo Administradores) -->
+            <div id="usuarios-section" class="section hidden">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">
+                        <i class="fas fa-users mr-2 text-red-500"></i>Gestión de Usuarios
+                    </h2>
+
+                    <!-- Filtros y controles -->
+                    <div class="mb-6 flex flex-wrap gap-4 items-center">
+                        <div class="flex-1 min-w-64">
+                            <input type="text" id="buscar-usuario" placeholder="Buscar usuarios..."
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                        </div>
+                        <select id="filtro-rol" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                            <option value="">Todos los roles</option>
+                            <option value="residente">Residentes</option>
+                            <option value="admin">Administradores</option>
+                            <option value="vigilante">Vigilantes</option>
+                        </select>
+                        <button onclick="mostrarModalCrearUsuario()" class="bg-gradient-to-r from-red-600 to-pink-600 text-white px-6 py-2 rounded-lg font-medium hover:from-red-700 hover:to-pink-700 transition-all">
+                            <i class="fas fa-user-plus mr-2"></i>Nuevo Usuario
+                        </button>
+                    </div>
+
+                    <!-- Tabla de usuarios -->
+                    <div class="overflow-x-auto">
+                        <table id="tabla-usuarios" class="w-full bg-white border border-gray-200 rounded-lg">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apartamento</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usuarios-tbody" class="bg-white divide-y divide-gray-200">
+                                <!-- Contenido dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resto de secciones (Reservas, Pagos, Chat, etc.) se mantienen igual que en el código original -->
+            <!-- Aquí incluirías todas las demás secciones del sistema -->
+
+            <!-- Modal para crear/editar usuarios -->
+            <div id="modal-usuario" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+                <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="modal-usuario-titulo" class="text-xl font-bold text-gray-800">Crear Usuario</h3>
+                        <button onclick="cerrarModalUsuario()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <form id="form-usuario" class="space-y-4">
+                        <input type="hidden" id="usuario-id">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
+                            <input type="text" id="usuario-nombre" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email" id="usuario-email" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Apartamento</label>
+                            <input type="text" id="usuario-apartamento" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Rol</label>
+                            <select id="usuario-rol" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                                <option value="">Seleccionar rol</option>
+                                <option value="residente">Residente</option>
+                                <option value="admin">Administrador</option>
+                                <option value="vigilante">Vigilante</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                            <input type="password" id="usuario-password"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                   placeholder="Dejar vacío para mantener actual">
+                        </div>
+                        <div class="flex space-x-4 pt-4">
+                            <button type="button" onclick="cerrarModalUsuario()"
+                                    class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-400 transition-all">
+                                Cancelar
+                            </button>
+                            <button type="submit"
+                                    class="flex-1 bg-gradient-to-r from-red-600 to-pink-600 text-white py-2 px-4 rounded-lg font-medium hover:from-red-700 hover:to-pink-700 transition-all">
+                                <i class="fas fa-save mr-2"></i>Guardar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para Ticket de Parqueadero -->
+        <div id="modal-ticket" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+            <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+                <div class="text-center">
+                    <div class="bg-green-100 rounded-full p-3 w-16 h-16 mx-auto mb-4">
+                        <i class="fas fa-ticket-alt text-2xl text-green-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Ticket de Parqueadero</h3>
+                    <div id="ticket-content" class="bg-gray-50 p-4 rounded-lg mb-4 text-left">
+                        <!-- Contenido del ticket -->
+                    </div>
+                    <button onclick="cerrarModalTicket()"
+                            class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all">
+                        <i class="fas fa-times mr-2"></i>Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sistema de Notificaciones -->
+    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2">
+        <!-- Las notificaciones aparecerán aquí -->
+    </div>
+
+    <script>
+        // Variables globales
+        let currentUser = null;
+        let currentSection = 'dashboard';
+
+        // Sistema de Autenticación
+        function switchTab(tab) {
+            const loginTab = document.getElementById('login-tab');
+            const registerTab = document.getElementById('register-tab');
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+
+            if (tab === 'login') {
+                loginTab.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white text-blue-600 shadow-sm";
+                registerTab.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800";
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+            } else {
+                registerTab.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors bg-white text-green-600 shadow-sm";
+                loginTab.className = "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800";
+                registerForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+            }
+        }
+
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('auth-message');
+            const messageText = document.getElementById('auth-message-text');
+
+            messageText.textContent = message;
+            messageDiv.className = `mt-4 p-3 rounded-lg ${type === 'error' ? 'bg-red-100 text-red-700 border border-red-300' : 'bg-green-100 text-green-700 border border-green-300'}`;
+            messageDiv.classList.remove('hidden');
+
+            setTimeout(() => {
+                messageDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        async function login(email, password) {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.usuario));
+                    currentUser = data.usuario;
+
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+
+                    // Actualizar interfaz según el rol
+                    updateUIForRole();
+                    updateUserInfo();
+
+                    showMessage('¡Bienvenido!', 'success');
+                } else {
+                    showMessage(data.mensaje || 'Error al iniciar sesión', 'error');
+                }
+            } catch (error) {
+                showMessage('Error de conexión', 'error');
+            }
+        }
+
+        async function register(nombre, email, apartamento, password) {
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nombre, email, apartamento, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('Usuario registrado exitosamente. Ahora puedes iniciar sesión.', 'success');
+                    switchTab('login');
+                } else {
+                    showMessage(data.mensaje || 'Error al registrar usuario', 'error');
+                }
+            } catch (error) {
+                showMessage('Error de conexión', 'error');
+            }
+        }
+
+        function updateUIForRole() {
+            if (!currentUser) return;
+
+            const header = document.getElementById('app-header');
+            const roleIndicator = document.getElementById('role-indicator');
+            const roleIcon = document.getElementById('role-icon');
+            const roleText = document.getElementById('role-text');
+
+            const residenteTabs = document.getElementById('residente-tabs');
+            const vigilanteTabs = document.getElementById('vigilante-tabs');
+            const adminTabs = document.getElementById('admin-tabs');
+
+            // Ocultar todos los tabs específicos
+            residenteTabs.classList.add('hidden');
+            vigilanteTabs.classList.add('hidden');
+            adminTabs.classList.add('hidden');
+
+            // Configurar colores y elementos según el rol
+            switch(currentUser.rol) {
+                case 'residente':
+                    // Interfaz azul para residentes
+                    header.className = 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-xl';
+                    roleIndicator.className = 'px-3 py-1 rounded-full text-sm font-medium bg-blue-500 bg-opacity-20';
+                    roleIcon.className = 'fas fa-user mr-1';
+                    roleText.textContent = 'Residente';
+                    residenteTabs.classList.remove('hidden');
+                    break;
+
+                case 'vigilante':
+                    // Interfaz amarilla para vigilantes
+                    header.className = 'bg-gradient-to-r from-yellow-600 to-amber-700 text-white shadow-xl';
+                    roleIndicator.className = 'px-3 py-1 rounded-full text-sm font-medium bg-yellow-500 bg-opacity-20';
+                    roleIcon.className = 'fas fa-shield-alt mr-1';
+                    roleText.textContent = 'Vigilante';
+                    vigilanteTabs.classList.remove('hidden');
+                    break;
+
+                case 'admin':
+                    // Interfaz roja para administradores
+                    header.className = 'bg-gradient-to-r from-red-600 to-pink-700 text-white shadow-xl';
+                    roleIndicator.className = 'px-3 py-1 rounded-full text-sm font-medium bg-red-500 bg-opacity-20';
+                    roleIcon.className = 'fas fa-crown mr-1';
+                    roleText.textContent = 'Administrador';
+                    adminTabs.classList.remove('hidden');
+                    break;
+            }
+        }
+
+        function updateUserInfo() {
+            if (currentUser) {
+                const userInfoElement = document.getElementById('user-info');
+                if (userInfoElement) {
+                    userInfoElement.innerHTML = `
+                        <i class="fas fa-user-circle mr-2"></i>
+                        Bienvenido, ${currentUser.nombre} - ${currentUser.apartamento}
+                    `;
+                }
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            currentUser = null;
+
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        // Navegación entre secciones
+        function showSection(section) {
+            // Ocultar todas las secciones
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(s => s.classList.add('hidden'));
+
+            // Mostrar la sección seleccionada
+            const targetSection = document.getElementById(section + '-section');
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+                currentSection = section;
+            }
+
+            // Actualizar tabs activos
+            const navTabs = document.querySelectorAll('.nav-tab');
+            navTabs.forEach(tab => {
+                tab.classList.remove('text-blue-600', 'border-blue-500', 'text-yellow-600', 'border-yellow-500', 'text-red-600', 'border-red-500');
+                tab.classList.add('text-gray-600', 'border-transparent');
+            });
+
+            const activeTab = document.querySelector(`[onclick="showSection('${section}')"]`);
+            if (activeTab) {
+                activeTab.classList.remove('text-gray-600', 'border-transparent');
+
+                // Aplicar color según el rol
+                if (currentUser?.rol === 'vigilante') {
+                    activeTab.classList.add('text-yellow-600', 'border-yellow-500');
+                } else if (currentUser?.rol === 'admin') {
+                    activeTab.classList.add('text-red-600', 'border-red-500');
+                } else {
+                    activeTab.classList.add('text-blue-600', 'border-blue-500');
+                }
+            }
+
+            // Cargar datos específicos de la sección
+            if (section === 'control-vehiculos') {
+                cargarVehiculosActivos();
+                cargarHistorialVehiculos();
+            } else if (section === 'usuarios') {
+                cargarUsuarios();
+            }
+        }
+
+        // Control de Vehículos
+        async function cargarVehiculosActivos() {
+            try {
+                const response = await fetch('/api/vehiculos-visitantes', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const vehiculos = await response.json();
+                    const tbody = document.getElementById('vehiculos-activos-tbody');
+
+                    tbody.innerHTML = vehiculos.filter(v => v.activo).map(vehiculo => {
+                        const ingreso = new Date(vehiculo.fechaIngreso);
+                        const ahora = new Date();
+                        const horas = Math.floor((ahora - ingreso) / (1000 * 60 * 60));
+                        const minutos = Math.floor(((ahora - ingreso) % (1000 * 60 * 60)) / (1000 * 60));
+
+                        return `
+                            <tr>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">${vehiculo.placa}</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">${vehiculo.tipoVehiculo}</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">${vehiculo.visitaA}</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">${ingreso.toLocaleString('es-CO')}</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">${horas}h ${minutos}m</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">${vehiculo.parqueadero || 'N/A'}</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button onclick="registrarSalidaRapida('${vehiculo.placa}')"
+                                            class="text-red-600 hover:text-red-900">
+                                        <i class="fas fa-sign-out-alt mr-1"></i>Salida
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error('Error cargando vehículos activos:', error);
+            }
+        }
+
+        async function cargarHistorialVehiculos() {
+            try {
+                const response = await fetch('/api/vehiculos-visitantes/hoy', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const vehiculos = await response.json();
+                    const tbody = document.getElementById('vehiculos-historial-tbody');
+
+                    tbody.innerHTML = vehiculos.filter(v => !v.activo).map(vehiculo => `
+                        <tr>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">${vehiculo.placa}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${vehiculo.tipoVehiculo}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${vehiculo.visitaA}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${new Date(vehiculo.fechaIngreso).toLocaleString('es-CO')}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${vehiculo.fechaSalida ? new Date(vehiculo.fechaSalida).toLocaleString('es-CO') : 'N/A'}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${vehiculo.totalHoras || 0}h</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">$${vehiculo.totalCobrado || 0}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                ${vehiculo.recibo ? `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">${vehiculo.recibo}</span>` : '-'}
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error cargando historial:', error);
+            }
+        }
+
+        async function registrarIngresoVehiculo(placa, tipo, visitaA) {
+            try {
+                const response = await fetch('/api/vehiculos-visitantes/ingreso', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ placa, tipoVehiculo: tipo, visitaA })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    mostrarNotificacion('Vehículo registrado correctamente', 'success');
+                    document.getElementById('form-ingreso-vehiculo').reset();
+                    cargarVehiculosActivos();
+                } else {
+                    mostrarNotificacion(data.mensaje || 'Error al registrar vehículo', 'error');
+                }
+            } catch (error) {
+                mostrarNotificacion('Error de conexión', 'error');
+            }
+        }
+
+        async function registrarSalidaVehiculo(placa) {
+            try {
+                const response = await fetch('/api/vehiculos-visitantes/salida', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ placa })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    mostrarNotificacion('Salida registrada correctamente', 'success');
+                    document.getElementById('form-salida-vehiculo').reset();
+
+                    // Mostrar ticket si hay cobro
+                    if (data.recibo) {
+                        mostrarTicketParqueadero(data.recibo);
+                    }
+
+                    cargarVehiculosActivos();
+                    cargarHistorialVehiculos();
+                } else {
+                    mostrarNotificacion(data.mensaje || 'Error al registrar salida', 'error');
+                }
+            } catch (error) {
+                mostrarNotificacion('Error de conexión', 'error');
+            }
+        }
+
+        function registrarSalidaRapida(placa) {
+            document.getElementById('placa-salida').value = placa;
+            registrarSalidaVehiculo(placa);
+        }
+
+        function mostrarTicketParqueadero(recibo) {
+            const modal = document.getElementById('modal-ticket');
+            const content = document.getElementById('ticket-content');
+
+            content.innerHTML = `
+                <div class="text-center space-y-2">
+                    <h4 class="font-bold text-lg">Conjunto Aralia de Castilla</h4>
+                    <p class="text-sm text-gray-600">Comprobante de Parqueadero</p>
+                    <div class="border-t border-dashed border-gray-300 my-3"></div>
+                    <div class="text-left space-y-1">
+                        <p><strong>Recibo:</strong> ${recibo.id}</p>
+                        <p><strong>Placa:</strong> ${recibo.placa}</p>
+                        <p><strong>Ingreso:</strong> ${new Date(recibo.fechaIngreso).toLocaleString('es-CO')}</p>
+                        <p><strong>Salida:</strong> ${new Date(recibo.fechaSalida).toLocaleString('es-CO')}</p>
+                        <p><strong>Total Horas:</strong> ${recibo.totalHoras}h</p>
+                        <p><strong>Horas Gratis:</strong> ${recibo.horasGratis}h</p>
+                        <p><strong>Horas Cobradas:</strong> ${recibo.horasCobradas}h</p>
+                        <p><strong>Visitaba:</strong> ${recibo.visitaA}</p>
+                    </div>
+                    <div class="border-t border-dashed border-gray-300 my-3"></div>
+                    <div class="text-lg font-bold">
+                        <p>TOTAL: $${recibo.totalCobrado}</p>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        function cerrarModalTicket() {
+            document.getElementById('modal-ticket').classList.add('hidden');
+        }
+
+        // Gestión de Usuarios
+        async function cargarUsuarios() {
+            try {
+                const response = await fetch('/api/admin/usuarios', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const usuarios = await response.json();
+                    const tbody = document.getElementById('usuarios-tbody');
+
+                    tbody.innerHTML = usuarios.map(usuario => `
+                        <tr>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">${usuario.id}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">${usuario.nombre}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${usuario.email}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${usuario.apartamento}</div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full ${
+                                    usuario.rol === 'admin' ? 'bg-red-100 text-red-800' :
+                                    usuario.rol === 'vigilante' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-blue-100 text-blue-800'
+                                }">
+                                    ${usuario.rol}
+                                </span>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full ${
+                                    usuario.activo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                                }">
+                                    ${usuario.activo ? 'Activo' : 'Inactivo'}
+                                </span>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                <button onclick="editarUsuario(${usuario.id})"
+                                        class="text-indigo-600 hover:text-indigo-900">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="toggleUsuarioActivo(${usuario.id}, ${!usuario.activo})"
+                                        class="${usuario.activo ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}">
+                                    <i class="fas fa-${usuario.activo ? 'user-times' : 'user-check'}"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error cargando usuarios:', error);
+            }
+        }
+
+        function mostrarModalCrearUsuario() {
+            document.getElementById('modal-usuario-titulo').textContent = 'Crear Usuario';
+            document.getElementById('form-usuario').reset();
+            document.getElementById('usuario-id').value = '';
+            document.getElementById('modal-usuario').classList.remove('hidden');
+        }
+
+        function cerrarModalUsuario() {
+            document.getElementById('modal-usuario').classList.add('hidden');
+        }
+
+        async function editarUsuario(id) {
+            try {
+                const response = await fetch(`/api/admin/usuarios/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const usuario = await response.json();
+
+                    document.getElementById('modal-usuario-titulo').textContent = 'Editar Usuario';
+                    document.getElementById('usuario-id').value = usuario.id;
+                    document.getElementById('usuario-nombre').value = usuario.nombre;
+                    document.getElementById('usuario-email').value = usuario.email;
+                    document.getElementById('usuario-apartamento').value = usuario.apartamento;
+                    document.getElementById('usuario-rol').value = usuario.rol;
+                    document.getElementById('usuario-password').value = '';
+
+                    document.getElementById('modal-usuario').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error cargando usuario:', error);
+            }
+        }
+
+        async function guardarUsuario(formData) {
+            try {
+                const id = document.getElementById('usuario-id').value;
+                const url = id ? `/api/admin/usuarios/${id}` : '/api/admin/usuarios';
+                const method = id ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    mostrarNotificacion(`Usuario ${id ? 'actualizado' : 'creado'} correctamente`, 'success');
+                    cerrarModalUsuario();
+                    cargarUsuarios();
+                } else {
+                    mostrarNotificacion(data.mensaje || 'Error al guardar usuario', 'error');
+                }
+            } catch (error) {
+                mostrarNotificacion('Error de conexión', 'error');
+            }
+        }
+
+        async function toggleUsuarioActivo(id, activo) {
+            try {
+                const response = await fetch(`/api/admin/usuarios/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ activo })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    mostrarNotificacion(`Usuario ${activo ? 'activado' : 'desactivado'} correctamente`, 'success');
+                    cargarUsuarios();
+                } else {
+                    mostrarNotificacion(data.mensaje || 'Error al actualizar usuario', 'error');
+                }
+            } catch (error) {
+                mostrarNotificacion('Error de conexión', 'error');
+            }
+        }
+
+        // Sistema de notificaciones
+        function mostrarNotificacion(mensaje, tipo = 'info') {
+            const container = document.getElementById('notification-container');
+            const id = Date.now();
+
+            const notification = document.createElement('div');
+            notification.id = `notification-${id}`;
+            notification.className = `notification p-4 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full opacity-0 max-w-sm ${
+                tipo === 'success' ? 'bg-green-500 text-white' :
+                tipo === 'error' ? 'bg-red-500 text-white' :
+                tipo === 'warning' ? 'bg-yellow-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-${
+                            tipo === 'success' ? 'check-circle' :
+                            tipo === 'error' ? 'exclamation-circle' :
+                            tipo === 'warning' ? 'exclamation-triangle' :
+                            'info-circle'
+                        } mr-2"></i>
+                        <span>${mensaje}</span>
+                    </div>
+                    <button onclick="cerrarNotificacion(${id})" class="ml-2 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            container.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full', 'opacity-0');
+            }, 100);
+
+            setTimeout(() => {
+                cerrarNotificacion(id);
+            }, 5000);
+        }
+
+        function cerrarNotificacion(id) {
+            const notification = document.getElementById(`notification-${id}`);
+            if (notification) {
+                notification.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Verificar autenticación
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+
+            if (token && user) {
+                currentUser = JSON.parse(user);
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                updateUIForRole();
+                updateUserInfo();
+            }
+
+            // Formularios de autenticación
+            document.getElementById('login-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                login(email, password);
+            });
+
+            document.getElementById('register-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const nombre = document.getElementById('register-nombre').value;
+                const email = document.getElementById('register-email').value;
+                const apartamento = document.getElementById('register-apartamento').value;
+                const password = document.getElementById('register-password').value;
+                register(nombre, email, apartamento, password);
+            });
+
+            // Formularios de control de vehículos
+            document.getElementById('form-ingreso-vehiculo').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const placa = document.getElementById('placa-ingreso').value.toUpperCase();
+                const tipo = document.getElementById('tipo-vehiculo').value;
+                const visitaA = document.getElementById('visita-a').value;
+                registrarIngresoVehiculo(placa, tipo, visitaA);
+            });
+
+            document.getElementById('form-salida-vehiculo').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const placa = document.getElementById('placa-salida').value.toUpperCase();
+                registrarSalidaVehiculo(placa);
+            });
+
+            // Formulario de usuarios
+            document.getElementById('form-usuario').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = {
+                    nombre: document.getElementById('usuario-nombre').value,
+                    email: document.getElementById('usuario-email').value,
+                    apartamento: document.getElementById('usuario-apartamento').value,
+                    rol: document.getElementById('usuario-rol').value
+                };
+
+                const password = document.getElementById('usuario-password').value;
+                if (password) {
+                    formData.password = password;
+                }
+
+                guardarUsuario(formData);
+            });
+        });
+    </script>
+</body>
+</html>

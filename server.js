@@ -11,6 +11,11 @@ app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Manejar favicon.ico
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end(); // No Content - evita el error 404
+});
+
 // Datos en memoria (en producción usarías una base de datos)
 let data = {
   usuarios: [
@@ -69,6 +74,15 @@ let data = {
       rol: 'residente'
     },
     {
+      id: 8,
+      email: 'car02cbs@gmail.com',
+      password: 'password3',
+      nombre: 'Vigilante de Seguridad',
+      apartamento: 'Portería Principal',
+      activo: true,
+      rol: 'vigilante'
+    },
+    {
       id: 6,
       email: 'patricia.soto@email.com',
       password: 'demo123',
@@ -76,6 +90,15 @@ let data = {
       apartamento: 'Torre 3 - Apto 303',
       activo: true,
       rol: 'residente'
+    },
+    {
+      id: 9,
+      email: 'alcaldia@conjunto.com',
+      password: 'alcaldia123',
+      nombre: 'Oficial de Alcaldía',
+      apartamento: 'Oficina Alcaldía',
+      activo: true,
+      rol: 'alcaldia'
     }
   ],
   residentes: [
@@ -138,23 +161,106 @@ let data = {
     { id: 2, concepto: 'Parqueadero', valor: 80000, mes: 'Agosto 2025', estado: 'pagado', vencimiento: '2025-08-15' },
     { id: 3, concepto: 'Administración', valor: 450000, mes: 'Julio 2025', estado: 'pagado', vencimiento: '2025-07-15' }
   ],
-  mensajes: [
-    { id: 1, usuario: 'Admin Conjunto', mensaje: 'Recordamos que mañana habrá mantenimiento del ascensor Torre B', fecha: '2025-08-12 09:00' },
-    { id: 2, usuario: 'Ana Martínez - 501B', mensaje: '¿Alguien sabe hasta qué hora estará cerrada la piscina?', fecha: '2025-08-12 14:30' }
-  ],
-  chatsPrivados: [],
   solicitudesChat: [],
+  chats: {
+    general: [
+      {
+        id: 1,
+        usuario: 'Carlos Andrés Santos Hernández',
+        apartamento: 'Torre 2 - Apto 401A',
+        mensaje: '¡Hola a todos! Buenos días',
+        fecha: new Date().toISOString(),
+        tipo: 'general'
+      }
+    ],
+    admin: [],
+    vigilantes: [],
+    privados: {}
+  },
+  incidentes: [
+    {
+      id: 1,
+      tipo: 'Infraestructura',
+      titulo: 'Daño en vía principal',
+      descripcion: 'Hueco grande en la entrada del conjunto',
+      ubicacion: 'Entrada Principal',
+      prioridad: 'Alta',
+      estado: 'Reportado',
+      reportadoPor: 'Administrador del Conjunto',
+      fecha: new Date().toISOString(),
+      fotos: [],
+      respuestaAlcaldia: null,
+      fechaRespuesta: null
+    }
+  ],
   emprendimientos: [
-    { id: 1, nombre: 'Delicias Caseras', propietario: 'Laura Ruiz - 203A', tipo: 'Comida', telefono: '300-123-4567', descripcion: 'Postres y comida casera' },
-    { id: 2, nombre: 'TecniFix', propietario: 'Miguel Santos - 302B', tipo: 'Técnico', telefono: '301-987-6543', descripcion: 'Reparación de electrodomésticos' }
+    {
+      id: 1,
+      nombre: 'Delicias Caseras',
+      propietario: 'Laura Ruiz - Torre 2 Apto 203A',
+      tipo: 'Comida',
+      telefono: '300-123-4567',
+      descripcion: 'Postres artesanales, tortas personalizadas y comida casera. Hacemos delivery dentro del conjunto.',
+      imagen: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop',
+      calificacion: 4.8,
+      horario: 'Lun-Sáb 9am-7pm'
+    },
+    {
+      id: 2,
+      nombre: 'TecniFix',
+      propietario: 'Miguel Santos - Torre 1 Apto 302B',
+      tipo: 'Técnico',
+      telefono: '301-987-6543',
+      descripcion: 'Reparación y mantenimiento de electrodomésticos, aires acondicionados, neveras, lavadoras. Servicio a domicilio.',
+      imagen: 'https://images.unsplash.com/photo-1581092921461-eab62e97a780?w=400&h=300&fit=crop',
+      calificacion: 4.5,
+      horario: 'Lun-Vie 8am-6pm'
+    },
+    {
+      id: 3,
+      nombre: 'CodeFlow Solutions',
+      propietario: 'Carlos Andrés Santos Hernández - Torre 2 Apto 401A',
+      tipo: 'Tecnología',
+      telefono: '310-555-7890',
+      descripcion: 'Desarrollo de aplicaciones web y móviles, automatizaciones, sistemas de gestión. Soluciones tecnológicas personalizadas para negocios y emprendimientos.',
+      imagen: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=300&fit=crop',
+      calificacion: 5.0,
+      horario: 'Lun-Vie 9am-6pm, Sáb 10am-2pm'
+    }
   ],
-  pqrs: [
-    { id: 1, tipo: 'Reclamo', asunto: 'Ruido nocturno Torre B', estado: 'En proceso', fecha: '2025-08-10' },
-    { id: 2, tipo: 'Petición', asunto: 'Solicitud nueva máquina gimnasio', estado: 'Pendiente', fecha: '2025-08-08' }
-  ],
+  arriendos: [],
   permisos: [
-    { id: 1, tipo: 'Entrada Personal', nombre: 'María Trabajadora', cedula: '12345678', fecha: '2025-08-12', vigencia: '2025-08-15' },
-    { id: 2, tipo: 'Salida Objeto', objeto: 'Televisor Samsung 55"', autorizado: 'Juan Pérez', fecha: '2025-08-11' }
+    // Tipos: visitante, objeto, trasteo, domicilio
+  ],
+  ultimoSorteo: null,
+  paquetes: [],
+  pqrs: [
+    {
+      id: 1,
+      tipo: 'Reclamo',
+      asunto: 'Ruido nocturno Torre B',
+      descripcion: 'Constantemente hay ruido después de las 10pm en el apartamento 301B',
+      estado: 'En proceso',
+      fecha: '2025-08-10',
+      residente: 'Carlos Andrés Santos Hernández',
+      apartamento: 'Torre 2 - Apto 401A',
+      respuesta: null,
+      fechaRespuesta: null,
+      respondidoPor: null
+    },
+    {
+      id: 2,
+      tipo: 'Petición',
+      asunto: 'Solicitud nueva máquina gimnasio',
+      descripcion: 'Se solicita la compra de una caminadora adicional para el gimnasio',
+      estado: 'Pendiente',
+      fecha: '2025-08-08',
+      residente: 'María González',
+      apartamento: 'Torre 1 - Apto 301',
+      respuesta: null,
+      fechaRespuesta: null,
+      respondidoPor: null
+    }
   ],
   noticias: [
     {
@@ -319,6 +425,69 @@ let data = {
       recibo: 'REC-001'
     }
   ],
+  // Nuevas estructuras de datos
+  solicitudesPermisos: [],
+  camaras: [
+    { id: 1, nombre: 'Entrada Principal', ubicacion: 'Portería', url: 'rtsp://camera1', tipo: 'fija', visible_residentes: true, activa: true },
+    { id: 2, nombre: 'Parqueadero Sótano 1', ubicacion: 'Parqueadero', url: 'rtsp://camera2', tipo: 'PTZ', visible_residentes: false, activa: true },
+    { id: 3, nombre: 'Zona Social', ubicacion: 'Zonas Comunes', url: 'rtsp://camera3', tipo: 'fija', visible_residentes: true, activa: true }
+  ],
+  encuestas: [
+    {
+      id: 1,
+      titulo: 'Horario de uso de la piscina',
+      descripcion: '¿Cuál horario prefieres para el uso de la piscina?',
+      opciones: [
+        { id: 1, texto: '6:00 AM - 12:00 PM', votos: 15 },
+        { id: 2, texto: '12:00 PM - 6:00 PM', votos: 28 },
+        { id: 3, texto: '6:00 PM - 10:00 PM', votos: 42 }
+      ],
+      votantes: [], // Array de IDs de usuarios que ya votaron
+      estado: 'activa', // activa, cerrada
+      fechaCreacion: new Date().toISOString(),
+      fechaCierre: null,
+      creadoPor: 'Administrador del Conjunto'
+    }
+  ],
+  documentos: [
+    {
+      id: 1,
+      titulo: 'Manual de Convivencia',
+      descripcion: 'Reglamento interno del conjunto residencial Aralia de Castilla',
+      categoria: 'Reglamento',
+      archivo: '#',
+      fechaPublicacion: '2024-01-15',
+      publicadoPor: 'Administración'
+    },
+    {
+      id: 2,
+      titulo: 'Balance Financiero 2024 - Primer Trimestre',
+      descripcion: 'Estado financiero del conjunto correspondiente a Enero - Marzo 2024',
+      categoria: 'Balance',
+      archivo: '#',
+      fechaPublicacion: '2024-04-10',
+      publicadoPor: 'Administración'
+    },
+    {
+      id: 3,
+      titulo: 'Balance Financiero 2024 - Segundo Trimestre',
+      descripcion: 'Estado financiero del conjunto correspondiente a Abril - Junio 2024',
+      categoria: 'Balance',
+      archivo: '#',
+      fechaPublicacion: '2024-07-10',
+      publicadoPor: 'Administración'
+    },
+    {
+      id: 4,
+      titulo: 'Balance Financiero 2024 - Tercer Trimestre',
+      descripcion: 'Estado financiero del conjunto correspondiente a Julio - Septiembre 2024',
+      categoria: 'Balance',
+      archivo: '#',
+      fechaPublicacion: '2024-10-10',
+      publicadoPor: 'Administración'
+    }
+  ],
+  asignacionesParqueaderos: [],
   recibosParqueadero: [
     {
       id: 'REC-001',
@@ -338,7 +507,7 @@ let data = {
 
 // Rutas principales
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'conjunto-aralia-completo.html'));
 });
 
 // API Routes
@@ -438,20 +607,40 @@ app.get('/api/reservas', (req, res) => {
 });
 
 app.post('/api/reservas', (req, res) => {
-  const { espacio, fecha, hora, usuario } = req.body;
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const { espacio, fecha, hora, observaciones } = req.body;
+
+  // Validar que el espacio esté disponible
+  const reservaExistente = data.reservas.find(r =>
+    r.espacio === espacio && r.fecha === fecha && r.hora === hora
+  );
+
+  if (reservaExistente) {
+    return res.status(400).json({ success: false, mensaje: 'Este espacio ya está reservado para esa fecha y hora' });
+  }
 
   const nuevaReserva = {
     id: data.reservas.length + 1,
     espacio,
     fecha,
     hora,
-    usuario
+    usuario: usuario.nombre,
+    apartamento: usuario.apartamento,
+    observaciones: observaciones || '',
+    fechaCreacion: new Date().toISOString(),
+    estado: 'Confirmada'
   };
 
   data.reservas.push(nuevaReserva);
   guardarDatos();
 
-  res.json(nuevaReserva);
+  res.json({ success: true, reserva: nuevaReserva });
 });
 
 // Pagos
@@ -492,12 +681,226 @@ app.get('/api/emprendimientos', (req, res) => {
   res.json(data.emprendimientos);
 });
 
+app.get('/api/residente/emprendimientos', (req, res) => {
+  res.json({ success: true, emprendimientos: data.emprendimientos });
+});
+
+// Arriendos
+app.get('/api/arriendos', (req, res) => {
+  res.json(data.arriendos);
+});
+
+app.post('/api/residente/publicar-arriendo', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const nuevoArriendo = {
+    id: data.arriendos.length + 1,
+    ...req.body,
+    propietario: usuario.nombre,
+    propietarioId: usuario.id,
+    email: usuario.email,
+    fechaPublicacion: new Date().toISOString(),
+    estado: 'Activo'
+  };
+
+  data.arriendos.push(nuevoArriendo);
+  guardarDatos();
+  res.json({ success: true, arriendo: nuevoArriendo });
+});
+
+// Endpoint para solicitar permiso (residente)
+app.post('/api/residente/solicitar-permiso', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const { tipo, nombre, cedula, placa, empresa, descripcion, fechaIngreso, horaIngreso, tiempoEstimado } = req.body;
+
+  const nuevoPermiso = {
+    id: data.permisos.length + 1,
+    tipo, // visitante, objeto, trasteo, domicilio
+    residente: usuario.nombre,
+    apartamento: usuario.apartamento,
+    nombre,
+    cedula: cedula || null,
+    placa: placa || null,
+    empresa: empresa || null,
+    descripcion: descripcion || null,
+    fechaIngreso,
+    horaIngreso,
+    tiempoEstimado: tiempoEstimado || null,
+    fechaSolicitud: new Date().toISOString(),
+    estado: 'Vigente', // Vigente, Ingresado, Finalizado, Vencido
+    autorizadoPor: usuario.nombre,
+    horaIngresoReal: null,
+    horaSalidaReal: null
+  };
+
+  data.permisos.push(nuevoPermiso);
+  guardarDatos();
+  res.json({ success: true, permiso: nuevoPermiso });
+});
+
+// Endpoint para obtener permisos (admin y vigilante)
+app.get('/api/permisos', verificarVigilante, (req, res) => {
+  const { tipo, estado } = req.query;
+
+  let permisosFiltrados = data.permisos;
+
+  if (tipo) {
+    permisosFiltrados = permisosFiltrados.filter(p => p.tipo === tipo);
+  }
+
+  if (estado) {
+    permisosFiltrados = permisosFiltrados.filter(p => p.estado === estado);
+  }
+
+  res.json({ success: true, permisos: permisosFiltrados });
+});
+
+// Endpoint para registrar ingreso de permiso
+app.put('/api/permisos/:id/ingresar', verificarVigilante, (req, res) => {
+  const { id } = req.params;
+  const permiso = data.permisos.find(p => p.id === parseInt(id));
+
+  if (!permiso) {
+    return res.status(404).json({ success: false, mensaje: 'Permiso no encontrado' });
+  }
+
+  permiso.estado = 'Ingresado';
+  permiso.horaIngresoReal = new Date().toISOString();
+  guardarDatos();
+
+  res.json({ success: true, permiso });
+});
+
+// Endpoint para registrar salida de permiso
+app.put('/api/permisos/:id/salir', verificarVigilante, (req, res) => {
+  const { id } = req.params;
+  const permiso = data.permisos.find(p => p.id === parseInt(id));
+
+  if (!permiso) {
+    return res.status(404).json({ success: false, mensaje: 'Permiso no encontrado' });
+  }
+
+  permiso.estado = 'Finalizado';
+  permiso.horaSalidaReal = new Date().toISOString();
+  guardarDatos();
+
+  res.json({ success: true, permiso });
+});
+
+// Endpoint para obtener mis permisos (residente)
+app.get('/api/residente/mis-permisos', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const misPermisos = data.permisos.filter(p =>
+    p.apartamento === usuario.apartamento
+  );
+
+  res.json({ success: true, permisos: misPermisos });
+});
+
+// Paquetes
+app.get('/api/paquetes', (req, res) => {
+  res.json(data.paquetes);
+});
+
+app.post('/api/paquetes/registrar', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario || usuario.rol !== 'vigilante') {
+    return res.status(403).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const { torre, apartamento, descripcion, remitente, empresa } = req.body;
+
+  const nuevoPaquete = {
+    id: data.paquetes.length + 1,
+    torre,
+    apartamento,
+    descripcion,
+    remitente,
+    empresa,
+    fechaLlegada: new Date().toISOString(),
+    registradoPor: usuario.nombre,
+    estado: 'Pendiente',
+    retirado: false
+  };
+
+  data.paquetes.push(nuevoPaquete);
+  guardarDatos();
+  res.json({ success: true, paquete: nuevoPaquete });
+});
+
+app.put('/api/paquetes/:id/retirar', (req, res) => {
+  const id = parseInt(req.params.id);
+  const paquete = data.paquetes.find(p => p.id === id);
+
+  if (paquete) {
+    paquete.retirado = true;
+    paquete.fechaRetiro = new Date().toISOString();
+    paquete.estado = 'Retirado';
+    guardarDatos();
+    res.json({ success: true, paquete });
+  } else {
+    res.status(404).json({ success: false, mensaje: 'Paquete no encontrado' });
+  }
+});
+
+app.get('/api/residente/mis-paquetes', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  // Normalizar el formato del apartamento del usuario para comparación
+  const apartamentoUsuario = usuario.apartamento.toLowerCase().trim();
+
+  const misPaquetes = data.paquetes.filter(p => {
+    if (!p.apartamento) return false;
+
+    // Normalizar el apartamento del paquete
+    const apartamentoPaquete = p.apartamento.toLowerCase().trim();
+
+    // Comparar directamente o verificar si coinciden normalizados
+    return apartamentoPaquete === apartamentoUsuario ||
+           apartamentoUsuario.includes(apartamentoPaquete) ||
+           apartamentoPaquete.includes(apartamentoUsuario);
+  });
+
+  res.json({ success: true, paquetes: misPaquetes });
+});
+
 // PQRs
 app.get('/api/pqrs', (req, res) => {
   res.json(data.pqrs);
 });
 
 app.post('/api/pqrs', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
   const { tipo, asunto, descripcion } = req.body;
   const nuevaPqr = {
     id: data.pqrs.length + 1,
@@ -505,31 +908,542 @@ app.post('/api/pqrs', (req, res) => {
     asunto,
     descripcion,
     estado: 'Pendiente',
-    fecha: new Date().toLocaleDateString('es-CO')
+    fecha: new Date().toISOString(),
+    residente: usuario.nombre,
+    apartamento: usuario.apartamento,
+    respuesta: null,
+    fechaRespuesta: null,
+    respondidoPor: null
   };
   data.pqrs.push(nuevaPqr);
-  res.json(nuevaPqr);
+  guardarDatos();
+  res.json({ success: true, pqr: nuevaPqr });
 });
 
-// Permisos
-app.get('/api/permisos', (req, res) => {
-  res.json(data.permisos);
+// Endpoint para responder PQRS (solo admin)
+app.put('/api/pqrs/:id/responder', verificarAdmin, (req, res) => {
+  const { id } = req.params;
+  const { respuesta } = req.body;
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  const pqr = data.pqrs.find(p => p.id === parseInt(id));
+
+  if (!pqr) {
+    return res.status(404).json({ success: false, mensaje: 'PQRS no encontrada' });
+  }
+
+  pqr.respuesta = respuesta;
+  pqr.fechaRespuesta = new Date().toISOString();
+  pqr.respondidoPor = usuario.nombre;
+  pqr.estado = 'Respondida';
+  guardarDatos();
+
+  res.json({ success: true, pqr });
 });
 
-app.post('/api/permisos', (req, res) => {
-  const { tipo, nombre, cedula, objeto, vigencia } = req.body;
-  const nuevoPermiso = {
-    id: data.permisos.length + 1,
-    tipo,
-    nombre,
-    cedula,
-    objeto,
-    autorizado: 'Juan Pérez - 401A',
-    fecha: new Date().toLocaleDateString('es-CO'),
-    vigencia
+// Endpoint para cambiar estado de PQRS (solo admin)
+app.put('/api/pqrs/:id/estado', verificarAdmin, (req, res) => {
+  const { id } = req.params;
+  const { estado } = req.body;
+
+  const pqr = data.pqrs.find(p => p.id === parseInt(id));
+
+  if (!pqr) {
+    return res.status(404).json({ success: false, mensaje: 'PQRS no encontrada' });
+  }
+
+  pqr.estado = estado;
+  guardarDatos();
+
+  res.json({ success: true, pqr });
+});
+
+// ============= ENDPOINTS DE CHAT =============
+
+// Obtener mensajes de un canal de chat
+app.get('/api/chat/:canal', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const { canal } = req.params;
+
+  // Verificar permisos según el canal
+  if (canal === 'admin' && usuario.rol !== 'admin') {
+    return res.status(403).json({ success: false, mensaje: 'No autorizado para este canal' });
+  }
+
+  if (canal === 'vigilantes' && usuario.rol !== 'vigilante' && usuario.rol !== 'admin') {
+    return res.status(403).json({ success: false, mensaje: 'No autorizado para este canal' });
+  }
+
+  const mensajes = data.chats[canal] || [];
+  res.json({ success: true, mensajes });
+});
+
+// Enviar mensaje a un canal
+app.post('/api/chat/:canal', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const { canal } = req.params;
+  const { mensaje } = req.body;
+
+  // Verificar permisos según el canal
+  if (canal === 'admin' && usuario.rol !== 'admin') {
+    return res.status(403).json({ success: false, mensaje: 'No autorizado para este canal' });
+  }
+
+  if (canal === 'vigilantes' && usuario.rol !== 'vigilante' && usuario.rol !== 'admin') {
+    return res.status(403).json({ success: false, mensaje: 'No autorizado para este canal' });
+  }
+
+  if (!data.chats[canal]) {
+    data.chats[canal] = [];
+  }
+
+  const nuevoMensaje = {
+    id: data.chats[canal].length + 1,
+    usuario: usuario.nombre,
+    usuarioId: usuario.id,
+    apartamento: usuario.apartamento,
+    rol: usuario.rol,
+    mensaje,
+    fecha: new Date().toISOString(),
+    tipo: canal
   };
-  data.permisos.push(nuevoPermiso);
-  res.json(nuevoPermiso);
+
+  data.chats[canal].push(nuevoMensaje);
+  guardarDatos();
+
+  res.json({ success: true, mensaje: nuevoMensaje });
+});
+
+// Obtener lista de chats privados del usuario
+app.get('/api/chat/privados/lista', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  // Obtener todos los chats privados donde participa el usuario
+  const misChats = Object.keys(data.chats.privados)
+    .filter(chatId => chatId.includes(`-${usuario.id}-`) || chatId.includes(`-${usuario.id}`))
+    .map(chatId => {
+      const mensajes = data.chats.privados[chatId] || [];
+      const ultimoMensaje = mensajes[mensajes.length - 1];
+
+      // Extraer IDs de los participantes del chatId
+      const ids = chatId.split('-').map(id => parseInt(id));
+      const otroId = ids.find(id => id !== usuario.id);
+      const otroUsuario = data.usuarios.find(u => u.id === otroId);
+
+      return {
+        chatId,
+        otroUsuario: otroUsuario ? {
+          id: otroUsuario.id,
+          nombre: otroUsuario.nombre,
+          apartamento: otroUsuario.apartamento
+        } : null,
+        ultimoMensaje,
+        cantidadMensajes: mensajes.length
+      };
+    });
+
+  res.json({ success: true, chats: misChats });
+});
+
+// Obtener mensajes de un chat privado
+app.get('/api/chat/privado/:otroUsuarioId', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const otroUsuarioId = parseInt(req.params.otroUsuarioId);
+  const chatId = [usuario.id, otroUsuarioId].sort().join('-');
+
+  const mensajes = data.chats.privados[chatId] || [];
+
+  const otroUsuario = data.usuarios.find(u => u.id === otroUsuarioId);
+
+  res.json({
+    success: true,
+    mensajes,
+    otroUsuario: otroUsuario ? {
+      id: otroUsuario.id,
+      nombre: otroUsuario.nombre,
+      apartamento: otroUsuario.apartamento
+    } : null
+  });
+});
+
+// Enviar mensaje privado
+app.post('/api/chat/privado/:otroUsuarioId', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const otroUsuarioId = parseInt(req.params.otroUsuarioId);
+  const { mensaje } = req.body;
+
+  const chatId = [usuario.id, otroUsuarioId].sort().join('-');
+
+  if (!data.chats.privados[chatId]) {
+    data.chats.privados[chatId] = [];
+  }
+
+  const nuevoMensaje = {
+    id: data.chats.privados[chatId].length + 1,
+    usuarioId: usuario.id,
+    usuario: usuario.nombre,
+    mensaje,
+    fecha: new Date().toISOString()
+  };
+
+  data.chats.privados[chatId].push(nuevoMensaje);
+  guardarDatos();
+
+  res.json({ success: true, mensaje: nuevoMensaje });
+});
+
+// Obtener lista de residentes para iniciar chat
+app.get('/api/residentes/lista', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  // Devolver todos los residentes excepto el usuario actual
+  const residentes = data.usuarios
+    .filter(u => u.id !== usuario.id && u.rol === 'residente')
+    .map(u => ({
+      id: u.id,
+      nombre: u.nombre,
+      apartamento: u.apartamento
+    }));
+
+  res.json({ success: true, residentes });
+});
+
+// ============= ENDPOINTS DE INCIDENTES (ALCALDÍA) =============
+
+// Obtener todos los incidentes
+app.get('/api/incidentes', (req, res) => {
+  res.json({ success: true, incidentes: data.incidentes });
+});
+
+// Crear nuevo incidente (admin)
+app.post('/api/incidentes', verificarAdmin, (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  const { tipo, titulo, descripcion, ubicacion, prioridad, fotos } = req.body;
+
+  const nuevoIncidente = {
+    id: data.incidentes.length + 1,
+    tipo,
+    titulo,
+    descripcion,
+    ubicacion,
+    prioridad,
+    estado: 'Reportado',
+    reportadoPor: usuario.nombre,
+    fecha: new Date().toISOString(),
+    fotos: fotos || [],
+    respuestaAlcaldia: null,
+    fechaRespuesta: null
+  };
+
+  data.incidentes.push(nuevoIncidente);
+  guardarDatos();
+
+  res.json({ success: true, incidente: nuevoIncidente });
+});
+
+// Responder incidente (alcaldia)
+app.put('/api/incidentes/:id/responder', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario || usuario.rol !== 'alcaldia') {
+    return res.status(403).json({ success: false, mensaje: 'No autorizado. Solo la Alcaldía puede responder.' });
+  }
+
+  const { id } = req.params;
+  const { respuesta } = req.body;
+
+  const incidente = data.incidentes.find(i => i.id === parseInt(id));
+  if (!incidente) {
+    return res.status(404).json({ success: false, mensaje: 'Incidente no encontrado' });
+  }
+
+  incidente.respuestaAlcaldia = respuesta;
+  incidente.fechaRespuesta = new Date().toISOString();
+  incidente.estado = 'En atención';
+  guardarDatos();
+
+  res.json({ success: true, incidente });
+});
+
+// Cambiar estado de incidente (alcaldia)
+app.put('/api/incidentes/:id/estado', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario || usuario.rol !== 'alcaldia') {
+    return res.status(403).json({ success: false, mensaje: 'No autorizado. Solo la Alcaldía puede cambiar el estado.' });
+  }
+
+  const { id } = req.params;
+  const { estado } = req.body;
+
+  const incidente = data.incidentes.find(i => i.id === parseInt(id));
+  if (!incidente) {
+    return res.status(404).json({ success: false, mensaje: 'Incidente no encontrado' });
+  }
+
+  incidente.estado = estado;
+  guardarDatos();
+
+  res.json({ success: true, incidente });
+});
+
+// ============= ENDPOINTS DE ENCUESTAS =============
+
+// Obtener todas las encuestas
+app.get('/api/encuestas', (req, res) => {
+  res.json({ success: true, encuestas: data.encuestas });
+});
+
+// Crear encuesta (admin)
+app.post('/api/encuestas', verificarAdmin, (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  const { titulo, descripcion, opciones } = req.body;
+
+  if (!opciones || opciones.length < 2) {
+    return res.status(400).json({ success: false, mensaje: 'Debe haber al menos 2 opciones' });
+  }
+
+  const nuevaEncuesta = {
+    id: data.encuestas.length + 1,
+    titulo,
+    descripcion,
+    opciones: opciones.map((texto, index) => ({
+      id: index + 1,
+      texto: texto.trim(),
+      votos: 0
+    })),
+    votantes: [],
+    estado: 'activa',
+    fechaCreacion: new Date().toISOString(),
+    fechaCierre: null,
+    creadoPor: usuario.nombre
+  };
+
+  data.encuestas.push(nuevaEncuesta);
+  guardarDatos();
+
+  res.json({ success: true, encuesta: nuevaEncuesta });
+});
+
+// Votar en encuesta
+app.post('/api/encuestas/:id/votar', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const { id } = req.params;
+  const { opcionId } = req.body;
+
+  const encuesta = data.encuestas.find(e => e.id === parseInt(id));
+  if (!encuesta) {
+    return res.status(404).json({ success: false, mensaje: 'Encuesta no encontrada' });
+  }
+
+  if (encuesta.estado !== 'activa') {
+    return res.status(400).json({ success: false, mensaje: 'Esta encuesta ya está cerrada' });
+  }
+
+  if (encuesta.votantes.includes(usuario.id)) {
+    return res.status(400).json({ success: false, mensaje: 'Ya has votado en esta encuesta' });
+  }
+
+  const opcion = encuesta.opciones.find(o => o.id === parseInt(opcionId));
+  if (!opcion) {
+    return res.status(404).json({ success: false, mensaje: 'Opción no encontrada' });
+  }
+
+  opcion.votos++;
+  encuesta.votantes.push(usuario.id);
+  guardarDatos();
+
+  res.json({ success: true, encuesta });
+});
+
+// Cerrar encuesta (admin)
+app.put('/api/encuestas/:id/cerrar', verificarAdmin, (req, res) => {
+  const { id } = req.params;
+
+  const encuesta = data.encuestas.find(e => e.id === parseInt(id));
+  if (!encuesta) {
+    return res.status(404).json({ success: false, mensaje: 'Encuesta no encontrada' });
+  }
+
+  encuesta.estado = 'cerrada';
+  encuesta.fechaCierre = new Date().toISOString();
+  guardarDatos();
+
+  res.json({ success: true, encuesta });
+});
+
+// Eliminar encuesta (admin)
+app.delete('/api/encuestas/:id', verificarAdmin, (req, res) => {
+  const { id } = req.params;
+  const index = data.encuestas.findIndex(e => e.id === parseInt(id));
+
+  if (index === -1) {
+    return res.status(404).json({ success: false, mensaje: 'Encuesta no encontrada' });
+  }
+
+  data.encuestas.splice(index, 1);
+  guardarDatos();
+
+  res.json({ success: true, mensaje: 'Encuesta eliminada' });
+});
+
+// ============= ENDPOINTS DE PAQUETES =============
+
+// Obtener paquetes
+app.get('/api/paquetes', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  // Si es residente, solo ve sus paquetes
+  if (usuario.rol === 'residente') {
+    const paquetesUsuario = data.paquetes.filter(p => p.apartamento === usuario.apartamento);
+    return res.json({ success: true, paquetes: paquetesUsuario });
+  }
+
+  // Admin y vigilante ven todos
+  res.json({ success: true, paquetes: data.paquetes });
+});
+
+// Registrar paquete (vigilante)
+app.post('/api/paquetes', verificarVigilante, (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  const { apartamento, nombreResidente, empresa, descripcion, guia } = req.body;
+
+  const nuevoPaquete = {
+    id: data.paquetes.length + 1,
+    apartamento,
+    nombreResidente,
+    empresa,
+    descripcion,
+    guia: guia || 'N/A',
+    estado: 'Pendiente', // Pendiente, Entregado
+    fechaRecepcion: new Date().toISOString(),
+    fechaEntrega: null,
+    recibidoPor: usuario.nombre,
+    entregadoA: null
+  };
+
+  data.paquetes.push(nuevoPaquete);
+  guardarDatos();
+
+  res.json({ success: true, paquete: nuevoPaquete });
+});
+
+// Marcar paquete como entregado
+app.put('/api/paquetes/:id/entregar', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const { id } = req.params;
+  const paquete = data.paquetes.find(p => p.id === parseInt(id));
+
+  if (!paquete) {
+    return res.status(404).json({ success: false, mensaje: 'Paquete no encontrado' });
+  }
+
+  // Solo vigilante o el residente dueño puede marcar como entregado
+  if (usuario.rol !== 'vigilante' && usuario.rol !== 'admin' && paquete.apartamento !== usuario.apartamento) {
+    return res.status(403).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  paquete.estado = 'Entregado';
+  paquete.fechaEntrega = new Date().toISOString();
+  paquete.entregadoA = usuario.nombre;
+  guardarDatos();
+
+  res.json({ success: true, paquete });
+});
+
+// ============= ENDPOINTS DE ARRIENDOS =============
+
+// Obtener arriendos
+app.get('/api/residente/arriendos', (req, res) => {
+  const apartamentos = data.arriendos.filter(a => a.tipo === 'apartamento');
+  const parqueaderos = data.arriendos.filter(a => a.tipo === 'parqueadero');
+
+  res.json({ success: true, apartamentos, parqueaderos });
+});
+
+// Publicar arriendo
+app.post('/api/residente/publicar-arriendo', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const arriendoData = req.body;
+
+  const nuevoArriendo = {
+    id: data.arriendos.length + 1,
+    ...arriendoData,
+    propietario: usuario.nombre,
+    fechaPublicacion: new Date().toISOString().split('T')[0],
+    disponible: true
+  };
+
+  data.arriendos.push(nuevoArriendo);
+  guardarDatos();
+
+  res.json({ success: true, arriendo: nuevoArriendo });
 });
 
 // Noticias
@@ -1084,6 +1998,40 @@ app.post('/api/admin/sorteo-parqueaderos', verificarAdmin, (req, res) => {
   });
 });
 
+// Consultar parqueadero asignado (residente)
+app.get('/api/residente/mi-parqueadero', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  if (!data.ultimoSorteo) {
+    return res.json({ success: true, asignado: false, mensaje: 'No se ha realizado sorteo aún' });
+  }
+
+  const asignacion = data.ultimoSorteo.resultados.find(r =>
+    r.participante.includes(usuario.nombre) || r.participante.includes(usuario.apartamento)
+  );
+
+  if (asignacion) {
+    res.json({
+      success: true,
+      asignado: true,
+      parqueadero: asignacion.parqueadero,
+      nivel: asignacion.nivel,
+      fechaSorteo: data.ultimoSorteo.fecha
+    });
+  } else {
+    res.json({
+      success: true,
+      asignado: false,
+      mensaje: 'No participaste en el último sorteo'
+    });
+  }
+});
+
 function obtenerUsuarioPorToken(token) {
   try {
     const decoded = Buffer.from(token, 'base64').toString();
@@ -1093,6 +2041,628 @@ function obtenerUsuarioPorToken(token) {
     return null;
   }
 }
+
+// ================================
+// NUEVOS ENDPOINTS MÓDULO ADMINISTRADOR
+// ================================
+
+// Middleware para verificar rol de vigilante
+function verificarVigilante(req, res, next) {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario || (usuario.rol !== 'vigilante' && usuario.rol !== 'admin')) {
+    return res.status(403).json({
+      success: false,
+      mensaje: 'Acceso denegado. Solo vigilantes y administradores.'
+    });
+  }
+
+  req.usuario = usuario;
+  next();
+}
+
+// === NOTICIAS ===
+app.post('/api/admin/noticias', verificarAdmin, (req, res) => {
+  const { titulo, contenido, categoria, fechaEvento, horaEvento, lugar, prioridad } = req.body;
+
+  const nuevaNoticia = {
+    id: data.noticias.length + 1,
+    titulo,
+    contenido,
+    categoria,
+    fecha: new Date().toISOString().split('T')[0],
+    fechaEvento,
+    horaEvento,
+    lugar,
+    prioridad: prioridad || 'media',
+    activa: true,
+    creadaPor: req.usuario.email
+  };
+
+  data.noticias.push(nuevaNoticia);
+  guardarDatos();
+
+  res.json({ success: true, noticia: nuevaNoticia });
+});
+
+app.delete('/api/admin/noticias/:id', verificarAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = data.noticias.findIndex(n => n.id === id);
+
+  if (index !== -1) {
+    data.noticias[index].activa = false;
+    guardarDatos();
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ success: false, mensaje: 'Noticia no encontrada' });
+  }
+});
+
+// === PAGOS MASIVOS ===
+app.post('/api/admin/pagos/cargar-masivo', verificarAdmin, (req, res) => {
+  const { pagos } = req.body; // Array de pagos [{torre, apartamento, concepto, valor, mes, vencimiento}]
+
+  const nuevos = [];
+  pagos.forEach(pago => {
+    const nuevo = {
+      id: data.pagos.length + nuevos.length + 1,
+      torre: pago.torre,
+      apartamento: pago.apartamento,
+      concepto: pago.concepto,
+      valor: parseFloat(pago.valor),
+      mes: pago.mes,
+      estado: 'pendiente',
+      vencimiento: pago.vencimiento,
+      fechaCreacion: new Date().toISOString()
+    };
+    nuevos.push(nuevo);
+  });
+
+  data.pagos.push(...nuevos);
+  guardarDatos();
+
+  res.json({ success: true, cantidad: nuevos.length, pagos: nuevos });
+});
+
+app.get('/api/admin/pagos/reporte', verificarAdmin, (req, res) => {
+  const { tipo, filtro } = req.query; // tipo: 'residente' o 'torre', filtro: valor específico
+
+  let pagosFiltrados = data.pagos;
+
+  if (tipo === 'torre' && filtro) {
+    pagosFiltrados = data.pagos.filter(p => p.torre === filtro);
+  } else if (tipo === 'apartamento' && filtro) {
+    pagosFiltrados = data.pagos.filter(p => p.apartamento === filtro);
+  }
+
+  const total = pagosFiltrados.reduce((sum, p) => sum + p.valor, 0);
+  const pagados = pagosFiltrados.filter(p => p.estado === 'pagado').reduce((sum, p) => sum + p.valor, 0);
+  const pendientes = total - pagados;
+
+  res.json({
+    success: true,
+    pagos: pagosFiltrados,
+    resumen: { total, pagados, pendientes }
+  });
+});
+
+// === RESERVAS ADMIN ===
+app.delete('/api/admin/reservas/:id', verificarAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = data.reservas.findIndex(r => r.id === id);
+
+  if (index !== -1) {
+    data.reservas.splice(index, 1);
+    guardarDatos();
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ success: false, mensaje: 'Reserva no encontrada' });
+  }
+});
+
+app.put('/api/admin/reservas/:id', verificarAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  const { espacio, fecha, hora, estado } = req.body;
+  const index = data.reservas.findIndex(r => r.id === id);
+
+  if (index !== -1) {
+    data.reservas[index] = {
+      ...data.reservas[index],
+      espacio: espacio || data.reservas[index].espacio,
+      fecha: fecha || data.reservas[index].fecha,
+      hora: hora || data.reservas[index].hora,
+      estado: estado || data.reservas[index].estado
+    };
+    guardarDatos();
+    res.json({ success: true, reserva: data.reservas[index] });
+  } else {
+    res.status(404).json({ success: false, mensaje: 'Reserva no encontrada' });
+  }
+});
+
+app.get('/api/admin/reservas/reporte', verificarAdmin, (req, res) => {
+  const reportePorEspacio = {};
+
+  data.reservas.forEach(r => {
+    if (!reportePorEspacio[r.espacio]) {
+      reportePorEspacio[r.espacio] = { cantidad: 0, reservas: [] };
+    }
+    reportePorEspacio[r.espacio].cantidad++;
+    reportePorEspacio[r.espacio].reservas.push(r);
+  });
+
+  res.json({ success: true, reporte: reportePorEspacio });
+});
+
+// === USUARIOS ===
+app.post('/api/admin/usuarios', verificarAdmin, (req, res) => {
+  const { nombre, email, password, torre, apartamento, rol } = req.body;
+
+  // Verificar si el email ya existe
+  if (data.usuarios.find(u => u.email === email)) {
+    return res.status(400).json({ success: false, mensaje: 'El email ya está registrado' });
+  }
+
+  const nuevoUsuario = {
+    id: data.usuarios.length + 1,
+    nombre,
+    email,
+    password,
+    apartamento: `${torre} - Apto ${apartamento}`,
+    rol: rol || 'residente',
+    activo: true,
+    fechaCreacion: new Date().toISOString()
+  };
+
+  data.usuarios.push(nuevoUsuario);
+
+  // Si es residente, asignar parqueadero automáticamente
+  if (rol === 'residente') {
+    const parqueaderosDisponibles = data.parqueaderos.filter(p => p.disponible);
+    if (parqueaderosDisponibles.length > 0) {
+      const parqueadero = parqueaderosDisponibles[0];
+      parqueadero.disponible = false;
+      parqueadero.ocupadoPor = `${nuevoUsuario.nombre} - ${nuevoUsuario.apartamento}`;
+
+      data.asignacionesParqueaderos.push({
+        id: data.asignacionesParqueaderos.length + 1,
+        usuarioId: nuevoUsuario.id,
+        parqueaderoId: parqueadero.id,
+        fechaAsignacion: new Date().toISOString()
+      });
+    }
+  }
+
+  guardarDatos();
+  res.json({ success: true, usuario: nuevoUsuario });
+});
+
+app.get('/api/admin/usuarios/todos', verificarAdmin, (req, res) => {
+  const usuariosSinPassword = data.usuarios.map(u => ({
+    id: u.id,
+    nombre: u.nombre,
+    email: u.email,
+    apartamento: u.apartamento,
+    rol: u.rol,
+    activo: u.activo
+  }));
+
+  res.json({ success: true, usuarios: usuariosSinPassword });
+});
+
+// === PERMISOS/SOLICITUDES ===
+app.post('/api/residente/solicitudes', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const { tipo, descripcion, fecha, datos } = req.body;
+
+  const nuevaSolicitud = {
+    id: data.solicitudesPermisos.length + 1,
+    tipo, // 'visitante', 'objeto', 'mudanza', 'trabajo'
+    descripcion,
+    fecha,
+    datos,
+    estado: 'pendiente',
+    solicitadoPor: usuario.nombre,
+    apartamento: usuario.apartamento,
+    fechaSolicitud: new Date().toISOString()
+  };
+
+  data.solicitudesPermisos.push(nuevaSolicitud);
+  guardarDatos();
+
+  res.json({ success: true, solicitud: nuevaSolicitud });
+});
+
+app.get('/api/admin/solicitudes', verificarAdmin, (req, res) => {
+  res.json({ success: true, solicitudes: data.solicitudesPermisos });
+});
+
+app.get('/api/vigilante/solicitudes', verificarVigilante, (req, res) => {
+  res.json({ success: true, solicitudes: data.solicitudesPermisos });
+});
+
+app.put('/api/admin/solicitudes/:id', verificarAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  const { estado, observaciones } = req.body; // estado: 'aprobado', 'rechazado'
+
+  const solicitud = data.solicitudesPermisos.find(s => s.id === id);
+  if (solicitud) {
+    solicitud.estado = estado;
+    solicitud.observaciones = observaciones;
+    solicitud.procesadoPor = req.usuario.nombre;
+    solicitud.fechaProceso = new Date().toISOString();
+
+    guardarDatos();
+    res.json({ success: true, solicitud });
+  } else {
+    res.status(404).json({ success: false, mensaje: 'Solicitud no encontrada' });
+  }
+});
+
+app.put('/api/vigilante/solicitudes/:id', verificarVigilante, (req, res) => {
+  const id = parseInt(req.params.id);
+  const { estado, observaciones } = req.body;
+
+  const solicitud = data.solicitudesPermisos.find(s => s.id === id);
+  if (solicitud) {
+    solicitud.estado = estado;
+    solicitud.observaciones = observaciones;
+    solicitud.procesadoPor = req.usuario.nombre;
+    solicitud.fechaProceso = new Date().toISOString();
+
+    guardarDatos();
+    res.json({ success: true, solicitud });
+  } else {
+    res.status(404).json({ success: false, mensaje: 'Solicitud no encontrada' });
+  }
+});
+
+// === CÁMARAS ===
+app.get('/api/admin/camaras', verificarAdmin, (req, res) => {
+  res.json({ success: true, camaras: data.camaras });
+});
+
+app.post('/api/admin/camaras', verificarAdmin, (req, res) => {
+  const { nombre, ubicacion, url, tipo, visible_residentes } = req.body;
+
+  const nuevaCamara = {
+    id: data.camaras.length + 1,
+    nombre,
+    ubicacion,
+    url,
+    tipo: tipo || 'fija',
+    visible_residentes: visible_residentes || false,
+    activa: true
+  };
+
+  data.camaras.push(nuevaCamara);
+  guardarDatos();
+
+  res.json({ success: true, camara: nuevaCamara });
+});
+
+app.put('/api/admin/camaras/:id', verificarAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  const camara = data.camaras.find(c => c.id === id);
+
+  if (camara) {
+    Object.assign(camara, req.body);
+    guardarDatos();
+    res.json({ success: true, camara });
+  } else {
+    res.status(404).json({ success: false, mensaje: 'Cámara no encontrada' });
+  }
+});
+
+app.get('/api/residente/camaras', (req, res) => {
+  const camarasVisibles = data.camaras.filter(c => c.visible_residentes && c.activa);
+  res.json({ success: true, camaras: camarasVisibles });
+});
+
+app.get('/api/residente/mis-reservas', (req, res) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const reservasUsuario = data.reservas.filter(r => r.usuario === usuario.nombre || r.usuarioId === usuario.id);
+  res.json({ success: true, misReservas: reservasUsuario });
+});
+
+// === PQRS ===
+app.put('/api/admin/pqrs/:id', verificarAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  const { estado, respuesta } = req.body; // estado: 'En proceso', 'Resuelto', 'Rechazado'
+
+  const pqr = data.pqrs.find(p => p.id === id);
+  if (pqr) {
+    pqr.estado = estado;
+    pqr.respuesta = respuesta;
+    pqr.respondidoPor = req.usuario.nombre;
+    pqr.fechaRespuesta = new Date().toISOString();
+
+    guardarDatos();
+    res.json({ success: true, pqr });
+  } else {
+    res.status(404).json({ success: false, mensaje: 'PQRS no encontrada' });
+  }
+});
+
+app.get('/api/admin/pqrs/todas', verificarAdmin, (req, res) => {
+  res.json({ success: true, pqrs: data.pqrs });
+});
+
+// === ENCUESTAS ===
+app.post('/api/admin/encuestas', verificarAdmin, (req, res) => {
+  const { titulo, descripcion, tipo, opciones, fechaCierre } = req.body;
+  // tipo: 'encuesta' o 'votacion'
+
+  const nuevaEncuesta = {
+    id: data.encuestas.length + 1,
+    titulo,
+    descripcion,
+    tipo,
+    opciones: opciones.map((op, i) => ({ id: i + 1, texto: op, votos: 0 })),
+    fechaCreacion: new Date().toISOString(),
+    fechaCierre,
+    activa: true,
+    votos: [],
+    creadaPor: req.usuario.email
+  };
+
+  data.encuestas.push(nuevaEncuesta);
+  guardarDatos();
+
+  res.json({ success: true, encuesta: nuevaEncuesta });
+});
+
+app.get('/api/encuestas', (req, res) => {
+  const encuestasActivas = data.encuestas.filter(e => e.activa);
+  res.json({ success: true, encuestas: encuestasActivas });
+});
+
+app.post('/api/encuestas/:id/votar', (req, res) => {
+  const id = parseInt(req.params.id);
+  const { opcionId } = req.body;
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  const usuario = obtenerUsuarioPorToken(token);
+
+  if (!usuario) {
+    return res.status(401).json({ success: false, mensaje: 'No autorizado' });
+  }
+
+  const encuesta = data.encuestas.find(e => e.id === id);
+  if (!encuesta) {
+    return res.status(404).json({ success: false, mensaje: 'Encuesta no encontrada' });
+  }
+
+  // Verificar si ya votó
+  if (encuesta.votos.find(v => v.usuarioId === usuario.id)) {
+    return res.status(400).json({ success: false, mensaje: 'Ya votaste en esta encuesta' });
+  }
+
+  // Registrar voto
+  const opcion = encuesta.opciones.find(o => o.id === opcionId);
+  if (opcion) {
+    opcion.votos++;
+    encuesta.votos.push({
+      usuarioId: usuario.id,
+      opcionId,
+      fecha: new Date().toISOString()
+    });
+
+    guardarDatos();
+    res.json({ success: true });
+  } else {
+    res.status(400).json({ success: false, mensaje: 'Opción no válida' });
+  }
+});
+
+app.get('/api/admin/encuestas/:id/resultados', verificarAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  const encuesta = data.encuestas.find(e => e.id === id);
+
+  if (encuesta) {
+    const totalVotos = encuesta.votos.length;
+    const resultados = encuesta.opciones.map(op => ({
+      ...op,
+      porcentaje: totalVotos > 0 ? ((op.votos / totalVotos) * 100).toFixed(2) : 0
+    }));
+
+    res.json({
+      success: true,
+      encuesta: {
+        ...encuesta,
+        opciones: resultados,
+        totalVotos
+      }
+    });
+  } else {
+    res.status(404).json({ success: false, mensaje: 'Encuesta no encontrada' });
+  }
+});
+
+// === DOCUMENTOS ===
+app.post('/api/admin/documentos', verificarAdmin, (req, res) => {
+  const { titulo, tipo, descripcion, url, categoria } = req.body;
+  // tipo: 'reglamento', 'acta', 'comunicado', 'otro'
+
+  const nuevoDocumento = {
+    id: data.documentos.length + 1,
+    titulo,
+    tipo,
+    descripcion,
+    url,
+    categoria,
+    fechaSubida: new Date().toISOString(),
+    subidoPor: req.usuario.email,
+    activo: true
+  };
+
+  data.documentos.push(nuevoDocumento);
+  guardarDatos();
+
+  res.json({ success: true, documento: nuevoDocumento });
+});
+
+app.get('/api/documentos', (req, res) => {
+  const documentosActivos = data.documentos.filter(d => d.activo);
+  res.json({ success: true, documentos: documentosActivos });
+});
+
+app.delete('/api/admin/documentos/:id', verificarAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  const documento = data.documentos.find(d => d.id === id);
+
+  if (documento) {
+    documento.activo = false;
+    guardarDatos();
+    res.json({ success: true });
+  } else {
+    res.status(404).json({ success: false, mensaje: 'Documento no encontrado' });
+  }
+});
+
+app.put('/api/admin/documentos/:id', verificarAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  const documento = data.documentos.find(d => d.id === id);
+
+  if (documento) {
+    Object.assign(documento, req.body);
+    documento.fechaActualizacion = new Date().toISOString();
+    guardarDatos();
+    res.json({ success: true, documento });
+  } else {
+    res.status(404).json({ success: false, mensaje: 'Documento no encontrado' });
+  }
+});
+
+// === ESTADÍSTICAS ADMIN ===
+app.get('/api/admin/estadisticas', verificarAdmin, (req, res) => {
+  const totalResidentes = data.usuarios.filter(u => u.rol === 'residente' && u.activo).length;
+  const ingresosMes = data.pagos
+    .filter(p => p.estado === 'pagado')
+    .reduce((sum, p) => sum + p.valor, 0);
+  const vehiculosActivos = data.vehiculosVisitantes.filter(v => v.activo).length;
+  const pqrsPendientes = data.pqrs.filter(p => p.estado === 'Pendiente').length;
+
+  res.json({
+    success: true,
+    totalResidentes,
+    ingresosMes,
+    vehiculosActivos,
+    pqrsPendientes
+  });
+});
+
+// === CONTROL VEHÍCULOS MEJORADO ===
+app.post('/api/vehiculos-visitantes/salida-calculada', verificarAdmin, (req, res) => {
+  const { id } = req.body;
+  const vehiculo = data.vehiculosVisitantes.find(v => v.id === id && v.activo);
+
+  if (!vehiculo) {
+    return res.status(404).json({ success: false, mensaje: 'Vehículo no encontrado' });
+  }
+
+  const fechaSalida = new Date();
+  const fechaIngreso = new Date(vehiculo.fechaIngreso);
+  const tiempoEstancia = fechaSalida - fechaIngreso;
+
+  // Calcular días y horas
+  const diasCompletos = Math.floor(tiempoEstancia / (1000 * 60 * 60 * 24));
+  const horasRestantes = Math.ceil((tiempoEstancia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+  let totalCobrado = 0;
+  let detalleCobro = '';
+
+  if (diasCompletos > 0) {
+    // Cobrar por días
+    totalCobrado = diasCompletos * 12000;
+    detalleCobro = `${diasCompletos} día(s) x $12,000`;
+
+    if (horasRestantes > 2) {
+      totalCobrado += (horasRestantes - 2) * 1000;
+      detalleCobro += ` + ${horasRestantes - 2} hora(s) adicional(es) x $1,000`;
+    }
+  } else {
+    // Solo horas
+    const horasTotales = Math.ceil(tiempoEstancia / (1000 * 60 * 60));
+
+    if (horasTotales <= 2) {
+      totalCobrado = 0;
+      detalleCobro = `${horasTotales} hora(s) - Gratis`;
+    } else if (horasTotales <= 10) {
+      const horasCobradas = horasTotales - 2;
+      totalCobrado = horasCobradas * 1000;
+      detalleCobro = `2 horas gratis + ${horasCobradas} hora(s) x $1,000`;
+    } else {
+      totalCobrado = 12000;
+      detalleCobro = `Más de 10 horas - Tarifa plena $12,000`;
+    }
+  }
+
+  vehiculo.fechaSalida = fechaSalida.toISOString();
+  vehiculo.activo = false;
+  vehiculo.totalCobrado = totalCobrado;
+  vehiculo.detalleCobro = detalleCobro;
+  vehiculo.diasCompletos = diasCompletos;
+  vehiculo.horasTotales = diasCompletos * 24 + horasRestantes;
+
+  // Liberar parqueadero
+  if (vehiculo.parqueadero) {
+    const parqueadero = data.parqueaderos.find(p => p.numero === vehiculo.parqueadero);
+    if (parqueadero) {
+      parqueadero.disponible = true;
+      parqueadero.ocupadoPor = null;
+    }
+  }
+
+  guardarDatos();
+
+  res.json({
+    success: true,
+    vehiculo,
+    resumen: {
+      totalCobrado,
+      detalleCobro,
+      diasCompletos,
+      horasTotales: diasCompletos * 24 + horasRestantes
+    }
+  });
+});
+
+app.get('/api/admin/vehiculos/reporte', verificarAdmin, (req, res) => {
+  const { fechaInicio, fechaFin } = req.query;
+
+  let vehiculos = data.vehiculosVisitantes;
+
+  if (fechaInicio && fechaFin) {
+    vehiculos = vehiculos.filter(v => {
+      const fecha = new Date(v.fechaIngreso);
+      return fecha >= new Date(fechaInicio) && fecha <= new Date(fechaFin);
+    });
+  }
+
+  const totalRecaudado = vehiculos
+    .filter(v => !v.activo && v.totalCobrado)
+    .reduce((sum, v) => sum + v.totalCobrado, 0);
+
+  res.json({
+    success: true,
+    vehiculos,
+    totalRecaudado,
+    totalVehiculos: vehiculos.length
+  });
+});
 
 // Iniciar servidor
 app.listen(PORT, () => {

@@ -156,7 +156,7 @@
     <!-- Aplicación Principal -->
     <div id="main-app" class="hidden">
     <!-- Header mejorado -->
-    <div id="main-header" class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white shadow-2xl">
+    <div class="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white shadow-2xl">
         <div class="p-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
@@ -178,10 +178,6 @@
                     <button class="bg-white/10 p-2 rounded-lg hover:bg-white/20 transition-colors">
                         <i class="fas fa-bell"></i>
                     </button>
-                    <div id="role-indicator" class="px-3 py-1 rounded-full text-sm font-medium bg-blue-500 bg-opacity-20">
-                        <i id="role-icon" class="fas fa-user mr-1"></i>
-                        <span id="role-text">Residente</span>
-                    </div>
                     <button onclick="logout()" class="bg-red-500/80 hover:bg-red-600 px-3 py-2 rounded-lg transition-colors text-sm">
                         <i class="fas fa-sign-out-alt mr-1"></i>Salir
                     </button>
@@ -930,52 +926,22 @@
             apartamentoUsuario: '401A', // Apartamento del usuario actual
             torreUsuario: '4' // Torre del usuario actual
         };
-
-        // Inicializar reloj
-        function actualizarReloj() {
-            const now = new Date();
-            const options = {
-                hour: '2-digit',
-                minute: '2-digit',
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short'
-            };
-            document.getElementById('current-time').textContent = now.toLocaleDateString('es-CO', options);
-        }
-
-        // Sistema de notificaciones
-        function mostrarNotificacion(mensaje, tipo = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `bg-white border-l-4 ${
-                tipo === 'success' ? 'border-green-500' :
-                tipo === 'error' ? 'border-red-500' :
-                'border-blue-500'
-            } p-4 rounded-lg shadow-lg mb-2 animate-slide-up`;
-
-            notification.innerHTML = `
-                <div class="flex items-center">
-                    <i class="fas ${
-                        tipo === 'success' ? 'fa-check-circle text-green-500' :
-                        tipo === 'error' ? 'fa-exclamation-circle text-red-500' :
-                        'fa-info-circle text-blue-500'
-                    } mr-3"></i>
-                    <p class="text-gray-800">${mensaje}</p>
-                    <button onclick="this.parentElement.parentElement.remove()" class="ml-auto text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `;
-
-            document.getElementById('notifications').appendChild(notification);
-
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
+                {
+                    id: 1,
+                    espacio; "Piscina",
+                    fecha; "2025-08-15",
+                    hora; "10:00",
+                    usuario; "Juan Pérez - Apto 401A",
+                    estado; "activa"
                 }
-            }, 5000);
-        }
-
+                {
+                    id: 2,
+                    espacio; "Gimnasio",
+                    fecha; "2025-08-18",
+                    hora; "07:00",
+                    usuario; "María García - Apto 302B",
+                    estado; "activa"
+                }
             pagos: [
                 {
                     id: 1,
@@ -1002,7 +968,7 @@
                     estado: "pendiente"
                 }
             ],
-            mensajes: [
+            mensajes; [
                 {
                     id: 1,
                     usuario: "María García",
@@ -1060,7 +1026,7 @@
                     destinatarioTorre: "4"
                 }
             ],
-            emprendimientos: [
+            emprendimientos; [
                 {
                     id: 1,
                     nombre: "Delicias Caseras",
@@ -1080,7 +1046,7 @@
                     rating: 4.5
                 }
             ],
-            pqrs: [
+            pqrs; [
                 {
                     id: 1,
                     tipo: "Queja",
@@ -1098,7 +1064,7 @@
                     estado: "Resuelta"
                 }
             ],
-            permisos: [
+            permisos; [
                 {
                     id: 1,
                     tipo: "Entrada Personal",
@@ -1116,75 +1082,9 @@
                     fecha: "11/08/2025 15:20"
                 }
             ]
-        };
+        
 
-        // Funciones de navegación
-        function mostrarSeccion(seccion) {
-            // Mostrar loading
-            mostrarLoading();
-
-            setTimeout(() => {
-                // Ocultar todas las secciones
-                document.querySelectorAll('.seccion').forEach(sec => sec.classList.remove('active'));
-                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-
-                // Mostrar sección seleccionada
-                document.getElementById(seccion).classList.add('active');
-                document.querySelector(`[data-section="${seccion}"]`).classList.add('active');
-
-                // Cargar datos de la sección
-                renderizarSeccion(seccion);
-                actualizarStats();
-
-                // Ocultar loading
-                ocultarLoading();
-            }, 300);
-        }
-
-        function mostrarLoading() {
-            document.getElementById('loading-overlay').classList.remove('hidden');
-            document.getElementById('loading-overlay').classList.add('flex');
-        }
-
-        function ocultarLoading() {
-            document.getElementById('loading-overlay').classList.add('hidden');
-            document.getElementById('loading-overlay').classList.remove('flex');
-        }
-
-        // Actualizar estadísticas del dashboard
-        function actualizarStats() {
-            document.getElementById('stats-reservas').textContent = appData.reservas.length;
-            document.getElementById('stats-pagos').textContent = appData.pagos.filter(p => p.estado === 'pagado').length;
-            document.getElementById('stats-pqrs').textContent = appData.pqrs.filter(p => p.estado === 'En proceso').length;
-            document.getElementById('stats-permisos').textContent = appData.permisos.length;
-        }
-
-        // Renderizar secciones
-        function renderizarSeccion(seccion) {
-            switch(seccion) {
-                case 'dashboard':
-                    // Dashboard ya se maneja con actualizarStats
-                    break;
-                case 'reservas':
-                    renderizarReservas();
-                    break;
-                case 'pagos':
-                    renderizarPagos();
-                    break;
-                case 'chat':
-                    renderizarChat();
-                    break;
-                case 'emprendimientos':
-                    renderizarEmprendimientos();
-                    break;
-                case 'pqr':
-                    renderizarPqrs();
-                    break;
-                case 'permisos':
-                    renderizarPermisos();
-                    break;
-            }
-        }
+        // Inicializar reloj
         function actualizarReloj() {
             const now = new Date();
             const options = { 
@@ -1566,7 +1466,7 @@
         function renderizarChat() {
             const container = document.getElementById('chat-mensajes');
             const mensajesFiltrados = obtenerMensajesFiltrados();
-
+            
             if (mensajesFiltrados.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-12">
@@ -1580,10 +1480,75 @@
 
             container.innerHTML = mensajesFiltrados.map(mensaje => {
                 const esMensajePropio = mensaje.apartamento === chatState.apartamentoUsuario;
-                const claseExtra = mensaje.tipo === 'privado' ? 'mensaje-privado' :
-                                 mensaje.tipo === 'admin' ? 'mensaje-admin' :
+                const claseExtra = mensaje.tipo === 'privado' ? 'mensaje-privado' : 
+                                 mensaje.tipo === 'admin' ? 'mensaje-admin' : 
                                  mensaje.tipo === 'torre' ? 'mensaje-torre' : '';
+                
+                return `
+                    <div class="bg-white border border-gray-100 rounded-xl p-4 mb-4 hover:shadow-md transition-all duration-300 ${claseExtra}">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-gradient-to-br ${
+                                    mensaje.tipo === 'admin' ? 'from-red-500 to-red-600' :
+                                    mensaje.tipo === 'privado' ? 'from-yellow-500 to-orange-600' :
+                                    mensaje.tipo === 'torre' ? 'from-green-500 to-green-600' :
+                                    'from-blue-500 to-indigo-600'
+                                } rounded-full flex items-center justify-center text-white font-bold">
+                                    ${mensaje.tipo === 'admin' ? '🛡️' : mensaje.usuario.charAt(0)}
+                                </div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="font-semibold ${
+                                            mensaje.tipo === 'admin' ? 'text-red-600' :
+                                            mensaje.tipo === 'privado' ? 'text-yellow-600' :
+                                            mensaje.tipo === 'torre' ? 'text-green-600' :
+                                            'text-blue-600'
+                                        }">${mensaje.usuario}</h4>
+                                        ${mensaje.tipo === 'privado' ? '<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Privado</span>' : ''}
+                                        ${mensaje.tipo === 'admin' ? '<span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">Admin</span>' : ''}
+                                        ${mensaje.tipo === 'torre' ? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Torre</span>' : ''}
+                                        ${esMensajePropio ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Tú</span>' : ''}
+                                    </div>
+                                    <span class="text-xs text-gray-500">${mensaje.apartamento}</span>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-400">${mensaje.fecha}</span>
+                        </div>
+                        <p class="text-gray-700 ml-13 ${mensaje.tipo === 'admin' ? 'font-medium' : ''}">${mensaje.mensaje}</p>
+                        ${mensaje.tipo === 'privado' && !esMensajePropio ? `
+                            <div class="ml-13 mt-2">
+                                <button onclick="responderMensajePrivado('${mensaje.apartamento}')" class="text-xs text-yellow-600 hover:text-yellow-800">
+                                    <i class="fas fa-reply mr-1"></i>Responder
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+            const container = document.getElementById('chat-mensajes');
+        function renderizarChat() {
+            const container = document.getElementById('chat-mensajes');
+            const mensajesFiltrados = obtenerMensajesFiltrados();
+            
+            if (mensajesFiltrados.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-comments text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No hay mensajes en este chat</p>
+                        <p class="text-sm text-gray-400">¡Sé el primero en escribir!</p>
+                    </div>
+                `;
+                return;
+            }
 
+            container.innerHTML = mensajesFiltrados.map(mensaje => {
+                const esMensajePropio = mensaje.apartamento === chatState.apartamentoUsuario;
+                const claseExtra = mensaje.tipo === 'privado' ? 'mensaje-privado' : 
+                                 mensaje.tipo === 'admin' ? 'mensaje-admin' : 
+                                 mensaje.tipo === 'torre' ? 'mensaje-torre' : '';
+                
                 return `
                     <div class="bg-white border border-gray-100 rounded-xl p-4 mb-4 hover:shadow-md transition-all duration-300 ${claseExtra}">
                         <div class="flex justify-between items-start mb-2">
@@ -2135,8 +2100,6 @@
 
                     // Actualizar información del usuario en el header
                     updateUserInfo();
-                    // Actualizar interfaz según el rol del usuario
-                    updateUIForRole();
 
                     showMessage('¡Bienvenido!', 'success');
                 } else {
@@ -2182,144 +2145,6 @@
             }
         }
 
-        function updateUIForRole() {
-            if (!currentUser) return;
-
-            const header = document.getElementById('main-header');
-            const roleIndicator = document.getElementById('role-indicator');
-            const roleIcon = document.getElementById('role-icon');
-            const roleText = document.getElementById('role-text');
-            const navigationTabs = document.querySelectorAll('.nav-tab');
-
-            // Remover todas las clases de color anteriores
-            if (header) {
-                header.className = header.className.replace(/bg-gradient-to-r[\w\s\-]*/g, '');
-            }
-
-            // Configurar colores y elementos según el rol
-            switch(currentUser.rol) {
-                case 'residente':
-                    // Interfaz azul para residentes (normal)
-                    if (header) {
-                        header.className = 'bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white shadow-xl';
-                    }
-                    if (roleIndicator) {
-                        roleIndicator.className = 'px-3 py-1 rounded-full text-sm font-medium bg-blue-500 bg-opacity-20';
-                    }
-                    if (roleIcon) roleIcon.className = 'fas fa-user mr-1';
-                    if (roleText) roleText.textContent = 'Residente';
-
-                    // Mostrar solo tabs de residente
-                    showTabsForRole('residente');
-                    updateTabColors('blue');
-                    break;
-
-                case 'vigilante':
-                    // Interfaz amarilla para vigilantes
-                    if (header) {
-                        header.className = 'bg-gradient-to-r from-yellow-600 via-yellow-700 to-amber-700 text-white shadow-xl';
-                    }
-                    if (roleIndicator) {
-                        roleIndicator.className = 'px-3 py-1 rounded-full text-sm font-medium bg-yellow-500 bg-opacity-20';
-                    }
-                    if (roleIcon) roleIcon.className = 'fas fa-shield-alt mr-1';
-                    if (roleText) roleText.textContent = 'Vigilante';
-
-                    // Mostrar solo tabs de vigilante
-                    showTabsForRole('vigilante');
-                    updateTabColors('yellow');
-                    break;
-
-                case 'admin':
-                    // Interfaz rojita para administradores
-                    if (header) {
-                        header.className = 'bg-gradient-to-r from-red-600 via-red-700 to-pink-700 text-white shadow-xl';
-                    }
-                    if (roleIndicator) {
-                        roleIndicator.className = 'px-3 py-1 rounded-full text-sm font-medium bg-red-500 bg-opacity-20';
-                    }
-                    if (roleIcon) roleIcon.className = 'fas fa-crown mr-1';
-                    if (roleText) roleText.textContent = 'Administrador';
-
-                    // Mostrar todos los tabs para admin
-                    showTabsForRole('admin');
-                    updateTabColors('red');
-                    break;
-            }
-        }
-
-        function showTabsForRole(role) {
-            // Ocultar todos los tabs específicos primero (excepto dashboard)
-            const allTabs = document.querySelectorAll('.nav-btn:not([data-section="dashboard"])');
-            allTabs.forEach(tab => tab.classList.add('hidden'));
-
-            // Crear tabs dinámicos según el rol
-            const navContainer = document.querySelector('.flex.overflow-x-auto.scrollbar-hide');
-
-            // Agregar tabs específicos según el rol
-            switch(role) {
-                case 'residente':
-                    // Mostrar tabs básicos de residente (los que ya existen)
-                    ['reservas', 'pagos', 'chat', 'emprendimientos', 'pqr', 'permisos'].forEach(section => {
-                        const tab = document.querySelector(`[data-section="${section}"]`);
-                        if (tab) tab.classList.remove('hidden');
-                    });
-
-                    // Agregar tabs adicionales que faltan
-                    addTabIfNotExists(navContainer, 'noticias', 'fas fa-newspaper', 'Noticias');
-                    addTabIfNotExists(navContainer, 'arriendos', 'fas fa-home', 'Arriendos');
-                    break;
-
-                case 'vigilante':
-                    // Mostrar solo tabs específicos de vigilante
-                    ['permisos'].forEach(section => {
-                        const tab = document.querySelector(`[data-section="${section}"]`);
-                        if (tab) tab.classList.remove('hidden');
-                    });
-
-                    // Agregar tabs específicos de vigilante
-                    addTabIfNotExists(navContainer, 'control-vehiculos', 'fas fa-car', 'Control de Vehículos');
-                    addTabIfNotExists(navContainer, 'noticias', 'fas fa-newspaper', 'Noticias');
-                    break;
-
-                case 'admin':
-                    // Mostrar todos los tabs existentes
-                    ['reservas', 'pagos', 'chat', 'emprendimientos', 'pqr', 'permisos'].forEach(section => {
-                        const tab = document.querySelector(`[data-section="${section}"]`);
-                        if (tab) tab.classList.remove('hidden');
-                    });
-
-                    // Agregar todos los tabs adicionales de admin
-                    addTabIfNotExists(navContainer, 'usuarios', 'fas fa-users', 'Usuarios');
-                    addTabIfNotExists(navContainer, 'control-vehiculos', 'fas fa-car', 'Control de Vehículos');
-                    addTabIfNotExists(navContainer, 'noticias', 'fas fa-newspaper', 'Noticias');
-                    addTabIfNotExists(navContainer, 'arriendos', 'fas fa-home', 'Arriendos');
-                    addTabIfNotExists(navContainer, 'sorteo-parqueaderos', 'fas fa-dice', 'Sorteo Parqueaderos');
-                    break;
-            }
-        }
-
-        function addTabIfNotExists(container, section, icon, text) {
-            // Verificar si el tab ya existe
-            if (!document.querySelector(`[data-section="${section}"]`)) {
-                const button = document.createElement('button');
-                button.onclick = () => mostrarSeccion(section);
-                button.className = 'nav-btn';
-                button.setAttribute('data-section', section);
-                button.innerHTML = `<i class="${icon} mr-2"></i>${text}`;
-                container.appendChild(button);
-            }
-        }
-
-        function updateTabColors(colorScheme) {
-            const navTabs = document.querySelectorAll('.nav-btn');
-
-            navTabs.forEach(tab => {
-                // Los colores se manejan a través de CSS, pero podemos agregar clases específicas
-                tab.setAttribute('data-color-scheme', colorScheme);
-            });
-        }
-
         function logout() {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
@@ -2356,7 +2181,6 @@
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-app').classList.remove('hidden');
                 updateUserInfo();
-                updateUIForRole();
             }
         });
     </script>
