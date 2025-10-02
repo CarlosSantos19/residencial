@@ -6,6 +6,9 @@ class Pago {
   final String estado;
   final String vencimiento;
 
+  // Alias para monto (mismo que valor)
+  int get monto => valor;
+
   Pago({
     required this.id,
     required this.concepto,

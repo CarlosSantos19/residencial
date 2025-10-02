@@ -4,6 +4,7 @@ class Reserva {
   final String fecha;
   final String hora;
   final String usuario;
+  final String estado;
 
   Reserva({
     required this.id,
@@ -11,6 +12,7 @@ class Reserva {
     required this.fecha,
     required this.hora,
     required this.usuario,
+    this.estado = 'confirmada',
   });
 
   factory Reserva.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class Reserva {
       fecha: json['fecha'],
       hora: json['hora'],
       usuario: json['usuario'],
+      estado: json['estado'] ?? 'confirmada',
     );
   }
 
@@ -30,6 +33,7 @@ class Reserva {
       'fecha': fecha,
       'hora': hora,
       'usuario': usuario,
+      'estado': estado,
     };
   }
 

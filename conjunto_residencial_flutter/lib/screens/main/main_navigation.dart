@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dashboard_screen.dart';
-import '../reservas/reservas_screen.dart';
-import '../pagos/pagos_screen.dart';
-import '../chat/chat_screen.dart';
-import '../emprendimientos/emprendimientos_screen.dart';
+import 'package:provider/provider.dart';
+import '../../services/auth_service.dart';
+import '../../config/tab_config.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -13,351 +11,322 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation>
-    with TickerProviderStateMixin {
-  int _currentIndex = 0;
-  late PageController _pageController;
-  late AnimationController _animationController;
-
-  final List<NavigationItem> _navigationItems = [
-    NavigationItem(
-      icon: Icons.dashboard_outlined,
-      activeIcon: Icons.dashboard,
-      label: 'Dashboard',
-      screen: const DashboardScreen(),
-    ),
-    NavigationItem(
-      icon: Icons.calendar_today_outlined,
-      activeIcon: Icons.calendar_today,
-      label: 'Reservas',
-      screen: const ReservasScreen(),
-    ),
-    NavigationItem(
-      icon: Icons.payment_outlined,
-      activeIcon: Icons.payment,
-      label: 'Pagos',
-      screen: const PagosScreen(),
-    ),
-    NavigationItem(
-      icon: Icons.chat_bubble_outline,
-      activeIcon: Icons.chat_bubble,
-      label: 'Chat',
-      screen: const ChatScreen(),
-    ),
-    NavigationItem(
-      icon: Icons.store_outlined,
-      activeIcon: Icons.store,
-      label: 'Negocios',
-      screen: const EmprendimientosScreen(),
-    ),
-  ];
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  late List<TabItem> _tabs;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _animationController.forward();
+    final authService = context.read<AuthService>();
+    final user = authService.currentUser!;
+    _tabs = TabConfig.getTabsForRole(user.rol);
+    _tabController = TabController(length: _tabs.length, vsync: this);
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
-    _animationController.dispose();
+    _tabController.dispose();
     super.dispose();
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthService>().currentUser!;
+
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        children: _navigationItems.map((item) => item.screen).toList(),
+      appBar: AppBar(
+        title: Text('Conjunto Aralia de Castilla'),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [user.rol.gradientStart, user.rol.gradientEnd],
+            ),
+          ),
+        ),
+        bottom: _tabs.length > 5
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(48),
+                child: Container(
+                  color: Colors.white.withOpacity(0.1),
+                  child: TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    indicatorColor: Colors.white,
+                    indicatorWeight: 3,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.white.withOpacity(0.7),
+                    tabs: _tabs.map((tab) {
+                      return Tab(
+                        icon: Icon(tab.icon, size: 20),
+                        text: tab.titulo,
+                      );
+                    }).toList(),
+                  ),
+                ),
+              )
+            : null,
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
-      floatingActionButton: _buildFloatingActionButton(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      drawer: _buildDrawer(),
+      body: TabBarView(
+        controller: _tabController,
+        children: _tabs.map((tab) => tab.screen).toList(),
+      ),
+      bottomNavigationBar: _tabs.length <= 5 ? _buildBottomNav() : null,
     );
   }
 
-  Widget _buildBottomNavigationBar() {
+  Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        child: BottomAppBar(
-          height: 80,
-          color: Colors.white,
-          elevation: 0,
-          notchMargin: 8,
-          shape: const CircularNotchedRectangle(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                // Primeros dos elementos
-                for (int i = 0; i < 2; i++)
-                  _buildNavItem(i),
-
-                // Espacio para el FAB
-                const SizedBox(width: 40),
-
-                // Últimos tres elementos
-                for (int i = 2; i < _navigationItems.length; i++)
-                  _buildNavItem(i),
-              ],
-            ),
-          ),
-        ),
+      child: TabBar(
+        controller: _tabController,
+        labelColor: context.read<AuthService>().currentUser!.rol.primaryColor,
+        unselectedLabelColor: Colors.grey,
+        indicatorColor: context.read<AuthService>().currentUser!.rol.primaryColor,
+        tabs: _tabs.map((tab) {
+          return Tab(
+            icon: Icon(tab.icon),
+            text: tab.titulo,
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildNavItem(int index) {
-    final item = _navigationItems[index];
-    final isSelected = _currentIndex == index;
+  Widget _buildDrawer() {
+    final authService = context.read<AuthService>();
+    final user = authService.currentUser!;
 
-    return GestureDetector(
-      onTap: () => _onItemTapped(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF3B82F6).withOpacity(0.1)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(
-                isSelected ? item.activeIcon : item.icon,
-                key: ValueKey(isSelected),
-                color: isSelected
-                    ? const Color(0xFF3B82F6)
-                    : Colors.grey.shade600,
-                size: 24,
+    return Drawer(
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [user.rol.gradientStart, user.rol.gradientEnd],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              item.label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected
-                    ? const Color(0xFF3B82F6)
-                    : Colors.grey.shade600,
+            child: SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundColor: Colors.white,
+                    child: Text(
+                      user.nombre[0].toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: user.rol.primaryColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    user.nombre,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user.email,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${user.rol.displayName} - Apto ${user.apartamento}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget? _buildFloatingActionButton() {
-    // Solo mostrar FAB en ciertas pantallas
-    if (_currentIndex == 0) { // Dashboard
-      return FloatingActionButton(
-        onPressed: () {
-          _showQuickActionsBottomSheet();
-        },
-        backgroundColor: const Color(0xFF3B82F6),
-        child: const Icon(Icons.add, color: Colors.white),
-      );
-    }
-    return null;
-  }
-
-  void _showQuickActionsBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Acciones Rápidas',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            GridView.count(
-              shrinkWrap: true,
-              crossAxisCount: 3,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
               children: [
-                _buildQuickActionItem(
-                  icon: Icons.calendar_today,
-                  label: 'Nueva Reserva',
-                  color: const Color(0xFF3B82F6),
+                const SizedBox(height: 8),
+                ..._tabs.map((tab) {
+                  final index = _tabs.indexOf(tab);
+                  final isSelected = _tabController.index == index;
+                  return ListTile(
+                    leading: Icon(
+                      tab.icon,
+                      color: isSelected ? user.rol.primaryColor : Colors.grey,
+                    ),
+                    title: Text(
+                      tab.titulo,
+                      style: TextStyle(
+                        color: isSelected ? user.rol.primaryColor : Colors.black87,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    selected: isSelected,
+                    selectedTileColor: user.rol.primaryColor.withOpacity(0.1),
+                    onTap: () {
+                      _tabController.animateTo(index);
+                      Navigator.pop(context);
+                    },
+                  );
+                }).toList(),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.settings, color: Colors.grey),
+                  title: const Text('Configuración'),
                   onTap: () {
                     Navigator.pop(context);
-                    _onItemTapped(1); // Ir a reservas
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Configuración en desarrollo'),
+                      ),
+                    );
                   },
                 ),
-                _buildQuickActionItem(
-                  icon: Icons.payment,
-                  label: 'Ver Pagos',
-                  color: const Color(0xFF10B981),
+                ListTile(
+                  leading: const Icon(Icons.help_outline, color: Colors.grey),
+                  title: const Text('Ayuda'),
                   onTap: () {
                     Navigator.pop(context);
-                    _onItemTapped(2); // Ir a pagos
+                    _showAyuda();
                   },
                 ),
-                _buildQuickActionItem(
-                  icon: Icons.chat,
-                  label: 'Chat',
-                  color: const Color(0xFFF59E0B),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _onItemTapped(3); // Ir a chat
-                  },
-                ),
-                _buildQuickActionItem(
-                  icon: Icons.support_agent,
-                  label: 'Nueva PQR',
-                  color: const Color(0xFFEF4444),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Implementar nueva PQR
-                  },
-                ),
-                _buildQuickActionItem(
-                  icon: Icons.shield,
-                  label: 'Nuevo Permiso',
-                  color: const Color(0xFF8B5CF6),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Implementar nuevo permiso
-                  },
-                ),
-                _buildQuickActionItem(
-                  icon: Icons.qr_code_scanner,
-                  label: 'Escanear QR',
-                  color: const Color(0xFF6366F1),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Implementar scanner QR
+                ListTile(
+                  leading: const Icon(Icons.logout, color: Colors.red),
+                  title: const Text(
+                    'Cerrar Sesión',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onTap: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Cerrar Sesión'),
+                        content: const Text('¿Estás seguro de cerrar sesión?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancelar'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
+                            child: const Text('Cerrar Sesión'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirm == true && mounted) {
+                      authService.logout();
+                      Navigator.pushReplacementNamed(context, '/login');
+                    }
                   },
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActionItem({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: color.withOpacity(0.2),
-            width: 1,
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: color,
-              size: 28,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Versión 1.0.0',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 12,
+              ),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
-}
 
-class NavigationItem {
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-  final Widget screen;
-
-  NavigationItem({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
-    required this.screen,
-  });
+  void _showAyuda() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Ayuda'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Conjunto Aralia de Castilla',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Sistema de gestión integral para el conjunto residencial.',
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Funcionalidades principales:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              ..._tabs.map((tab) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      Icon(tab.icon, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(tab.titulo)),
+                    ],
+                  ),
+                );
+              }).toList(),
+              const SizedBox(height: 16),
+              const Text(
+                'Para soporte técnico contacta al administrador.',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
 }
