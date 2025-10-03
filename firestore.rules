@@ -1,0 +1,156 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Función helper para verificar autenticación
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Función helper para verificar si es administrador
+    function isAdmin() {
+      return isSignedIn() &&
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+    }
+
+    // Función helper para verificar si es vigilante
+    function isVigilante() {
+      return isSignedIn() &&
+             (get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'vigilante' ||
+              get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin');
+    }
+
+    // Función helper para verificar si es el dueño del recurso
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Usuarios - Solo lectura propia y admin puede ver todos
+    match /usuarios/{userId} {
+      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Noticias - Todos pueden leer, solo admin puede escribir
+    match /noticias/{noticiaId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Reservas - Usuarios pueden ver las suyas, admin ve todas
+    match /reservas/{reservaId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || isOwner(resource.data.usuarioId);
+    }
+
+    // PQRS - Usuarios pueden ver las suyas y crear, admin ve todas
+    match /pqrs/{pqrsId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || isOwner(resource.data.usuarioId);
+      allow delete: if isAdmin();
+    }
+
+    // Pagos - Usuarios ven los suyos, admin ve todos
+    match /pagos/{pagoId} {
+      allow read: if isSignedIn() && (isOwner(resource.data.usuarioId) || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Emprendimientos - Todos pueden leer, dueño y admin pueden escribir
+    match /emprendimientos/{emprendimientoId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || isOwner(resource.data.usuarioId);
+    }
+
+    // Reseñas - Todos pueden leer, usuarios pueden crear
+    match /resenas/{resenaId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isOwner(resource.data.usuarioId);
+    }
+
+    // Chat General - Todos pueden leer y escribir
+    match /chats/general/mensajes/{mensajeId} {
+      allow read, create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // Chat Admin - Solo admin
+    match /chats/admin/mensajes/{mensajeId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Chat Vigilantes - Solo vigilantes y admin
+    match /chats/vigilantes/mensajes/{mensajeId} {
+      allow read, write: if isVigilante();
+    }
+
+    // Chats Privados - Solo participantes
+    match /chats/privados/{chatId}/mensajes/{mensajeId} {
+      allow read, write: if isSignedIn() &&
+                            (request.auth.uid in resource.data.participantes ||
+                             request.auth.uid in get(/databases/$(database)/documents/chats/privados/$(chatId)).data.participantes);
+    }
+
+    // Vehículos Visitantes - Vigilantes y admin
+    match /vehiculosVisitantes/{vehiculoId} {
+      allow read: if isSignedIn();
+      allow write: if isVigilante();
+    }
+
+    // Permisos - Usuarios crean, vigilantes aprueban
+    match /permisos/{permisoId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isVigilante() || isOwner(resource.data.usuarioId);
+      allow delete: if isAdmin();
+    }
+
+    // Encuestas - Todos leen, admin escribe
+    match /encuestas/{encuestaId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Votos de encuestas - Solo crear
+    match /encuestas/{encuestaId}/votos/{votoId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+    }
+
+    // Paquetes - Usuarios ven los suyos, vigilantes escriben
+    match /paquetes/{paqueteId} {
+      allow read: if isSignedIn() && (isOwner(resource.data.usuarioId) || isVigilante());
+      allow write: if isVigilante();
+    }
+
+    // Parqueaderos - Admin gestiona, usuarios ven el suyo
+    match /parqueaderos/{parqueaderoId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Sorteo Parqueaderos - Admin escribe, todos leen
+    match /sorteoParqueaderos/{sorteoId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Apartamentos en Arriendo - Todos leen, dueño y admin escriben
+    match /apartamentosArriendo/{apartamentoId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || isOwner(resource.data.usuarioId);
+    }
+
+    // Incidentes (Alcaldía) - Todos leen y reportan
+    match /incidentes/{incidenteId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+  }
+}
