@@ -1,42 +1,29 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
+// import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
 
-// Handler para mensajes en background
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint('Handling a background message: ${message.messageId}');
-}
+// Handler para mensajes en background (deshabilitado sin Firebase)
+// @pragma('vm:entry-point')
+// Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+//   debugPrint('Handling a background message: ${message.messageId}');
+// }
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  // final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;
 
-  // Inicializar servicio de notificaciones
+  // Inicializar servicio de notificaciones (solo local, sin Firebase)
   Future<void> initialize() async {
     if (_initialized) return;
 
     try {
-      // Solicitar permisos
-      NotificationSettings settings = await _fcm.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
-
-      debugPrint('User granted permission: ${settings.authorizationStatus}');
-
       // Configurar notificaciones locales
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -72,51 +59,16 @@ class NotificationService {
               AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(channel);
 
-      // Configurar handler para mensajes en background
-      FirebaseMessaging.onBackgroundMessage(
-          _firebaseMessagingBackgroundHandler);
-
-      // Listener para mensajes en foreground
-      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-      // Listener para cuando se toca una notificación
-      FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
-
-      // Obtener token FCM
-      String? token = await _fcm.getToken();
-      debugPrint('FCM Token: $token');
-
       _initialized = true;
+      debugPrint('Notification service initialized (local only, Firebase disabled)');
     } catch (e) {
       debugPrint('Error initializing notifications: $e');
     }
   }
 
-  // Obtener token FCM
+  // Obtener token FCM (deshabilitado)
   Future<String?> getToken() async {
-    return await _fcm.getToken();
-  }
-
-  // Handler para mensajes en foreground
-  Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    debugPrint('Got a message whilst in the foreground!');
-    debugPrint('Message data: ${message.data}');
-
-    if (message.notification != null) {
-      debugPrint('Message also contained a notification: ${message.notification}');
-      await showLocalNotification(
-        title: message.notification!.title ?? 'Nueva notificación',
-        body: message.notification!.body ?? '',
-        payload: message.data.toString(),
-      );
-    }
-  }
-
-  // Handler para cuando se abre la app desde una notificación
-  Future<void> _handleMessageOpenedApp(RemoteMessage message) async {
-    debugPrint('Message clicked!');
-    debugPrint('Message data: ${message.data}');
-    // Aquí puedes navegar a una pantalla específica según el tipo de notificación
+    return null; // Firebase deshabilitado
   }
 
   // Handler para cuando se toca una notificación local
