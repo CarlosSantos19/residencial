@@ -14,6 +14,7 @@ import '../models/chat.dart';
 import '../models/arriendo.dart';
 import '../models/permiso.dart';
 import '../models/incidente_alcaldia.dart';
+import '../models/asignacion_parqueadero.dart';
 
 class ApiService {
   // IMPORTANTE: Usar localhost:8081 según el CLAUDE.md
@@ -358,7 +359,12 @@ class ApiService {
     }
   }
 
-  Future<PQRS> crearPQRS(String tipo, String asunto, String descripcion) async {
+  Future<PQRS> crearPQRS({
+    required String tipo,
+    required String asunto,
+    required String descripcion,
+    List<String>? adjuntos,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/pqrs'),
@@ -367,9 +373,10 @@ class ApiService {
           'tipo': tipo,
           'asunto': asunto,
           'descripcion': descripcion,
+          'imagenes': adjuntos ?? [],
         }),
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return PQRS.fromJson(jsonDecode(response.body));
       }
       throw Exception('Error creando PQRS');
@@ -695,14 +702,14 @@ class ApiService {
     }
   }
 
-  Future<Mensaje> enviarMensajePrivado(int otroUsuarioId, String mensaje) async {
+  Future<Mensaje> enviarMensajePrivado(int chatId, String mensaje) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/chat/privado/$otroUsuarioId'),
+        Uri.parse('$baseUrl/chat/privado/$chatId/mensaje'),
         headers: _headers,
         body: jsonEncode({'mensaje': mensaje}),
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return Mensaje.fromJson(jsonDecode(response.body));
       }
       throw Exception('Error enviando mensaje privado');
@@ -1000,14 +1007,24 @@ class ApiService {
     }
   }
 
-  Future<VehiculoVisitante> registrarIngresoVehiculo(Map<String, dynamic> datos) async {
+  Future<VehiculoVisitante> registrarIngresoVehiculo({
+    required String placa,
+    required String apartamento,
+    String? visitanteNombre,
+    String? tipo,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/vehiculos-visitantes/ingreso'),
         headers: _headers,
-        body: jsonEncode(datos),
+        body: jsonEncode({
+          'placa': placa,
+          'apartamento': apartamento,
+          'visitanteNombre': visitanteNombre,
+          'tipo': tipo ?? 'automovil',
+        }),
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return VehiculoVisitante.fromJson(jsonDecode(response.body));
       }
       throw Exception('Error registrando ingreso');
@@ -1016,14 +1033,20 @@ class ApiService {
     }
   }
 
-  Future<ReciboParqueadero> registrarSalidaVehiculo(String placa) async {
+  Future<ReciboParqueadero> registrarSalidaVehiculo(
+    int vehiculoId, {
+    String? metodoPago,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/vehiculos-visitantes/salida'),
         headers: _headers,
-        body: jsonEncode({'placa': placa}),
+        body: jsonEncode({
+          'vehiculoId': vehiculoId,
+          'metodoPago': metodoPago ?? 'efectivo',
+        }),
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return ReciboParqueadero.fromJson(jsonDecode(response.body));
       }
       throw Exception('Error registrando salida');
@@ -1214,6 +1237,446 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');
+    }
+  }
+
+  // ========== MÉTODOS AGREGADOS PARA FLUTTER APP ==========
+
+  // Dashboard - Noticias recientes
+  Future<List<Noticia>> getNoticiasRecientes({int limit = 5}) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/noticias/recientes?limit=$limit'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => Noticia.fromJson(json)).toList();
+      }
+      throw Exception('Error cargando noticias');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Dashboard - Próximas reservas
+  Future<List<Reserva>> getProximasReservas() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/reservas/proximas'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => Reserva.fromJson(json)).toList();
+      }
+      throw Exception('Error cargando próximas reservas');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Dashboard - Pagos pendientes
+  Future<List<Pago>> getPagosPendientes() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/pagos/pendientes'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => Pago.fromJson(json)).toList();
+      }
+      throw Exception('Error cargando pagos pendientes');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Dashboard - Estadísticas residente
+  Future<Map<String, dynamic>> getEstadisticasResidente() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/estadisticas/residente'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      throw Exception('Error cargando estadísticas');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Encuestas - Activas
+  Future<List<Encuesta>> getEncuestasActivas() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/encuestas/activas'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => Encuesta.fromJson(json)).toList();
+      }
+      throw Exception('Error cargando encuestas');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Encuestas - Todas (para admin)
+  Future<List<Encuesta>> getTodasEncuestas() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/encuestas'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => Encuesta.fromJson(json)).toList();
+      }
+      throw Exception('Error cargando encuestas');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Vehículos - Por apartamento
+  Future<List<VehiculoVisitante>> getVehiculosDeApartamento(String apartamento) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/vehiculos-visitantes/por-apartamento/$apartamento'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => VehiculoVisitante.fromJson(json)).toList();
+      }
+      throw Exception('Error cargando vehículos');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Vehículos - Todos activos
+  Future<List<VehiculoVisitante>> getTodosVehiculosActivos() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/vehiculos-visitantes/activos'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => VehiculoVisitante.fromJson(json)).toList();
+      }
+      throw Exception('Error cargando vehículos');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Estadísticas Admin
+  Future<Map<String, dynamic>> getEstadisticasAdmin() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/estadisticas'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      throw Exception('Error cargando estadísticas');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Estadísticas Admin - Pagos
+  Future<Map<String, dynamic>> getEstadisticasPagos() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/estadisticas/pagos'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      throw Exception('Error cargando estadísticas de pagos');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Estadísticas Admin - Reservas
+  Future<Map<String, dynamic>> getEstadisticasReservas() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/estadisticas/reservas'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      throw Exception('Error cargando estadísticas de reservas');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // ========== SORTEO DE PARQUEADEROS ==========
+
+  // Obtener último sorteo de parqueaderos
+  Future<Map<String, dynamic>?> getUltimoSorteoParqueaderos() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/sorteo-parqueaderos/ultimo'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      if (response.statusCode == 404) {
+        return null; // No hay sorteo previo
+      }
+      throw Exception('Error cargando último sorteo');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Obtener residentes activos
+  Future<List<User>> getResidentesActivos() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/admin/residentes/activos'),
+        headers: _headers,
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => User.fromJson(json)).toList();
+      }
+      throw Exception('Error cargando residentes');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // Guardar sorteo de parqueaderos
+  Future<void> guardarSorteoParqueaderos(List<AsignacionParqueadero> asignaciones) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/admin/sorteo-parqueaderos'),
+        headers: _headers,
+        body: jsonEncode({
+          'asignaciones': asignaciones.map((a) => a.toJson()).toList(),
+          'fecha': DateTime.now().toIso8601String(),
+        }),
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Error guardando sorteo');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // ========== RESEÑAS ==========
+
+  Future<void> crearResena({
+    required int emprendimientoId,
+    required int calificacion,
+    String? comentario,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/emprendimientos/$emprendimientoId/resenas'),
+        headers: _headers,
+        body: jsonEncode({
+          'calificacion': calificacion,
+          'comentario': comentario ?? '',
+        }),
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Error creando reseña');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // ========== VOTACIÓN ENCUESTAS ==========
+
+  Future<void> responderEncuesta(int encuestaId, int opcionId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/encuestas/$encuestaId/votar'),
+        headers: _headers,
+        body: jsonEncode({
+          'opcionId': opcionId,
+        }),
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Error votando en encuesta');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // ========== QR VISITANTES ==========
+
+  Future<void> crearQRVisitante(Map<String, dynamic> data) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/qr/visitante'),
+        headers: _headers,
+        body: jsonEncode(data),
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Error creando QR');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> validarQRVisitante(String codigo) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/qr/validar'),
+        headers: _headers,
+        body: jsonEncode({'codigo': codigo}),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      throw Exception('Error validando QR');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // ========== ALARMA SOS ==========
+
+  Future<void> activarAlarmaSOS({
+    required String tipo,
+    required String ubicacion,
+    required String descripcion,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/alarma/sos'),
+        headers: _headers,
+        body: jsonEncode({
+          'tipo': tipo,
+          'ubicacion': ubicacion,
+          'descripcion': descripcion,
+          'fecha': DateTime.now().toIso8601String(),
+        }),
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Error activando alarma');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // ========== CHAT ==========
+
+  Future<List<ChatMessage>> getChatGeneral() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/chat/general'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return (data['mensajes'] as List)
+            .map((m) => ChatMessage.fromJson(m))
+            .toList();
+      }
+      throw Exception('Error cargando mensajes');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<void> enviarMensajeGeneral(String mensaje) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/chat/general'),
+        headers: _headers,
+        body: jsonEncode({'mensaje': mensaje}),
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Error enviando mensaje');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<List<ChatMessage>> getMensajesChatPrivado(int chatId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/chat/privado/$chatId'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return (data['mensajes'] as List)
+            .map((m) => ChatMessage.fromJson(m))
+            .toList();
+      }
+      throw Exception('Error cargando mensajes');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  // ========== PQRS ==========
+
+  Future<List<PQRS>> getMisPQRS() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/pqrs/mis-solicitudes'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((p) => PQRS.fromJson(p)).toList();
+      }
+      throw Exception('Error cargando PQRS');
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<void> agregarComentarioPQRS(int pqrsId, String comentario) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/pqrs/$pqrsId/comentarios'),
+        headers: _headers,
+        body: jsonEncode({'comentario': comentario}),
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Error agregando comentario');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
     }
   }
 }

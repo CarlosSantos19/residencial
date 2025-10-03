@@ -47,6 +47,39 @@ dependencies:
   flutter_speed_dial: ^7.0.0
   pull_to_refresh: ^2.0.0
 
+  # Firebase & Notifications
+  firebase_core: ^2.24.0
+  firebase_messaging: ^14.7.6
+  flutter_local_notifications: ^16.3.0
+
+  # QR Code
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^3.5.2
+
+  # Payments
+  url_strategy: ^0.2.0
+
+  # Signature
+  signature: ^5.4.0
+
+  # Video & Camera
+  video_player: ^2.8.1
+  camera: ^0.10.5+5
+
+  # PDF & Excel
+  pdf: ^3.10.7
+  printing: ^5.11.1
+  path_provider: ^2.1.1
+  open_file: ^3.3.2
+  excel: ^4.0.2
+
+  # Animations
+  lottie: ^2.7.0
+  confetti: ^0.7.0
+
+  # Service Locator
+  get_it: ^7.6.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -54,3 +87,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Assets
+  assets:
+    - assets/images/espacios/
+    - assets/images/logos/
+    - assets/animations/

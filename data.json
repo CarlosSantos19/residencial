@@ -153,6 +153,17 @@
       "fecha": "2025-08-14",
       "hora": "06:00",
       "usuario": "Carlos López - Apto 305"
+    },
+    {
+      "id": 3,
+      "espacio": "Salón Social",
+      "fecha": "2025-10-07",
+      "hora": "08:00",
+      "usuario": "Carlos Andrés Santos Hernández",
+      "apartamento": "Torre 2 - Apto 401A",
+      "observaciones": "",
+      "fechaCreacion": "2025-10-03T21:58:42.185Z",
+      "estado": "Confirmada"
     }
   ],
   "pagos": [
@@ -189,7 +200,7 @@
         "usuario": "Carlos Andrés Santos Hernández",
         "apartamento": "Torre 2 - Apto 401A",
         "mensaje": "¡Hola a todos! Buenos días",
-        "fecha": "2025-10-02T15:54:29.940Z",
+        "fecha": "2025-10-03T21:55:06.855Z",
         "tipo": "general"
       }
     ],
@@ -207,7 +218,7 @@
       "prioridad": "Alta",
       "estado": "Reportado",
       "reportadoPor": "Administrador del Conjunto",
-      "fecha": "2025-10-02T15:54:29.943Z",
+      "fecha": "2025-10-03T21:55:06.859Z",
       "fotos": [],
       "respuestaAlcaldia": null,
       "fechaRespuesta": null
@@ -497,7 +508,7 @@
       ],
       "votantes": [],
       "estado": "activa",
-      "fechaCreacion": "2025-10-02T15:54:29.943Z",
+      "fechaCreacion": "2025-10-03T21:55:06.859Z",
       "fechaCierre": null,
       "creadoPor": "Administrador del Conjunto"
     }

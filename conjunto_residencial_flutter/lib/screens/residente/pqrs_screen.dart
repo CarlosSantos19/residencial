@@ -152,7 +152,11 @@ class _PQRSScreenState extends State<PQRSScreen> {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
-              await _apiService.crearPQRS(tipo, asuntoController.text, descripcionController.text);
+              await _apiService.crearPQRS(
+                tipo: tipo,
+                asunto: asuntoController.text,
+                descripcion: descripcionController.text,
+              );
               if (mounted) {
                 Navigator.pop(context);
                 _loadPQRS();

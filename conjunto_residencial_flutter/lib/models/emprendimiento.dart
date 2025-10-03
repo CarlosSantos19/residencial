@@ -15,6 +15,8 @@ class Emprendimiento {
   final List<Resena> resenas;
   final double calificacionPromedio;
   final int totalResenas;
+  final List<String>? imagenes; // Galería de imágenes del emprendimiento
+  final String? horarioAtencion; // Ej: "Lun-Vie 9am-6pm"
 
   Emprendimiento({
     required this.id,
@@ -33,6 +35,8 @@ class Emprendimiento {
     this.resenas = const [],
     this.calificacionPromedio = 0.0,
     this.totalResenas = 0,
+    this.imagenes,
+    this.horarioAtencion,
   });
 
   factory Emprendimiento.fromJson(Map<String, dynamic> json) {
@@ -57,6 +61,10 @@ class Emprendimiento {
           : [],
       calificacionPromedio: (json['calificacionPromedio'] ?? 0.0).toDouble(),
       totalResenas: json['totalResenas'] ?? 0,
+      imagenes: json['imagenes'] != null
+          ? List<String>.from(json['imagenes'])
+          : null,
+      horarioAtencion: json['horarioAtencion'],
     );
   }
 
@@ -78,6 +86,8 @@ class Emprendimiento {
       'resenas': resenas.map((r) => r.toJson()).toList(),
       'calificacionPromedio': calificacionPromedio,
       'totalResenas': totalResenas,
+      'imagenes': imagenes,
+      'horarioAtencion': horarioAtencion,
     };
   }
 

@@ -90,6 +90,11 @@ class VehiculoVisitante {
   // Getters para compatibilidad con pantallas
   String get horaIngreso => fechaIngreso.toIso8601String();
   String? get horaSalida => fechaSalida?.toIso8601String();
+  DateTime get horaEntrada => fechaIngreso;
+  String get apartamentoDestino => apartamento.toString();
+  bool get activo => estado == 'en_conjunto';
+  Duration get tiempoTranscurrido => (fechaSalida ?? DateTime.now()).difference(fechaIngreso);
+  double get valorAPagar => (costoParqueo ?? 0).toDouble();
 }
 
 class ReciboParqueadero {

@@ -66,6 +66,9 @@ class Mensaje {
       'destinatarioId': destinatarioId,
     };
   }
+
+  // Alias para compatibilidad
+  String get nombreUsuario => usuarioNombre;
 }
 
 class ChatPrivado {
@@ -104,7 +107,16 @@ class ChatPrivado {
       'ultimoMensaje': ultimoMensaje?.toJson(),
     };
   }
+
+  // Getters para compatibilidad con código existente
+  int get id => usuarioId;
+  int get otroUsuarioId => usuarioId;
+  String get nombreOtroUsuario => usuarioNombre;
+  String? get ultimoMensajeTexto => ultimoMensaje?.mensaje;
 }
+
+// Alias para compatibilidad con diferentes pantallas
+typedef ChatMessage = Mensaje;
 
 class SolicitudChat {
   final int id;
@@ -134,8 +146,8 @@ class SolicitudChat {
   factory SolicitudChat.fromJson(Map<String, dynamic> json) {
     return SolicitudChat(
       id: json['id'],
-      solicitanteId: json['solicitanteId'] ?? 0,
-      solicitanteNombre: json['solicitanteNombre'] ?? '',
+      solicitanteId: json['solicitanteId'] ?? json['remitenteId'] ?? 0,
+      solicitanteNombre: json['solicitanteNombre'] ?? json['nombreRemitente'] ?? '',
       solicitanteApartamento: json['solicitanteApartamento'],
       destinatarioId: json['destinatarioId'] ?? 0,
       destinatarioNombre: json['destinatarioNombre'] ?? '',
@@ -143,7 +155,7 @@ class SolicitudChat {
       estado: json['estado'] ?? 'pendiente',
       fechaSolicitud: json['fechaSolicitud'] != null
           ? DateTime.parse(json['fechaSolicitud'])
-          : DateTime.now(),
+          : (json['fecha'] != null ? DateTime.parse(json['fecha']) : DateTime.now()),
       fechaRespuesta: json['fechaRespuesta'] != null
           ? DateTime.parse(json['fechaRespuesta'])
           : null,
@@ -164,4 +176,9 @@ class SolicitudChat {
       'fechaRespuesta': fechaRespuesta?.toIso8601String(),
     };
   }
+
+  // Propiedades de compatibilidad con el código existente
+  int get remitenteId => solicitanteId;
+  String get nombreRemitente => solicitanteNombre;
+  DateTime get fecha => fechaSolicitud;
 }

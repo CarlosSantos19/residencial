@@ -56,4 +56,8 @@ class Noticia {
       'destacada': destacada,
     };
   }
+
+  DateTime get fecha {
+    return DateTime.parse(fechaPublicacion);
+  }
 }

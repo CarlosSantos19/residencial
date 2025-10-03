@@ -5,6 +5,11 @@ class Reserva {
   final String hora;
   final String usuario;
   final String estado;
+  final int? usuarioId; // ID del usuario que reservó
+  final String? imagenEspacio; // URL de imagen del espacio
+  final String? descripcionEspacio; // Descripción del espacio
+  final int? capacidadMaxima; // Capacidad máxima de personas
+  final bool? cancelable; // Si se puede cancelar
 
   Reserva({
     required this.id,
@@ -13,6 +18,11 @@ class Reserva {
     required this.hora,
     required this.usuario,
     this.estado = 'confirmada',
+    this.usuarioId,
+    this.imagenEspacio,
+    this.descripcionEspacio,
+    this.capacidadMaxima,
+    this.cancelable = true,
   });
 
   factory Reserva.fromJson(Map<String, dynamic> json) {
@@ -23,6 +33,11 @@ class Reserva {
       hora: json['hora'],
       usuario: json['usuario'],
       estado: json['estado'] ?? 'confirmada',
+      usuarioId: json['usuarioId'],
+      imagenEspacio: json['imagenEspacio'],
+      descripcionEspacio: json['descripcionEspacio'],
+      capacidadMaxima: json['capacidadMaxima'],
+      cancelable: json['cancelable'] ?? true,
     );
   }
 
@@ -34,12 +49,20 @@ class Reserva {
       'hora': hora,
       'usuario': usuario,
       'estado': estado,
+      'usuarioId': usuarioId,
+      'imagenEspacio': imagenEspacio,
+      'descripcionEspacio': descripcionEspacio,
+      'capacidadMaxima': capacidadMaxima,
+      'cancelable': cancelable,
     };
   }
 
   DateTime get fechaDateTime {
     return DateTime.parse(fecha);
   }
+
+  // Alias para compatibilidad
+  DateTime get fechaDate => fechaDateTime;
 
   bool get isToday {
     final now = DateTime.now();

@@ -76,7 +76,7 @@ class _ControlVehiculosVigilanteScreenState extends State<ControlVehiculosVigila
                       ),
                       if (v.horaSalida == null)
                         ElevatedButton(
-                          onPressed: () => _registrarSalida(v.placa),
+                          onPressed: () => _registrarSalida(v.id),
                           child: const Text('Salida'),
                         ),
                     ],
@@ -93,8 +93,8 @@ class _ControlVehiculosVigilanteScreenState extends State<ControlVehiculosVigila
   }
 
   void _registrarIngreso() {}
-  Future<void> _registrarSalida(String placa) async {
-    await _apiService.registrarSalidaVehiculo(placa);
+  Future<void> _registrarSalida(int vehiculoId) async {
+    await _apiService.registrarSalidaVehiculo(vehiculoId);
     _loadVehiculos();
   }
 }

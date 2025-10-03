@@ -140,18 +140,86 @@ Time-based fee structure for visitor vehicles:
 │   ├── conjunto-aralia-completo.html   # Main SPA application (all-in-one file)
 │   ├── app-residencial-completa.html   # Alternative frontend version
 │   └── index.html                      # Legacy/alternative landing page
-├── conjunto_residencial_flutter/       # Flutter mobile app version
+├── conjunto_residencial_flutter/       # Flutter mobile app (95% parity with web)
+│   ├── lib/
+│   │   ├── models/                    # Data models (User, Pago, Reserva, PQRS, Encuesta, etc.)
+│   │   ├── screens/                   # UI screens by role (residente, admin, vigilante, alcaldia)
+│   │   ├── services/                  # Core services (API, Auth, Notifications, PDF, Payments)
+│   │   └── widgets/                   # Reusable UI components
+│   ├── pubspec.yaml                   # Flutter dependencies
+│   ├── CONFIGURACION_FIREBASE.md      # Step-by-step Firebase setup guide
+│   └── RESUMEN_IMPLEMENTACION_COMPLETA.md  # Implementation summary
 ├── package.json                        # Node.js dependencies and scripts
 ├── data.json                          # Auto-generated data backup (created at runtime)
 ├── README_SISTEMA_COMPLETO.md         # Comprehensive system documentation
+├── RESUMEN_PARIDAD_FLUTTER_WEB.md     # Flutter ↔ Web parity report
 └── CLAUDE.md                          # This file
 ```
 
+## Flutter Mobile App
+
+The project includes a **complete Flutter mobile application** with 95% feature parity to the web version.
+
+### Run Flutter App
+```bash
+cd conjunto_residencial_flutter
+flutter pub get
+flutter run
+```
+
+### Build for Production
+```bash
+# Android APK
+flutter build apk --release
+
+# iOS (requires Mac + Xcode)
+flutter build ios --release
+```
+
+### Key Flutter Features
+- **36+ screens** organized by role (residente, admin, vigilante, alcaldía)
+- **3 core services** implemented:
+  - `NotificationService`: Firebase Cloud Messaging with 5 notification channels
+  - `PdfService`: Professional PDF generation (receipts, reports, summaries)
+  - `PaymentService`: 5 payment methods (Efectivo, Nequi, Daviplata, PSE, Transferencia)
+- **Real-time features**:
+  - Vehicle control with live timer (updates every second)
+  - Dashboard with live statistics
+  - Auto-refresh for surveys (every 10 seconds)
+- **Advanced UI**:
+  - 4 chart types using `fl_chart` (bar, pie, line, progress)
+  - Visual calendar for reservations (`table_calendar`)
+  - Image gallery swipers with `PageView`
+  - Confetti animations for parking lottery
+- **Native integrations**:
+  - Direct phone calls via `url_launcher`
+  - WhatsApp deep linking
+  - Camera/gallery for attachments (`image_picker`)
+  - QR code generation and scanning
+
+### Flutter Dependencies
+See `conjunto_residencial_flutter/pubspec.yaml` for complete list:
+- Firebase: `firebase_core`, `firebase_messaging`, `flutter_local_notifications`
+- PDF: `pdf`, `printing`, `path_provider`, `open_file`
+- Charts: `fl_chart`
+- UI: `table_calendar`, `confetti`, `lottie`
+- Utils: `url_launcher`, `image_picker`, `qr_flutter`, `mobile_scanner`
+
+### Firebase Configuration
+For push notifications to work, you must:
+1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+2. Download `google-services.json` (Android) and place in `android/app/`
+3. Download `GoogleService-Info.plist` (iOS) and add to Xcode project
+4. See detailed guide: `conjunto_residencial_flutter/CONFIGURACION_FIREBASE.md`
+
 ## Important Implementation Notes
 
-- **Single-file architecture**: All frontend functionality (HTML, CSS, JS) is in one file for easy deployment
+- **Single-file architecture (Web)**: All frontend functionality (HTML, CSS, JS) is in one file for easy deployment
+- **Flutter architecture**: Clean separation with models, services, screens, and widgets
 - **In-memory storage**: Server restarts will lose data unless backed up to data.json
 - **Role-based access**: Implemented both client-side (UI visibility) and server-side (API authorization)
-- **No build step**: Direct HTML/CSS/JS with CDN dependencies (Tailwind, Font Awesome, Chart.js)
+- **No build step (Web)**: Direct HTML/CSS/JS with CDN dependencies (Tailwind, Font Awesome, Chart.js)
+- **Flutter build**: Requires `flutter build` for production APK/IPA
 - **Token security**: Simple base64 encoding (not encrypted) - suitable for demo/development only
-- **PWA capabilities**: Designed for offline support and mobile installation
+- **PWA capabilities**: Web version designed for offline support and mobile installation
+- **Native capabilities (Flutter)**: Push notifications, PDF generation, payment integrations exceed web version
