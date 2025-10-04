@@ -27,12 +27,12 @@ This is a comprehensive residential complex management system with role-based ac
 
 ### Backend Architecture (server.js)
 - **Express server** running on port 8081
-- **In-memory data storage** with auto-backup to `data.json` every 5 minutes (server.js:2622-2625)
-- **Role-based middleware** (server.js:1794-2011):
-  - `verificarAdmin(req, res, next)`: Ensures user has 'admin' role (server.js:1794-1807)
-  - `verificarVigilante(req, res, next)`: Allows 'vigilante' or 'admin' roles (server.js:1998-2011)
+- **In-memory data storage** with auto-backup to `data.json` every 5 minutes (server.js:3206-3209)
+- **Role-based middleware**:
+  - `verificarAdmin(req, res, next)`: Ensures user has 'admin' role (server.js:1860-1873)
+  - `verificarVigilante(req, res, next)`: Allows 'vigilante' or 'admin' roles (server.js:2064-2077)
   - Uses token-based authentication via Authorization header: `Bearer <token>`
-  - Extracts user from token using `obtenerUsuarioPorToken(token)` helper (server.js:1983-1991)
+  - Extracts user from token using `obtenerUsuarioPorToken(token)` helper (server.js:2049-2057)
   - Returns 403 for unauthorized access
 - **~100+ API endpoints** organized by modules:
   - Authentication: `/api/auth/*` (login, register, verify)
@@ -91,9 +91,9 @@ The application implements complete visual differentiation by role via `setupUse
 
 ## Data Persistence
 
-- **Primary storage**: In-memory JavaScript objects in `data` variable (server.js:15)
-- **Automatic backup**: `setInterval()` writes to data.json every 5 minutes (server.js:2622-2625)
-- **Manual save**: `guardarDatos()` called after each data modification - currently a console.log stub (server.js:1785-1787)
+- **Primary storage**: In-memory JavaScript objects in `data` variable (server.js:34)
+- **Automatic backup**: `setInterval()` writes to data.json every 5 minutes (server.js:3206-3209)
+- **Manual save**: `guardarDatos()` called after each data modification - currently a console.log stub (server.js:1851-1853)
 - **No external database**: All data persists via JSON file for development/demo purposes
 - **Important**: Changes are only persisted to disk every 5 minutes or when server shuts down gracefully
 
@@ -102,7 +102,7 @@ The application implements complete visual differentiation by role via `setupUse
 ### Authentication Flow
 1. Login via `/api/auth/login` returns token (base64 encoded `userId:timestamp`)
 2. Token sent in Authorization header: `Bearer <token>`
-3. Server decodes token via `obtenerUsuarioPorToken()` to identify user (server.js:1983-1991)
+3. Server decodes token via `obtenerUsuarioPorToken()` to identify user (server.js:2049-2057)
 4. Middleware functions check user role and return 403 if unauthorized
 5. Frontend stores token in localStorage as 'authToken'
 
@@ -128,16 +128,17 @@ Time-based fee structure for visitor vehicles:
 - Endpoint: `/api/residente/mi-parqueadero` (GET) returns assigned parking for logged-in user
 
 ### Important Helper Functions
-- **obtenerUsuarioPorToken(token)**: Decodes base64 token and returns user object from data.usuarios (server.js:1983-1991)
-- **verificarAdmin(req, res, next)**: Middleware to restrict endpoints to admin role (server.js:1794-1807)
-- **verificarVigilante(req, res, next)**: Middleware to restrict endpoints to vigilante or admin roles (server.js:1998-2011)
-- **guardarDatos()**: Stub function for manual data persistence - currently just logs to console (server.js:1785-1787)
+- **obtenerUsuarioPorToken(token)**: Decodes base64 token and returns user object from data.usuarios (server.js:2049-2057)
+- **verificarAdmin(req, res, next)**: Middleware to restrict endpoints to admin role (server.js:1860-1873)
+- **verificarVigilante(req, res, next)**: Middleware to restrict endpoints to vigilante or admin roles (server.js:2064-2077)
+- **guardarDatos()**: Stub function for manual data persistence - currently just logs to console (server.js:1851-1853)
 
 ## File Organization
 ```
-├── server.js                           # Main Express server with all API endpoints (2624 lines)
+├── server.js                           # Main Express server with all API endpoints (3208 lines)
 ├── public/
-│   ├── conjunto-aralia-completo.html   # Main SPA application (all-in-one file)
+│   ├── conjunto-aralia-completo.html   # Main SPA application (9834 lines - all-in-one file)
+│   ├── conjunto-aralia-firebase.html   # Firebase-integrated version
 │   ├── app-residencial-completa.html   # Alternative frontend version
 │   └── index.html                      # Legacy/alternative landing page
 ├── conjunto_residencial_flutter/       # Flutter mobile app (95% parity with web)

@@ -26,9 +26,11 @@ service cloud.firestore {
     }
 
     // Usuarios - Todos los usuarios autenticados pueden leer todos los usuarios
+    // Los usuarios pueden crear/actualizar su propio documento (para migración)
     match /usuarios/{userId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow create, update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if isAdmin();
     }
 
     // Noticias - Todos pueden leer, solo admin puede escribir

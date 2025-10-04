@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico Firebase - Conjunto Residencial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTglrnttR2NKUHIsS9ddj37Yuwvz6Lv7A",
+            authDomain: "conjunto-residencial-2024.firebaseapp.com",
+            projectId: "conjunto-residencial-2024",
+            storageBucket: "conjunto-residencial-2024.firebasestorage.app",
+            messagingSenderId: "26128855451",
+            appId: "1:26128855451:web:d94aae5e71376e6808313e",
+            measurementId: "G-1PRFW148P0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Probar login con un usuario específico
+        window.probarLogin = async function(email, password) {
+            const resultado = document.getElementById('resultado-login');
+            resultado.innerHTML = `<div class="text-blue-600">🔄 Intentando login con ${email}...</div>`;
+
+            try {
+                // Paso 1: Autenticación
+                resultado.innerHTML += `<div class="text-blue-600 mt-2">Paso 1: Autenticando en Firebase Auth...</div>`;
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                resultado.innerHTML += `<div class="text-green-600">✅ Autenticación exitosa!</div>`;
+                resultado.innerHTML += `<div class="bg-green-50 p-2 rounded mt-2">
+                    <strong>UID:</strong> ${user.uid}<br>
+                    <strong>Email:</strong> ${user.email}<br>
+                    <strong>Email verificado:</strong> ${user.emailVerified}
+                </div>`;
+
+                // Paso 2: Buscar en Firestore
+                resultado.innerHTML += `<div class="text-blue-600 mt-4">Paso 2: Buscando documento en Firestore...</div>`;
+                resultado.innerHTML += `<div class="text-gray-600 text-sm">Ruta: usuarios/${user.uid}</div>`;
+
+                const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
+
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    resultado.innerHTML += `<div class="text-green-600">✅ Documento encontrado en Firestore!</div>`;
+                    resultado.innerHTML += `<div class="bg-green-50 p-3 rounded mt-2">
+                        <strong>Datos del documento:</strong><br>
+                        <pre class="text-xs mt-2">${JSON.stringify(userData, null, 2)}</pre>
+                    </div>`;
+
+                    resultado.innerHTML += `<div class="bg-blue-100 border border-blue-300 p-4 rounded mt-4">
+                        <strong class="text-green-700">🎉 ¡LOGIN COMPLETO Y EXITOSO!</strong><br>
+                        <p class="mt-2">Este usuario puede iniciar sesión en la aplicación principal.</p>
+                        <a href="/" class="inline-block mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            Ir a la aplicación
+                        </a>
+                    </div>`;
+                } else {
+                    resultado.innerHTML += `<div class="text-red-600">❌ ERROR: Documento NO encontrado en Firestore</div>`;
+                    resultado.innerHTML += `<div class="bg-red-50 border border-red-300 p-4 rounded mt-4">
+                        <strong class="text-red-700">⚠️ Problema encontrado:</strong><br>
+                        <p class="mt-2">El usuario existe en Firebase Authentication pero NO tiene documento en Firestore.</p>
+                        <p class="mt-2"><strong>Solución:</strong></p>
+                        <ol class="list-decimal list-inside mt-2 space-y-1">
+                            <li>Ve a <a href="/setup-usuarios.html" class="text-blue-600 underline">setup-usuarios.html</a></li>
+                            <li>Haz clic en "Crear/Sincronizar Usuarios"</li>
+                            <li>Espera a que termine el proceso</li>
+                            <li>Vuelve aquí y prueba de nuevo</li>
+                        </ol>
+                    </div>`;
+                }
+
+            } catch (error) {
+                resultado.innerHTML += `<div class="text-red-600 mt-4">❌ Error durante el login:</div>`;
+                resultado.innerHTML += `<div class="bg-red-50 p-3 rounded mt-2">
+                    <strong>Código de error:</strong> ${error.code}<br>
+                    <strong>Mensaje:</strong> ${error.message}
+                </div>`;
+
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    resultado.innerHTML += `<div class="bg-yellow-50 border border-yellow-300 p-4 rounded mt-4">
+                        <strong class="text-yellow-700">⚠️ Usuario no existe o contraseña incorrecta</strong><br>
+                        <p class="mt-2"><strong>Solución:</strong></p>
+                        <ol class="list-decimal list-inside mt-2 space-y-1">
+                            <li>Ve a <a href="/setup-usuarios.html" class="text-blue-600 underline">setup-usuarios.html</a></li>
+                            <li>Haz clic en "Crear/Sincronizar Usuarios"</li>
+                            <li>El script creará el usuario con la contraseña correcta</li>
+                        </ol>
+                    </div>`;
+                }
+            }
+        };
+
+        // Listar todos los usuarios en Firestore
+        window.listarUsuariosFirestore = async function() {
+            const resultado = document.getElementById('resultado-usuarios');
+            resultado.innerHTML = `<div class="text-blue-600">🔄 Consultando Firestore...</div>`;
+
+            try {
+                const usuariosSnap = await getDocs(collection(db, 'usuarios'));
+
+                if (usuariosSnap.empty) {
+                    resultado.innerHTML = `<div class="bg-red-50 border border-red-300 p-4 rounded">
+                        <strong class="text-red-700">❌ No hay usuarios en Firestore</strong><br>
+                        <p class="mt-2">La colección 'usuarios' está vacía.</p>
+                        <p class="mt-2"><strong>Solución:</strong></p>
+                        <ol class="list-decimal list-inside mt-2 space-y-1">
+                            <li>Ve a <a href="/setup-usuarios.html" class="text-blue-600 underline">setup-usuarios.html</a></li>
+                            <li>Haz clic en "Crear/Sincronizar Usuarios"</li>
+                            <li>Espera a que termine el proceso</li>
+                        </ol>
+                    </div>`;
+                } else {
+                    resultado.innerHTML = `<div class="text-green-600 mb-4">✅ Se encontraron ${usuariosSnap.size} usuarios en Firestore</div>`;
+
+                    usuariosSnap.forEach((doc) => {
+                        const data = doc.data();
+                        const colorClass =
+                            data.rol === 'admin' ? 'border-green-300 bg-green-50' :
+                            data.rol === 'vigilante' ? 'border-orange-300 bg-orange-50' :
+                            data.rol === 'alcaldia' ? 'border-purple-300 bg-purple-50' :
+                            'border-blue-300 bg-blue-50';
+
+                        resultado.innerHTML += `<div class="border ${colorClass} p-3 rounded mb-3">
+                            <div class="font-bold">${data.nombre || 'Sin nombre'}</div>
+                            <div class="text-sm mt-1">
+                                <strong>UID:</strong> ${doc.id}<br>
+                                <strong>Email:</strong> ${data.email || 'Sin email'}<br>
+                                <strong>Rol:</strong> <span class="font-semibold">${data.rol || 'Sin rol'}</span><br>
+                                <strong>Apartamento:</strong> ${data.apartamento || 'Sin apartamento'}
+                            </div>
+                        </div>`;
+                    });
+                }
+            } catch (error) {
+                resultado.innerHTML = `<div class="text-red-600">❌ Error: ${error.message}</div>`;
+            }
+        };
+
+        // Auto-cargar usuarios al iniciar
+        window.addEventListener('load', () => {
+            listarUsuariosFirestore();
+        });
+
+        console.log('✅ Diagnóstico Firebase cargado');
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-5xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold mb-4 text-blue-600">🔍 Diagnóstico Firebase</h1>
+            <p class="text-gray-700 mb-4">
+                Herramienta para diagnosticar problemas de login y verificar la configuración de Firebase.
+            </p>
+        </div>
+
+        <!-- Prueba de Login -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-2xl font-bold mb-4">🔐 Prueba de Login</h2>
+            <p class="text-gray-600 mb-4">Selecciona un usuario para probar el proceso completo de login:</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <button onclick="probarLogin('car-cbs@hotmail.com', 'password1')"
+                        class="bg-blue-500 text-white p-3 rounded hover:bg-blue-600 text-left">
+                    <div class="font-bold">🔵 Residente</div>
+                    <div class="text-sm">car-cbs@hotmail.com</div>
+                </button>
+
+                <button onclick="probarLogin('shayoja@hotmail.com', 'password2')"
+                        class="bg-green-500 text-white p-3 rounded hover:bg-green-600 text-left">
+                    <div class="font-bold">🟢 Administrador</div>
+                    <div class="text-sm">shayoja@hotmail.com</div>
+                </button>
+
+                <button onclick="probarLogin('car02cbs@gmail.com', 'password3')"
+                        class="bg-orange-500 text-white p-3 rounded hover:bg-orange-600 text-left">
+                    <div class="font-bold">🟠 Vigilante</div>
+                    <div class="text-sm">car02cbs@gmail.com</div>
+                </button>
+
+                <button onclick="probarLogin('alcaldia@conjunto.com', 'alcaldia123')"
+                        class="bg-purple-500 text-white p-3 rounded hover:bg-purple-600 text-left">
+                    <div class="font-bold">🏛️ Alcaldía</div>
+                    <div class="text-sm">alcaldia@conjunto.com</div>
+                </button>
+            </div>
+
+            <div id="resultado-login" class="bg-gray-50 p-4 rounded min-h-[100px] font-mono text-sm">
+                <div class="text-gray-500">Haz clic en un usuario para probar...</div>
+            </div>
+        </div>
+
+        <!-- Lista de Usuarios en Firestore -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">👥 Usuarios en Firestore</h2>
+                <button onclick="listarUsuariosFirestore()"
+                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    Recargar
+                </button>
+            </div>
+
+            <div id="resultado-usuarios" class="min-h-[200px]">
+                <div class="text-gray-500">Cargando...</div>
+            </div>
+        </div>
+
+        <!-- Enlaces útiles -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6">
+            <h3 class="font-bold text-blue-800 mb-3">🔗 Enlaces Útiles</h3>
+            <div class="space-y-2">
+                <a href="/setup-usuarios.html" class="block text-blue-600 hover:underline">
+                    📝 Configurar Usuarios (setup-usuarios.html)
+                </a>
+                <a href="/" class="block text-blue-600 hover:underline">
+                    🏠 Ir a la Aplicación Principal
+                </a>
+                <a href="https://console.firebase.google.com/project/conjunto-residencial-2024/firestore"
+                   target="_blank" class="block text-blue-600 hover:underline">
+                    🔥 Abrir Firestore en Firebase Console
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

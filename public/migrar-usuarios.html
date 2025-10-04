@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migración de Usuarios - Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, deleteDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTglrnttR2NKUHIsS9ddj37Yuwvz6Lv7A",
+            authDomain: "conjunto-residencial-2024.firebaseapp.com",
+            projectId: "conjunto-residencial-2024",
+            storageBucket: "conjunto-residencial-2024.firebasestorage.app",
+            messagingSenderId: "26128855451",
+            appId: "1:26128855451:web:d94aae5e71376e6808313e",
+            measurementId: "G-1PRFW148P0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Mapeo de usuarios: email -> datos del documento antiguo
+        const usuariosAMigrar = [
+            { oldId: '1', email: 'car-cbs@hotmail.com', password: 'password1' },
+            { oldId: '2', email: 'maria.gonzalez@email.com', password: 'demo123' },
+            { oldId: '3', email: 'carlos.ruiz@email.com', password: 'demo123' },
+            { oldId: '4', email: 'ana.martinez@email.com', password: 'demo123' },
+            { oldId: '5', email: 'luis.garcia@email.com', password: 'demo123' },
+            { oldId: '6', email: 'patricia.soto@email.com', password: 'demo123' },
+            { oldId: '7', email: 'shayoja@hotmail.com', password: 'password2' },
+            { oldId: '8', email: 'car02cbs@gmail.com', password: 'password3' },
+            { oldId: '9', email: 'alcaldia@conjunto.com', password: 'alcaldia123' }
+        ];
+
+        window.migrarUsuarios = async function() {
+            const logDiv = document.getElementById('log');
+            const btn = document.getElementById('btnMigrar');
+
+            btn.disabled = true;
+            btn.textContent = 'Migrando...';
+            logDiv.innerHTML = '<div class="text-xl font-bold mb-4 text-blue-600">🔄 Iniciando migración de usuarios...</div>';
+
+            let exitosos = 0;
+            let fallidos = 0;
+
+            for (const usuario of usuariosAMigrar) {
+                try {
+                    logDiv.innerHTML += `<div class="bg-blue-50 p-3 rounded mb-3 border border-blue-200">
+                        <div class="font-bold text-blue-700">📧 ${usuario.email}</div>
+                    `;
+
+                    // Paso 1: Hacer login para obtener el UID real de Firebase Auth
+                    logDiv.innerHTML += `<div class="text-sm mt-1">🔐 Haciendo login...</div>`;
+                    const userCredential = await signInWithEmailAndPassword(auth, usuario.email, usuario.password);
+                    const firebaseUid = userCredential.user.uid;
+
+                    logDiv.innerHTML += `<div class="text-sm text-green-600">✅ UID de Firebase Auth: ${firebaseUid}</div>`;
+
+                    // Paso 2: Obtener datos del documento antiguo (con ID numérico)
+                    logDiv.innerHTML += `<div class="text-sm mt-1">📄 Obteniendo datos del documento antiguo (ID: ${usuario.oldId})...</div>`;
+                    const oldDocRef = doc(db, 'usuarios', usuario.oldId);
+                    const oldDocSnap = await getDoc(oldDocRef);
+
+                    let userData = {};
+                    if (oldDocSnap.exists()) {
+                        userData = oldDocSnap.data();
+                        logDiv.innerHTML += `<div class="text-sm text-green-600">✅ Datos obtenidos del documento antiguo</div>`;
+                    } else {
+                        logDiv.innerHTML += `<div class="text-sm text-yellow-600">⚠️ Documento antiguo no encontrado, usando datos por defecto</div>`;
+                        // Si no existe, crear datos básicos
+                        userData = {
+                            email: usuario.email,
+                            nombre: usuario.email.split('@')[0],
+                            rol: usuario.email.includes('shayoja') ? 'admin' :
+                                 usuario.email.includes('vigilante') || usuario.email.includes('car02cbs') ? 'vigilante' :
+                                 usuario.email.includes('alcaldia') ? 'alcaldia' : 'residente',
+                            activo: true
+                        };
+                    }
+
+                    // Paso 3: Crear nuevo documento con el UID correcto de Firebase
+                    logDiv.innerHTML += `<div class="text-sm mt-1">💾 Creando documento nuevo con UID correcto...</div>`;
+                    const newDocRef = doc(db, 'usuarios', firebaseUid);
+
+                    await setDoc(newDocRef, {
+                        ...userData,
+                        id: firebaseUid, // Importante: actualizar el campo id también
+                        email: usuario.email,
+                        fechaActualizacion: new Date().toISOString()
+                    });
+
+                    logDiv.innerHTML += `<div class="text-sm text-green-600">✅ Documento creado en: usuarios/${firebaseUid}</div>`;
+
+                    // Paso 4: Eliminar documento antiguo (opcional, pero recomendado)
+                    if (oldDocSnap.exists() && usuario.oldId !== firebaseUid) {
+                        logDiv.innerHTML += `<div class="text-sm mt-1">🗑️ Eliminando documento antiguo (ID: ${usuario.oldId})...</div>`;
+                        await deleteDoc(oldDocRef);
+                        logDiv.innerHTML += `<div class="text-sm text-green-600">✅ Documento antiguo eliminado</div>`;
+                    }
+
+                    logDiv.innerHTML += `<div class="text-sm font-bold text-green-700 mt-2">✅✅ Migración exitosa!</div></div>`;
+                    exitosos++;
+
+                } catch (error) {
+                    logDiv.innerHTML += `<div class="text-sm text-red-600 mt-2">❌ Error: ${error.message}</div></div>`;
+                    fallidos++;
+                }
+
+                // Pequeña pausa para no saturar Firebase
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            // Resumen final
+            logDiv.innerHTML += `
+                <div class="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg mt-6 border-2 border-green-300">
+                    <h3 class="text-2xl font-bold mb-4 text-green-700">📊 Resumen de Migración</h3>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-white p-4 rounded shadow">
+                            <div class="text-3xl font-bold text-green-600">${exitosos}</div>
+                            <div class="text-sm text-gray-600">Usuarios migrados</div>
+                        </div>
+                        <div class="bg-white p-4 rounded shadow">
+                            <div class="text-3xl font-bold ${fallidos > 0 ? 'text-red-600' : 'text-gray-400'}">${fallidos}</div>
+                            <div class="text-sm text-gray-600">Errores</div>
+                        </div>
+                    </div>
+                    ${exitosos === usuariosAMigrar.length ? `
+                        <div class="bg-green-100 p-4 rounded border border-green-300 mb-4">
+                            <p class="text-green-800 font-semibold text-lg">🎉 ¡Migración completada exitosamente!</p>
+                            <p class="text-green-700 mt-2">Todos los usuarios ahora tienen sus documentos en Firestore con los UIDs correctos de Firebase Authentication.</p>
+                        </div>
+                    ` : ''}
+                    <div class="space-y-2">
+                        <a href="/diagnostico-firebase.html" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
+                            🔍 Verificar con Diagnóstico
+                        </a>
+                        <a href="/" class="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold ml-2">
+                            🏠 Ir a la Aplicación
+                        </a>
+                    </div>
+                </div>
+            `;
+
+            btn.disabled = false;
+            btn.textContent = 'Migrar Usuarios';
+        };
+
+        console.log('✅ Script de migración cargado');
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow-2xl p-8 mb-6">
+            <h1 class="text-4xl font-bold mb-4 text-indigo-600">🔧 Migración de Usuarios</h1>
+            <p class="text-gray-700 mb-6 text-lg">
+                Este script migrará los usuarios de Firestore para que usen los UIDs correctos de Firebase Authentication.
+            </p>
+
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-yellow-800">⚠️ Importante</h3>
+                        <div class="mt-2 text-sm text-yellow-700">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Este proceso copiará los datos de los documentos antiguos (con IDs numéricos)</li>
+                                <li>Creará nuevos documentos con los UIDs correctos de Firebase Auth</li>
+                                <li>Eliminará los documentos antiguos para evitar duplicados</li>
+                                <li>El proceso toma aproximadamente 1 minuto</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                <h3 class="font-bold text-blue-800 mb-2">📋 Usuarios que serán migrados:</h3>
+                <ul class="text-sm text-blue-700 space-y-1 ml-4">
+                    <li>🔵 car-cbs@hotmail.com (Residente)</li>
+                    <li>🔵 maria.gonzalez@email.com (Residente)</li>
+                    <li>🔵 carlos.ruiz@email.com (Residente)</li>
+                    <li>🔵 ana.martinez@email.com (Residente)</li>
+                    <li>🔵 luis.garcia@email.com (Residente)</li>
+                    <li>🔵 patricia.soto@email.com (Residente)</li>
+                    <li>🟢 shayoja@hotmail.com (Administrador)</li>
+                    <li>🟠 car02cbs@gmail.com (Vigilante)</li>
+                    <li>🏛️ alcaldia@conjunto.com (Alcaldía)</li>
+                </ul>
+            </div>
+
+            <button
+                id="btnMigrar"
+                onclick="migrarUsuarios()"
+                class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-lg hover:from-indigo-700 hover:to-purple-700 font-bold text-lg shadow-lg transform hover:scale-105 transition-all">
+                🚀 Iniciar Migración
+            </button>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-2xl p-8">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">📋 Proceso de Migración</h2>
+            <div id="log" class="bg-gray-50 p-4 rounded min-h-[200px] max-h-[600px] overflow-y-auto border border-gray-200">
+                <div class="text-gray-500 text-center py-8">
+                    Haz clic en "Iniciar Migración" para comenzar...
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Usuarios - Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Configuración Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTglrnttR2NKUHIsS9ddj37Yuwvz6Lv7A",
+            authDomain: "conjunto-residencial-2024.firebaseapp.com",
+            projectId: "conjunto-residencial-2024",
+            storageBucket: "conjunto-residencial-2024.firebasestorage.app",
+            messagingSenderId: "26128855451",
+            appId: "1:26128855451:web:d94aae5e71376e6808313e",
+            measurementId: "G-1PRFW148P0"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Lista de usuarios a crear
+        const usuarios = [
+            {
+                email: 'car-cbs@hotmail.com',
+                password: 'password1',
+                nombre: 'Carlos Andrés Santos Hernández',
+                apartamento: 'Torre 2 - Apto 401A',
+                rol: 'residente',
+                telefono: '3001234567',
+                activo: true
+            },
+            {
+                email: 'shayoja@hotmail.com',
+                password: 'password2',
+                nombre: 'Administrador del Conjunto',
+                apartamento: 'Oficina Administración',
+                rol: 'admin',
+                telefono: '3007654321',
+                activo: true
+            },
+            {
+                email: 'car02cbs@gmail.com',
+                password: 'password3',
+                nombre: 'Vigilante de Seguridad',
+                apartamento: 'Portería Principal',
+                rol: 'vigilante',
+                telefono: '3009876543',
+                activo: true
+            },
+            {
+                email: 'alcaldia@conjunto.com',
+                password: 'alcaldia123',
+                nombre: 'Alcaldía Municipal',
+                apartamento: 'Oficina Alcaldía',
+                rol: 'alcaldia',
+                telefono: '3005555555',
+                activo: true
+            },
+            {
+                email: 'maria.gonzalez@email.com',
+                password: 'demo123',
+                nombre: 'María González',
+                apartamento: 'Torre 1 - Apto 301',
+                rol: 'residente',
+                telefono: '3001111111',
+                activo: true
+            },
+            {
+                email: 'carlos.ruiz@email.com',
+                password: 'demo123',
+                nombre: 'Carlos Ruiz',
+                apartamento: 'Torre 3 - Apto 205',
+                rol: 'residente',
+                telefono: '3002222222',
+                activo: true
+            }
+        ];
+
+        // Función para crear/actualizar un usuario
+        async function crearUsuario(userData) {
+            const logDiv = document.getElementById('log');
+
+            try {
+                logDiv.innerHTML += `<div class="text-blue-600">📝 Procesando: ${userData.email}...</div>`;
+
+                let userCredential;
+                let uid;
+
+                try {
+                    // Intentar crear el usuario en Authentication
+                    userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
+                    uid = userCredential.user.uid;
+                    logDiv.innerHTML += `<div class="text-green-600">✅ Usuario creado en Authentication: ${userData.email} (UID: ${uid})</div>`;
+                } catch (error) {
+                    if (error.code === 'auth/email-already-in-use') {
+                        // Si ya existe, hacer login para obtener el UID
+                        logDiv.innerHTML += `<div class="text-yellow-600">⚠️ Usuario ya existe en Authentication, obteniendo UID...</div>`;
+                        userCredential = await signInWithEmailAndPassword(auth, userData.email, userData.password);
+                        uid = userCredential.user.uid;
+                        logDiv.innerHTML += `<div class="text-green-600">✅ UID obtenido: ${uid}</div>`;
+                    } else {
+                        throw error;
+                    }
+                }
+
+                // Crear/actualizar documento en Firestore
+                const userDocData = {
+                    id: uid,
+                    email: userData.email,
+                    nombre: userData.nombre,
+                    apartamento: userData.apartamento,
+                    rol: userData.rol,
+                    telefono: userData.telefono,
+                    activo: userData.activo,
+                    fechaRegistro: new Date().toISOString()
+                };
+
+                await setDoc(doc(db, 'usuarios', uid), userDocData);
+                logDiv.innerHTML += `<div class="text-green-600">✅✅ Documento creado en Firestore para: ${userData.email}</div>`;
+                logDiv.innerHTML += `<div class="bg-green-50 p-2 rounded mb-2">
+                    <strong>Usuario completo:</strong><br>
+                    Email: ${userData.email}<br>
+                    UID: ${uid}<br>
+                    Rol: ${userData.rol}<br>
+                    Nombre: ${userData.nombre}
+                </div>`;
+
+                return { success: true, uid };
+            } catch (error) {
+                logDiv.innerHTML += `<div class="text-red-600">❌ Error con ${userData.email}: ${error.message}</div>`;
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Función para crear todos los usuarios
+        window.crearTodosLosUsuarios = async function() {
+            const logDiv = document.getElementById('log');
+            const btn = document.getElementById('btnCrear');
+
+            btn.disabled = true;
+            btn.textContent = 'Procesando...';
+            logDiv.innerHTML = '<div class="text-xl font-bold mb-4">🚀 Iniciando creación de usuarios...</div>';
+
+            let exitosos = 0;
+            let fallidos = 0;
+
+            for (const usuario of usuarios) {
+                const resultado = await crearUsuario(usuario);
+                if (resultado.success) {
+                    exitosos++;
+                } else {
+                    fallidos++;
+                }
+                logDiv.innerHTML += '<hr class="my-2">';
+            }
+
+            logDiv.innerHTML += `
+                <div class="bg-blue-100 p-4 rounded-lg mt-4">
+                    <h3 class="text-xl font-bold mb-2">📊 Resumen Final</h3>
+                    <p>✅ Usuarios creados exitosamente: ${exitosos}</p>
+                    <p>❌ Usuarios con errores: ${fallidos}</p>
+                    <p class="mt-4 text-green-700 font-semibold">
+                        ${exitosos === usuarios.length ? '🎉 ¡Todos los usuarios fueron creados correctamente!' : ''}
+                    </p>
+                    <p class="mt-4">
+                        <a href="/" class="bg-blue-600 text-white px-4 py-2 rounded inline-block hover:bg-blue-700">
+                            Ir a la aplicación
+                        </a>
+                    </p>
+                </div>
+            `;
+
+            btn.disabled = false;
+            btn.textContent = 'Crear Usuarios';
+        };
+
+        // Función para verificar usuarios existentes
+        window.verificarUsuarios = async function() {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML = '<div class="text-xl font-bold mb-4">🔍 Verificando usuarios existentes...</div>';
+
+            for (const usuario of usuarios) {
+                try {
+                    // Intentar hacer login
+                    const userCredential = await signInWithEmailAndPassword(auth, usuario.email, usuario.password);
+                    const uid = userCredential.user.uid;
+
+                    // Verificar documento en Firestore
+                    const userDoc = await getDoc(doc(db, 'usuarios', uid));
+
+                    if (userDoc.exists()) {
+                        const data = userDoc.data();
+                        logDiv.innerHTML += `
+                            <div class="bg-green-50 p-3 rounded mb-2 border border-green-200">
+                                <div class="font-bold text-green-700">✅ ${usuario.email}</div>
+                                <div class="text-sm">UID: ${uid}</div>
+                                <div class="text-sm">Nombre: ${data.nombre}</div>
+                                <div class="text-sm">Rol: ${data.rol}</div>
+                                <div class="text-sm">Firestore: ✅ Documento existe</div>
+                            </div>
+                        `;
+                    } else {
+                        logDiv.innerHTML += `
+                            <div class="bg-yellow-50 p-3 rounded mb-2 border border-yellow-200">
+                                <div class="font-bold text-yellow-700">⚠️ ${usuario.email}</div>
+                                <div class="text-sm">UID: ${uid}</div>
+                                <div class="text-sm">Authentication: ✅ Existe</div>
+                                <div class="text-sm">Firestore: ❌ Documento NO existe</div>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                        logDiv.innerHTML += `
+                            <div class="bg-red-50 p-3 rounded mb-2 border border-red-200">
+                                <div class="font-bold text-red-700">❌ ${usuario.email}</div>
+                                <div class="text-sm">Authentication: ❌ No existe o contraseña incorrecta</div>
+                            </div>
+                        `;
+                    } else {
+                        logDiv.innerHTML += `
+                            <div class="bg-red-50 p-3 rounded mb-2 border border-red-200">
+                                <div class="font-bold text-red-700">❌ ${usuario.email}</div>
+                                <div class="text-sm">Error: ${error.message}</div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+        };
+
+        console.log('✅ Script de setup cargado');
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold mb-4 text-blue-600">🔧 Setup de Usuarios - Firebase</h1>
+            <p class="text-gray-700 mb-4">
+                Este script creará/sincronizará los usuarios en Firebase Authentication y Firestore.
+            </p>
+
+            <div class="bg-yellow-50 border border-yellow-200 p-4 rounded mb-4">
+                <h3 class="font-bold text-yellow-800 mb-2">⚠️ Importante:</h3>
+                <ul class="list-disc list-inside text-yellow-700 text-sm space-y-1">
+                    <li>Este proceso creará usuarios en Firebase Authentication</li>
+                    <li>También creará documentos correspondientes en Firestore</li>
+                    <li>Si un usuario ya existe en Authentication, solo actualizará Firestore</li>
+                    <li>Los usuarios se crean con las contraseñas definidas en el código</li>
+                </ul>
+            </div>
+
+            <div class="flex gap-4 mb-6">
+                <button
+                    id="btnCrear"
+                    onclick="crearTodosLosUsuarios()"
+                    class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
+                    Crear/Sincronizar Usuarios
+                </button>
+                <button
+                    onclick="verificarUsuarios()"
+                    class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold">
+                    Verificar Usuarios Existentes
+                </button>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 p-4 rounded mb-4">
+                <h3 class="font-bold text-blue-800 mb-2">👥 Usuarios a crear:</h3>
+                <ul class="text-sm text-blue-700 space-y-1">
+                    <li>🔵 <strong>Residente:</strong> car-cbs@hotmail.com / password1</li>
+                    <li>🟢 <strong>Administrador:</strong> shayoja@hotmail.com / password2</li>
+                    <li>🟠 <strong>Vigilante:</strong> car02cbs@gmail.com / password3</li>
+                    <li>🏛️ <strong>Alcaldía:</strong> alcaldia@conjunto.com / alcaldia123</li>
+                    <li>🔵 <strong>Residente:</strong> maria.gonzalez@email.com / demo123</li>
+                    <li>🔵 <strong>Residente:</strong> carlos.ruiz@email.com / demo123</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-bold mb-4">📋 Log de Procesos</h2>
+            <div id="log" class="bg-gray-50 p-4 rounded min-h-[200px] max-h-[600px] overflow-y-auto font-mono text-sm">
+                <div class="text-gray-500">Esperando acción...</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
