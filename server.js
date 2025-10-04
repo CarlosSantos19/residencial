@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = 8081;
+const PORT = process.env.PORT || 8081;
 
 // Middleware
 app.use(express.static('public'));

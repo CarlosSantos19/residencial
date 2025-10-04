@@ -1,0 +1,9 @@
+conjunto_residencial_flutter/
+.git/
+.vscode/
+.idea/
+*.md
+PLAN_*.md
+RESUMEN_*.md
+INSTRUCCIONES_*.md
+FUNCIONALIDADES_*.md
