@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conjunto Aralia de Castilla - Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, getDocs, doc, getDoc, query, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTglrnttR2NKUHIsS9ddj37Yuwvz6Lv7A",
+            authDomain: "conjunto-residencial-2024.firebaseapp.com",
+            projectId: "conjunto-residencial-2024",
+            storageBucket: "conjunto-residencial-2024.firebasestorage.app",
+            messagingSenderId: "26128855451",
+            appId: "1:26128855451:web:d94aae5e71376e6808313e",
+            measurementId: "G-1PRFW148P0"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Hacer disponibles globalmente
+        window.firebaseAuth = auth;
+        window.firebaseDB = db;
+        window.firebaseModules = {
+            signInWithEmailAndPassword,
+            onAuthStateChanged,
+            signOut,
+            collection,
+            getDocs,
+            doc,
+            getDoc,
+            query,
+            where
+        };
+
+        console.log('Firebase inicializado correctamente');
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Pantalla de Login -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
+            <div class="text-center mb-8">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-home text-2xl text-white"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Conjunto Aralia de Castilla</h1>
+                <p class="text-gray-600">Sistema con Firebase + Firestore</p>
+            </div>
+
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="login-email" required value="car-cbs@hotmail.com"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                    <input type="password" id="login-password" required value="password1"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition duration-200">
+                    Iniciar Sesión
+                </button>
+            </form>
+
+            <div class="mt-6 space-y-2">
+                <p class="text-sm text-gray-600 text-center">Usuarios de prueba:</p>
+                <button onclick="loginQuick('car-cbs@hotmail.com', 'password1')" class="w-full text-sm bg-blue-50 text-blue-600 py-2 rounded-lg hover:bg-blue-100">
+                    👤 Residente
+                </button>
+                <button onclick="loginQuick('shayoja@hotmail.com', 'password2')" class="w-full text-sm bg-green-50 text-green-600 py-2 rounded-lg hover:bg-green-100">
+                    👨‍💼 Administrador
+                </button>
+                <button onclick="loginQuick('car02cbs@gmail.com', 'password3')" class="w-full text-sm bg-orange-50 text-orange-600 py-2 rounded-lg hover:bg-orange-100">
+                    🛡️ Vigilante
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aplicación Principal -->
+    <div id="app" class="hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold">Conjunto Aralia de Castilla</h1>
+                    <p id="user-name" class="text-sm text-blue-100"></p>
+                </div>
+                <button onclick="logout()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg">
+                    <i class="fas fa-sign-out-alt"></i> Salir
+                </button>
+            </div>
+        </div>
+
+        <div class="container mx-auto p-6">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-check-circle text-green-500"></i> ¡Firebase Conectado!
+                </h2>
+
+                <div class="space-y-4">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-green-800 mb-2">✅ Servicios Activos:</h3>
+                        <ul class="list-disc list-inside text-green-700 space-y-1">
+                            <li>Firebase Authentication</li>
+                            <li>Cloud Firestore Database</li>
+                            <li>Firebase Hosting</li>
+                            <li>Reglas de seguridad configuradas</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-blue-800 mb-2">📊 Datos en Firestore:</h3>
+                        <ul class="list-disc list-inside text-blue-700 space-y-1">
+                            <li id="users-count">Cargando usuarios...</li>
+                            <li id="news-count">Cargando noticias...</li>
+                            <li id="reservations-count">Cargando reservas...</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-yellow-800 mb-2">🚧 Próximos Pasos:</h3>
+                        <ul class="list-disc list-inside text-yellow-700 space-y-1">
+                            <li>Migrar interfaz completa a Firebase</li>
+                            <li>Configurar app Flutter con Firebase</li>
+                            <li>Generar APK para Android</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        // Login rápido
+        function loginQuick(email, password) {
+            document.getElementById('login-email').value = email;
+            document.getElementById('login-password').value = password;
+            document.getElementById('login-form').dispatchEvent(new Event('submit'));
+        }
+
+        // Login
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const { signInWithEmailAndPassword } = window.firebaseModules;
+                const userCredential = await signInWithEmailAndPassword(window.firebaseAuth, email, password);
+                console.log('Login exitoso:', userCredential.user);
+
+                // Obtener datos del usuario desde Firestore
+                const { doc, getDoc } = window.firebaseModules;
+                const userDoc = await getDoc(doc(window.firebaseDB, 'usuarios', userCredential.user.uid));
+
+                if (userDoc.exists()) {
+                    currentUser = userDoc.data();
+                    showApp();
+                } else {
+                    alert('Usuario no encontrado en Firestore');
+                }
+            } catch (error) {
+                console.error('Error de login:', error);
+                alert('Error: ' + error.message);
+            }
+        });
+
+        // Logout
+        async function logout() {
+            const { signOut } = window.firebaseModules;
+            await signOut(window.firebaseAuth);
+            document.getElementById('app').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        }
+
+        // Mostrar app
+        async function showApp() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            document.getElementById('user-name').textContent = currentUser.nombre + ' (' + currentUser.rol + ')';
+
+            // Cargar estadísticas
+            try {
+                const { collection, getDocs } = window.firebaseModules;
+
+                const usersSnapshot = await getDocs(collection(window.firebaseDB, 'usuarios'));
+                document.getElementById('users-count').textContent = `${usersSnapshot.size} usuarios registrados`;
+
+                const newsSnapshot = await getDocs(collection(window.firebaseDB, 'noticias'));
+                document.getElementById('news-count').textContent = `${newsSnapshot.size} noticias publicadas`;
+
+                const reservationsSnapshot = await getDocs(collection(window.firebaseDB, 'reservas'));
+                document.getElementById('reservations-count').textContent = `${reservationsSnapshot.size} reservas activas`;
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+            }
+        }
+
+        // Verificar sesión al cargar
+        window.addEventListener('load', () => {
+            const { onAuthStateChanged } = window.firebaseModules;
+            onAuthStateChanged(window.firebaseAuth, async (user) => {
+                if (user) {
+                    const { doc, getDoc } = window.firebaseModules;
+                    const userDoc = await getDoc(doc(window.firebaseDB, 'usuarios', user.uid));
+                    if (userDoc.exists()) {
+                        currentUser = userDoc.data();
+                        showApp();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
