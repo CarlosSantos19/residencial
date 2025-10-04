@@ -198,16 +198,25 @@
             try {
                 const { collection, getDocs } = window.firebaseModules;
 
+                console.log('Cargando usuarios...');
                 const usersSnapshot = await getDocs(collection(window.firebaseDB, 'usuarios'));
+                console.log('Usuarios cargados:', usersSnapshot.size);
                 document.getElementById('users-count').textContent = `${usersSnapshot.size} usuarios registrados`;
 
+                console.log('Cargando noticias...');
                 const newsSnapshot = await getDocs(collection(window.firebaseDB, 'noticias'));
+                console.log('Noticias cargadas:', newsSnapshot.size);
                 document.getElementById('news-count').textContent = `${newsSnapshot.size} noticias publicadas`;
 
+                console.log('Cargando reservas...');
                 const reservationsSnapshot = await getDocs(collection(window.firebaseDB, 'reservas'));
+                console.log('Reservas cargadas:', reservationsSnapshot.size);
                 document.getElementById('reservations-count').textContent = `${reservationsSnapshot.size} reservas activas`;
             } catch (error) {
-                console.error('Error cargando datos:', error);
+                console.error('❌ Error cargando datos:', error);
+                document.getElementById('users-count').textContent = '❌ Error: ' + error.message;
+                document.getElementById('news-count').textContent = '❌ Error: ' + error.message;
+                document.getElementById('reservations-count').textContent = '❌ Error: ' + error.message;
             }
         }
 

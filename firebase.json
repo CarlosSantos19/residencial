@@ -9,7 +9,7 @@
     "rewrites": [
       {
         "source": "**",
-        "destination": "/conjunto-aralia-completo.html"
+        "destination": "/index.html"
       }
     ]
   },

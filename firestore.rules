@@ -25,9 +25,9 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Usuarios - Solo lectura propia y admin puede ver todos
+    // Usuarios - Todos los usuarios autenticados pueden leer todos los usuarios
     match /usuarios/{userId} {
-      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow read: if isSignedIn();
       allow write: if isAdmin();
     }
 
