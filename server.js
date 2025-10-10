@@ -3148,12 +3148,16 @@ app.get('/api/admin/estadisticas/reservas', verificarAdmin, (req, res) => {
 
 // Obtener último sorteo realizado
 app.get('/api/admin/sorteo-parqueaderos/ultimo', verificarAdmin, (req, res) => {
-  const sorteos = data.sorteoParqueaderos || [];
-  if (sorteos.length === 0) {
-    return res.status(404).json({ error: 'No hay sorteos previos' });
+  if (!data.ultimoSorteo || !data.ultimoSorteo.resultados) {
+    return res.json({ success: false, mensaje: 'No hay sorteos realizados aún' });
   }
-  const ultimo = sorteos[sorteos.length - 1];
-  res.json(ultimo);
+
+  res.json({
+    success: true,
+    fecha: data.ultimoSorteo.fecha,
+    realizadoPor: data.ultimoSorteo.realizadoPor,
+    resultados: data.ultimoSorteo.resultados
+  });
 });
 
 // Obtener residentes activos para sorteo
@@ -3195,6 +3199,24 @@ app.post('/api/admin/sorteo-parqueaderos', verificarAdmin, (req, res) => {
 });
 
 // ==================== FIN ENDPOINTS FLUTTER ====================
+
+// ============= ENDPOINT PARA MIGRACIÓN A FIREBASE =============
+app.get('/api/admin/exportar-datos', (req, res) => {
+  // Retornar todos los datos para migración a Firebase
+  res.json({
+    usuarios: data.usuarios,
+    emprendimientos: data.emprendimientos,
+    reservas: data.reservas,
+    pagos: data.pagos,
+    noticias: data.noticias,
+    pqrs: data.pqrs,
+    encuestas: data.encuestas,
+    chats: data.chats,
+    parqueaderos: data.parqueaderos,
+    vehiculosVisitantes: data.vehiculosVisitantes,
+    apartamentosArriendo: data.apartamentosArriendo
+  });
+});
 
 // Iniciar servidor
 app.listen(PORT, () => {
