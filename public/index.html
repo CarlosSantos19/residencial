@@ -535,7 +535,8 @@ const tabConfigs = {
         { id: 'incidentes-admin', name: 'Incidentes Alcaldía', icon: 'fas fa-city' },
         { id: 'encuestas-admin', name: 'Encuestas', icon: 'fas fa-poll' },
         { id: 'registros-eventos-admin', name: 'Registros Eventos', icon: 'fas fa-clipboard-list' },
-        { id: 'paquetes-admin', name: 'Correspondencia', icon: 'fas fa-envelope' }
+        { id: 'paquetes-admin', name: 'Correspondencia', icon: 'fas fa-envelope' },
+        { id: 'chat', name: 'Chat', icon: 'fas fa-comments' }
     ],
     alcaldia: [
         { id: 'panel-alcaldia', name: 'Panel Alcaldía', icon: 'fas fa-landmark' },
@@ -547,7 +548,8 @@ const tabConfigs = {
         { id: 'permisos-vigilante', name: 'Gestión Permisos', icon: 'fas fa-key' },
         { id: 'registros', name: 'Registros', icon: 'fas fa-clipboard-list' },
         { id: 'camaras-vigilante', name: 'Cámaras', icon: 'fas fa-video' },
-        { id: 'paquetes-vigilante', name: 'Correspondencia', icon: 'fas fa-envelope' }
+        { id: 'paquetes-vigilante', name: 'Correspondencia', icon: 'fas fa-envelope' },
+        { id: 'chat', name: 'Chat', icon: 'fas fa-comments' }
     ]
 };
 
@@ -3694,22 +3696,37 @@ function loadChat() {
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
                 <div class="border-b border-gray-200">
                     <nav class="flex space-x-8 px-6" id="chat-tabs">
+                        <!-- Pestaña General: Todos pueden ver -->
                         <button onclick="switchChatTab('general')" id="chat-tab-general"
                                 class="py-4 px-2 border-b-2 font-medium text-sm chat-tab-active">
                             <i class="fas fa-users mr-2"></i>General
                         </button>
-                        ${currentUser.rol === 'admin' || currentUser.rol === 'residente' ? `
+
+                        <!-- Pestaña Administrador: Residentes y Vigilantes pueden escribir al Admin -->
+                        ${currentUser.rol === 'residente' || currentUser.rol === 'vigilante' ? `
                             <button onclick="switchChatTab('admin')" id="chat-tab-admin"
                                     class="py-4 px-2 border-b-2 font-medium text-sm chat-tab-inactive">
                                 <i class="fas fa-user-shield mr-2"></i>Administrador
                             </button>
                         ` : ''}
-                        ${currentUser.rol === 'vigilante' || currentUser.rol === 'admin' ? `
+
+                        <!-- Pestaña Vigilantes: Admin y Residentes pueden escribir a Vigilantes -->
+                        ${currentUser.rol === 'admin' || currentUser.rol === 'residente' ? `
                             <button onclick="switchChatTab('vigilantes')" id="chat-tab-vigilantes"
                                     class="py-4 px-2 border-b-2 font-medium text-sm chat-tab-inactive">
                                 <i class="fas fa-shield-alt mr-2"></i>Vigilantes
                             </button>
                         ` : ''}
+
+                        <!-- Pestaña Residentes: Admin y Vigilantes pueden escribir a Residentes -->
+                        ${currentUser.rol === 'admin' || currentUser.rol === 'vigilante' ? `
+                            <button onclick="switchChatTab('residentes')" id="chat-tab-residentes"
+                                    class="py-4 px-2 border-b-2 font-medium text-sm chat-tab-inactive">
+                                <i class="fas fa-home mr-2"></i>Residentes
+                            </button>
+                        ` : ''}
+
+                        <!-- Pestaña Privados: Solo para Residentes (chat entre residentes) -->
                         ${currentUser.rol === 'residente' ? `
                             <button onclick="switchChatTab('privados')" id="chat-tab-privados"
                                     class="py-4 px-2 border-b-2 font-medium text-sm chat-tab-inactive">
@@ -3793,6 +3810,9 @@ function switchChatTab(chatType) {
             break;
         case 'vigilantes':
             input.placeholder = 'Mensaje para vigilantes...';
+            break;
+        case 'residentes':
+            input.placeholder = 'Mensaje para residentes...';
             break;
         case 'privados':
             input.placeholder = 'Selecciona una conversación privada...';
