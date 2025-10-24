@@ -3708,7 +3708,7 @@ function loadChat() {
 
                     <!-- Lista de Canales y Usuarios -->
                     <div class="flex-1 overflow-y-auto">
-                        <!-- Canal General -->
+                        <!-- Canal General: Todos -->
                         <div class="border-b border-gray-100">
                             <button onclick="switchChatTab('general')" id="chat-item-general"
                                     class="w-full p-4 flex items-center gap-3 hover:bg-blue-50 transition-colors chat-item-active">
@@ -3722,8 +3722,8 @@ function loadChat() {
                             </button>
                         </div>
 
-                        <!-- Pestaña Administrador: Solo para Residentes y Vigilantes -->
-                        ${currentUser.rol !== 'admin' ? `
+                        <!-- Canal Administrador: Para Residentes y Vigilantes -->
+                        ${currentUser.rol === 'residente' || currentUser.rol === 'vigilante' ? `
                             <div class="border-b border-gray-100">
                                 <button onclick="switchChatTab('admin')" id="chat-item-admin"
                                         class="w-full p-4 flex items-center gap-3 hover:bg-green-50 transition-colors chat-item-inactive">
@@ -3738,7 +3738,7 @@ function loadChat() {
                             </div>
                         ` : ''}
 
-                        <!-- Canal Vigilantes: Para Residentes -->
+                        <!-- Canal Vigilantes: Solo para Residentes -->
                         ${currentUser.rol === 'residente' ? `
                             <div class="border-b border-gray-100">
                                 <button onclick="switchChatTab('vigilantes')" id="chat-item-vigilantes"
@@ -3754,40 +3754,37 @@ function loadChat() {
                             </div>
                         ` : ''}
 
-                        <!-- Selector de Vigilantes Individuales -->
+                        <!-- Lista de Vigilantes Individuales: Para Admin y Residentes -->
                         ${currentUser.rol === 'admin' || currentUser.rol === 'residente' ? `
                             <div class="border-b border-gray-100">
                                 <div class="p-3 bg-gray-50">
-                                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Vigilantes</div>
+                                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Chats con Vigilantes</div>
                                 </div>
-                                <div id="lista-vigilantes-chat">
+                                <div id="lista-vigilantes-chat" class="max-h-64 overflow-y-auto">
                                     <!-- Se cargarán vigilantes aquí -->
                                 </div>
                             </div>
                         ` : ''}
 
-                        <!-- Selector de Residentes -->
+                        <!-- Lista de Residentes Individuales: Para Admin y Vigilantes -->
                         ${currentUser.rol === 'admin' || currentUser.rol === 'vigilante' ? `
                             <div class="border-b border-gray-100">
                                 <div class="p-3 bg-gray-50">
-                                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Residentes</div>
+                                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Chats con Residentes</div>
                                 </div>
-                                <div id="lista-residentes-chat">
+                                <div id="lista-residentes-chat" class="max-h-64 overflow-y-auto">
                                     <!-- Se cargarán residentes aquí -->
                                 </div>
                             </div>
                         ` : ''}
 
-                        <!-- Chats Privados para Residentes -->
+                        <!-- Chats Privados entre Residentes: Solo para Residentes -->
                         ${currentUser.rol === 'residente' ? `
                             <div class="border-b border-gray-100">
-                                <div class="p-3 bg-gray-50 flex items-center justify-between">
+                                <div class="p-3 bg-gray-50">
                                     <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Otros Residentes</div>
-                                    <button onclick="mostrarSelectorResidentes()" class="text-blue-600 hover:text-blue-700">
-                                        <i class="fas fa-plus-circle"></i>
-                                    </button>
                                 </div>
-                                <div id="lista-residentes-privados-chat">
+                                <div id="lista-residentes-privados-chat" class="max-h-64 overflow-y-auto">
                                     <!-- Se cargarán residentes aquí -->
                                 </div>
                             </div>
