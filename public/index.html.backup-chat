@@ -11695,6 +11695,359 @@ let currentChatChannel = 'general';
 let currentPrivateChatUser = null;
 let chatRefreshInterval = null;
 
+function loadChat() {
+    const contentArea = document.getElementById('content-area');
+
+    const canales = [];
+    canales.push({ id: 'general', nombre: 'General', icon: 'fa-users', color: 'blue' });
+
+    if (currentUser.rol === 'admin') {
+        canales.push({ id: 'admin', nombre: 'Admin', icon: 'fa-user-shield', color: 'green' });
+    }
+
+    if (currentUser.rol === 'vigilante' || currentUser.rol === 'admin') {
+        canales.push({ id: 'vigilantes', nombre: 'Vigilantes', icon: 'fa-shield-alt', color: 'orange' });
+    }
+
+    if (currentUser.rol === 'residente') {
+        canales.push({ id: 'privados', nombre: 'Privados', icon: 'fa-lock', color: 'purple' });
+    }
+
+    contentArea.innerHTML = `
+        <div class="p-6 space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-comments text-blue-600 mr-3"></i>
+                        Chat
+                    </h2>
+                    <p class="text-gray-600 mt-1">Comunícate con la comunidad</p>
+                </div>
+                ${currentUser.rol === 'residente' ? `
+                    <button onclick="mostrarNuevoChatPrivado()" class="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-lg hover:shadow-lg transition flex items-center gap-2">
+                        <i class="fas fa-plus"></i>
+                        Nuevo Chat Privado
+                    </button>
+                ` : ''}
+            </div>
+
+            <!-- Canales de Chat -->
+            <div class="bg-white rounded-lg shadow-sm border-2 border-gray-200">
+                <div class="border-b border-gray-200 bg-gray-50 px-6 py-3">
+                    <div class="flex space-x-4">
+                        ${canales.map(canal => `
+                            <button onclick="cambiarCanalChat('${canal.id}')" id="canal-${canal.id}"
+                                class="canal-chat px-4 py-2 rounded-lg font-semibold transition ${canal.id === 'general' ? 'bg-'+canal.color+'-600 text-white' : 'text-gray-600 hover:bg-gray-200'}">
+                                <i class="fas ${canal.icon} mr-2"></i>
+                                ${canal.nombre}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Área de Mensajes -->
+                <div id="chat-mensajes" class="h-96 overflow-y-auto p-6 bg-gradient-to-b from-gray-50 to-white">
+                    <div class="text-center py-12">
+                        <i class="fas fa-spinner fa-spin text-4xl text-blue-400 mb-4"></i>
+                        <p class="text-gray-600">Cargando mensajes...</p>
+                    </div>
+                </div>
+
+                <!-- Input de Mensaje -->
+                <div class="border-t border-gray-200 p-4 bg-white">
+                    <form id="form-mensaje-chat" class="flex gap-3">
+                        <input type="text" id="input-mensaje-chat"
+                            class="flex-1 p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500"
+                            placeholder="Escribe tu mensaje..." required>
+                        <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Enviar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('form-mensaje-chat').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const input = document.getElementById('input-mensaje-chat');
+        const mensaje = input.value.trim();
+
+        if (!mensaje) return;
+
+        if (currentChatChannel === 'privados' && !currentPrivateChatUser) {
+            showNotification('Selecciona un chat privado primero', 'error');
+            return;
+        }
+
+        try {
+            let url, body;
+
+            if (currentChatChannel === 'privados') {
+                url = `/api/chat/privado/${currentPrivateChatUser.id}`;
+                body = { mensaje };
+            } else {
+                url = `/api/chat/${currentChatChannel}`;
+                body = { mensaje };
+            }
+
+            const response = await fetchWithAuth(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                input.value = '';
+                cargarMensajesChat();
+            } else {
+                showNotification('Error al enviar mensaje', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Error al enviar mensaje', 'error');
+        }
+    });
+
+    cargarMensajesChat();
+
+    // Actualizar mensajes cada 3 segundos
+    if (chatRefreshInterval) clearInterval(chatRefreshInterval);
+    chatRefreshInterval = setInterval(cargarMensajesChat, 3000);
+}
+
+function cambiarCanalChat(canal) {
+    currentChatChannel = canal;
+    currentPrivateChatUser = null;
+
+    // Actualizar estilos de botones
+    document.querySelectorAll('.canal-chat').forEach(btn => {
+        btn.className = 'canal-chat px-4 py-2 rounded-lg font-semibold transition text-gray-600 hover:bg-gray-200';
+    });
+
+    const colores = {
+        general: 'blue',
+        admin: 'green',
+        vigilantes: 'orange',
+        privados: 'purple'
+    };
+
+    const boton = document.getElementById(`canal-${canal}`);
+    if (boton) {
+        boton.className = `canal-chat px-4 py-2 rounded-lg font-semibold transition bg-${colores[canal]}-600 text-white`;
+    }
+
+    if (canal === 'privados') {
+        cargarListaChatsPrivados();
+    } else {
+        cargarMensajesChat();
+    }
+}
+
+async function cargarMensajesChat() {
+    try {
+        let url;
+
+        if (currentChatChannel === 'privados') {
+            if (!currentPrivateChatUser) return;
+            url = `/api/chat/privado/${currentPrivateChatUser.id}`;
+        } else {
+            url = `/api/chat/${currentChatChannel}`;
+        }
+
+        const response = await fetchWithAuth(url);
+        const data = await response.json();
+
+        const container = document.getElementById('chat-mensajes');
+
+        if (!data.success || !data.mensajes || data.mensajes.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-12">
+                    <i class="fas fa-comment-slash text-6xl text-gray-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay mensajes</h3>
+                    <p class="text-gray-600">¡Sé el primero en escribir!</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = data.mensajes.map(msg => {
+            const esMio = currentChatChannel === 'privados'
+                ? msg.usuarioId === currentUser.id
+                : msg.usuario === currentUser.nombre;
+
+            const fecha = new Date(msg.fecha);
+
+            if (esMio) {
+                return `
+                    <div class="flex justify-end mb-4">
+                        <div class="max-w-md">
+                            <div class="bg-blue-600 text-white rounded-lg rounded-tr-none p-3 shadow">
+                                <p class="text-sm">${msg.mensaje}</p>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1 text-right">
+                                ${fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="flex justify-start mb-4">
+                        <div class="max-w-md">
+                            <div class="bg-white border-2 border-gray-200 rounded-lg rounded-tl-none p-3 shadow">
+                                <div class="font-bold text-sm text-gray-900 mb-1">
+                                    ${msg.usuario}
+                                    ${msg.apartamento ? `<span class="text-xs font-normal text-gray-500">- ${msg.apartamento}</span>` : ''}
+                                </div>
+                                <p class="text-sm text-gray-700">${msg.mensaje}</p>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                ${fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }).join('');
+
+        // Scroll al final
+        container.scrollTop = container.scrollHeight;
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function cargarListaChatsPrivados() {
+    try {
+        const response = await fetchWithAuth('/api/chat/privados/lista');
+        const data = await response.json();
+
+        const container = document.getElementById('chat-mensajes');
+
+        if (!data.success || data.chats.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-12">
+                    <i class="fas fa-user-friends text-6xl text-gray-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">No tienes chats privados</h3>
+                    <p class="text-gray-600 mb-4">Inicia una conversación con otro residente</p>
+                    <button onclick="mostrarNuevoChatPrivado()" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition">
+                        <i class="fas fa-plus mr-2"></i>
+                        Nuevo Chat
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="space-y-3">
+                ${data.chats.map(chat => {
+                    const ultimoMensaje = chat.ultimoMensaje;
+                    const fecha = ultimoMensaje ? new Date(ultimoMensaje.fecha) : null;
+
+                    return `
+                        <div onclick="abrirChatPrivado(${chat.otroUsuario.id}, '${chat.otroUsuario.nombre}')"
+                            class="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-purple-400 hover:shadow-lg transition cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-purple-100 p-3 rounded-full">
+                                    <i class="fas fa-user text-purple-600 text-xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-gray-900">${chat.otroUsuario.nombre}</h4>
+                                    <p class="text-sm text-gray-600">${chat.otroUsuario.apartamento}</p>
+                                    ${ultimoMensaje ? `
+                                        <p class="text-xs text-gray-500 mt-1 truncate">${ultimoMensaje.mensaje}</p>
+                                    ` : ''}
+                                </div>
+                                ${fecha ? `
+                                    <div class="text-xs text-gray-400">
+                                        ${fecha.toLocaleDateString('es-CO')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function abrirChatPrivado(usuarioId, nombreUsuario) {
+    currentPrivateChatUser = { id: usuarioId, nombre: nombreUsuario };
+
+    // Actualizar placeholder
+    document.getElementById('input-mensaje-chat').placeholder = `Mensaje para ${nombreUsuario}...`;
+
+    cargarMensajesChat();
+}
+
+async function mostrarNuevoChatPrivado() {
+    try {
+        const response = await fetchWithAuth('/api/residentes/lista');
+        const data = await response.json();
+
+        if (!data.success || data.residentes.length === 0) {
+            showNotification('No hay residentes disponibles', 'info');
+            return;
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
+        modal.innerHTML = `
+            <div class="bg-white rounded-xl shadow-2xl w-11/12 max-w-md">
+                <div class="bg-purple-600 text-white p-6 rounded-t-xl">
+                    <h3 class="text-2xl font-bold flex items-center">
+                        <i class="fas fa-user-plus mr-3"></i>
+                        Nuevo Chat Privado
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Selecciona un residente para iniciar una conversación:</p>
+                    <div class="space-y-2 max-h-96 overflow-y-auto">
+                        ${data.residentes.map(r => `
+                            <button onclick="iniciarChatConResidente(${r.id}, '${r.nombre}')"
+                                class="w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition">
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-purple-100 p-2 rounded-full">
+                                        <i class="fas fa-user text-purple-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-900">${r.nombre}</h4>
+                                        <p class="text-sm text-gray-600">${r.apartamento}</p>
+                                    </div>
+                                </div>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="p-6 border-t border-gray-200">
+                    <button onclick="this.closest('.fixed').remove()"
+                        class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition font-semibold">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error al cargar residentes', 'error');
+    }
+}
+
+function iniciarChatConResidente(id, nombre) {
+    document.querySelector('.fixed.inset-0').remove();
+    cambiarCanalChat('privados');
+    abrirChatPrivado(id, nombre);
+}
 
 // ============= JUEGOS MULTIJUGADOR =============
 
