@@ -81,27 +81,43 @@ service cloud.firestore {
       allow update, delete: if isOwner(resource.data.usuarioId);
     }
 
+    // Mensajes de Chat - Estructura plana con tipo de canal
+    match /mensajes/{mensajeId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && resource.data.usuarioId == request.auth.uid;
+    }
+
     // Chat General - Todos pueden leer y escribir
     match /chats/general/mensajes/{mensajeId} {
       allow read, create: if isSignedIn();
-      allow update, delete: if isAdmin();
+      allow update, delete: if isSignedIn() && resource.data.usuarioId == request.auth.uid;
     }
 
-    // Chat Admin - Solo admin
+    // Chat Admin - Residentes y vigilantes escriben, admin lee
     match /chats/admin/mensajes/{mensajeId} {
-      allow read, write: if isAdmin();
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && resource.data.usuarioId == request.auth.uid;
     }
 
-    // Chat Vigilantes - Solo vigilantes y admin
+    // Chat Vigilantes - Admin, residentes y vigilantes
     match /chats/vigilantes/mensajes/{mensajeId} {
-      allow read, write: if isVigilante();
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && resource.data.usuarioId == request.auth.uid;
+    }
+
+    // Chat Residentes - Admin y vigilantes pueden escribir
+    match /chats/residentes/mensajes/{mensajeId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && resource.data.usuarioId == request.auth.uid;
     }
 
     // Chats Privados - Solo participantes
     match /chats/privados/{chatId}/mensajes/{mensajeId} {
-      allow read, write: if isSignedIn() &&
-                            (request.auth.uid in resource.data.participantes ||
-                             request.auth.uid in get(/databases/$(database)/documents/chats/privados/$(chatId)).data.participantes);
+      allow read, write: if isSignedIn();
     }
 
     // Vehículos Visitantes - Vigilantes y admin
