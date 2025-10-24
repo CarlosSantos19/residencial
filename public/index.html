@@ -75,6 +75,16 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
+        .chat-item-active {
+            background-color: #eff6ff !important;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .chat-item-inactive {
+            background-color: transparent;
+            border-left: 4px solid transparent;
+        }
+
         /* Estilos para temas */
         .dark .bg-white { background-color: #1f2937; }
         .dark .text-gray-900 { color: #f9fafb; }
@@ -3678,96 +3688,134 @@ async function enviarResena(emprendimientoId) {
 function loadChat() {
     const contentArea = document.getElementById('content-area');
     contentArea.innerHTML = `
-        <div class="p-6">
+        <div class="h-full flex flex-col p-6">
             <div class="flex items-center justify-between mb-6">
-                <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+                <h2 class="text-3xl font-bold text-gray-900 flex items-center">
                     <i class="fas fa-comments text-blue-600 mr-3"></i>
                     Chat Comunitario
                 </h2>
-                ${currentUser.rol === 'residente' ? `
-                    <button onclick="mostrarSolicitudChatPrivado()"
-                            class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                        <i class="fas fa-user-plus mr-2"></i>Solicitar Chat Privado
-                    </button>
-                ` : ''}
             </div>
 
-            <!-- Pestañas de Chat -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-                <div class="border-b border-gray-200">
-                    <nav class="flex space-x-8 px-6" id="chat-tabs">
-                        <!-- Pestaña General: Todos pueden ver -->
-                        <button onclick="switchChatTab('general')" id="chat-tab-general"
-                                class="py-4 px-2 border-b-2 font-medium text-sm chat-tab-active">
-                            <i class="fas fa-users mr-2"></i>General
-                        </button>
+            <div class="flex-1 flex gap-6 overflow-hidden">
+                <!-- Panel Lateral: Lista de Contactos/Canales -->
+                <div class="w-80 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col">
+                    <div class="p-4 border-b border-gray-200">
+                        <h3 class="font-semibold text-gray-900 mb-3 flex items-center">
+                            <i class="fas fa-layer-group mr-2 text-blue-600"></i>
+                            Canales y Contactos
+                        </h3>
+                    </div>
 
-                        <!-- Pestaña Administrador: Residentes y Vigilantes pueden escribir al Admin -->
-                        ${currentUser.rol === 'residente' || currentUser.rol === 'vigilante' ? `
-                            <button onclick="switchChatTab('admin')" id="chat-tab-admin"
-                                    class="py-4 px-2 border-b-2 font-medium text-sm chat-tab-inactive">
-                                <i class="fas fa-user-shield mr-2"></i>Administrador
+                    <!-- Lista de Canales y Usuarios -->
+                    <div class="flex-1 overflow-y-auto">
+                        <!-- Canal General -->
+                        <div class="border-b border-gray-100">
+                            <button onclick="switchChatTab('general')" id="chat-item-general"
+                                    class="w-full p-4 flex items-center gap-3 hover:bg-blue-50 transition-colors chat-item-active">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                                    <i class="fas fa-users text-white"></i>
+                                </div>
+                                <div class="flex-1 text-left">
+                                    <div class="font-semibold text-gray-900">General</div>
+                                    <div class="text-xs text-gray-500">Chat comunitario</div>
+                                </div>
                             </button>
-                        ` : ''}
-
-                        <!-- Pestaña Vigilantes: Admin y Residentes pueden escribir a Vigilantes -->
-                        ${currentUser.rol === 'admin' || currentUser.rol === 'residente' ? `
-                            <button onclick="switchChatTab('vigilantes')" id="chat-tab-vigilantes"
-                                    class="py-4 px-2 border-b-2 font-medium text-sm chat-tab-inactive">
-                                <i class="fas fa-shield-alt mr-2"></i>Vigilantes
-                            </button>
-                        ` : ''}
-
-                        <!-- Pestaña Residentes: Admin y Vigilantes pueden escribir a Residentes -->
-                        ${currentUser.rol === 'admin' || currentUser.rol === 'vigilante' ? `
-                            <button onclick="switchChatTab('residentes')" id="chat-tab-residentes"
-                                    class="py-4 px-2 border-b-2 font-medium text-sm chat-tab-inactive">
-                                <i class="fas fa-home mr-2"></i>Residentes
-                            </button>
-                        ` : ''}
-
-                        <!-- Pestaña Privados: Solo para Residentes (chat entre residentes) -->
-                        ${currentUser.rol === 'residente' ? `
-                            <button onclick="switchChatTab('privados')" id="chat-tab-privados"
-                                    class="py-4 px-2 border-b-2 font-medium text-sm chat-tab-inactive">
-                                <i class="fas fa-lock mr-2"></i>Privados
-                            </button>
-                        ` : ''}
-                    </nav>
-                </div>
-            </div>
-
-            <!-- Contenedor de Chat -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <!-- Área de Mensajes -->
-                <div id="chat-messages-area" class="h-96 overflow-y-auto p-4 bg-gray-50 border-b border-gray-200">
-                    <!-- Los mensajes se cargarán aquí -->
-                </div>
-
-                <!-- Input de Mensaje -->
-                <div class="p-4">
-                    <form id="chat-form" class="flex items-center space-x-4">
-                        <div class="flex-1 relative">
-                            <input type="text" id="chat-message-input"
-                                   placeholder="Escribe tu mensaje aquí..."
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         </div>
-                        <button type="submit"
-                                class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
 
-            <!-- Usuarios Conectados -->
-            <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                <h3 class="font-medium text-gray-900 mb-3 flex items-center">
-                    <i class="fas fa-circle text-green-500 mr-2"></i>
-                    Usuarios Conectados
-                </h3>
-                <div id="usuarios-conectados" class="flex flex-wrap gap-2">
-                    <!-- Lista de usuarios conectados -->
+                        <!-- Pestaña Administrador: Solo para Residentes y Vigilantes -->
+                        ${currentUser.rol !== 'admin' ? `
+                            <div class="border-b border-gray-100">
+                                <button onclick="switchChatTab('admin')" id="chat-item-admin"
+                                        class="w-full p-4 flex items-center gap-3 hover:bg-green-50 transition-colors chat-item-inactive">
+                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+                                        <i class="fas fa-user-shield text-white"></i>
+                                    </div>
+                                    <div class="flex-1 text-left">
+                                        <div class="font-semibold text-gray-900">Administrador</div>
+                                        <div class="text-xs text-gray-500">Chat con admin</div>
+                                    </div>
+                                </button>
+                            </div>
+                        ` : ''}
+
+                        <!-- Selector de Vigilantes -->
+                        ${currentUser.rol === 'admin' || currentUser.rol === 'residente' ? `
+                            <div class="border-b border-gray-100">
+                                <div class="p-3 bg-gray-50">
+                                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Vigilantes</div>
+                                </div>
+                                <div id="lista-vigilantes-chat">
+                                    <!-- Se cargarán vigilantes aquí -->
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <!-- Selector de Residentes -->
+                        ${currentUser.rol === 'admin' || currentUser.rol === 'vigilante' ? `
+                            <div class="border-b border-gray-100">
+                                <div class="p-3 bg-gray-50">
+                                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Residentes</div>
+                                </div>
+                                <div id="lista-residentes-chat">
+                                    <!-- Se cargarán residentes aquí -->
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <!-- Chats Privados para Residentes -->
+                        ${currentUser.rol === 'residente' ? `
+                            <div class="border-b border-gray-100">
+                                <div class="p-3 bg-gray-50 flex items-center justify-between">
+                                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Otros Residentes</div>
+                                    <button onclick="mostrarSelectorResidentes()" class="text-blue-600 hover:text-blue-700">
+                                        <i class="fas fa-plus-circle"></i>
+                                    </button>
+                                </div>
+                                <div id="lista-residentes-privados-chat">
+                                    <!-- Se cargarán residentes aquí -->
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <!-- Panel Principal: Área de Chat -->
+                <div class="flex-1 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col">
+                    <!-- Header del Chat -->
+                    <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+                        <div class="flex items-center gap-3">
+                            <div id="chat-header-icon" class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                                <i class="fas fa-users text-white text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 id="chat-header-title" class="font-bold text-lg text-gray-900">Chat General</h3>
+                                <p id="chat-header-subtitle" class="text-sm text-gray-600">Chat comunitario</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Área de Mensajes -->
+                    <div id="chat-messages-area" class="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-gray-50 to-white">
+                        <div class="text-center py-12 text-gray-400">
+                            <i class="fas fa-comments text-6xl mb-4 opacity-50"></i>
+                            <p class="text-lg font-medium">Selecciona un chat para comenzar</p>
+                        </div>
+                    </div>
+
+                    <!-- Input de Mensaje -->
+                    <div class="p-4 border-t border-gray-200 bg-gray-50">
+                        <form id="chat-form" class="flex items-center gap-3">
+                            <div class="flex-1 relative">
+                                <input type="text" id="chat-message-input"
+                                       placeholder="Escribe tu mensaje aquí..."
+                                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                            </div>
+                            <button type="submit"
+                                    class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3775,8 +3823,9 @@ function loadChat() {
 
     // Inicializar chat
     currentChatType = 'general';
+    currentChatUserId = null;
     loadChatMessages('general');
-    loadUsuariosConectados();
+    cargarListaUsuariosChat();
 
     // Configurar envío de mensajes
     document.getElementById('chat-form').onsubmit = (e) => {
@@ -3786,38 +3835,177 @@ function loadChat() {
 }
 
 let currentChatType = 'general';
+let currentChatUserId = null;
+let currentChatUserName = null;
 
-function switchChatTab(chatType) {
+function switchChatTab(chatType, userId = null, userName = null) {
     // Remover clases activas
-    document.querySelectorAll('[id^="chat-tab-"]').forEach(tab => {
-        tab.className = 'py-4 px-2 border-b-2 font-medium text-sm chat-tab-inactive';
+    document.querySelectorAll('[id^="chat-item-"]').forEach(item => {
+        item.className = item.className.replace('chat-item-active', 'chat-item-inactive');
     });
 
-    // Activar tab seleccionado
-    document.getElementById(`chat-tab-${chatType}`).className = 'py-4 px-2 border-b-2 font-medium text-sm chat-tab-active';
+    // Activar item seleccionado
+    const itemId = userId ? `chat-item-user-${userId}` : `chat-item-${chatType}`;
+    const itemEl = document.getElementById(itemId);
+    if (itemEl) {
+        itemEl.className = itemEl.className.replace('chat-item-inactive', 'chat-item-active');
+    }
 
     currentChatType = chatType;
-    loadChatMessages(chatType);
+    currentChatUserId = userId;
+    currentChatUserName = userName;
+
+    // Actualizar header del chat
+    updateChatHeader(chatType, userName);
+
+    // Cargar mensajes
+    if (userId) {
+        loadChatMessagesWithUser(userId);
+    } else {
+        loadChatMessages(chatType);
+    }
 
     // Cambiar placeholder según el tipo de chat
     const input = document.getElementById('chat-message-input');
-    switch(chatType) {
-        case 'general':
-            input.placeholder = 'Mensaje para toda la comunidad...';
-            break;
-        case 'admin':
-            input.placeholder = 'Mensaje para el administrador...';
-            break;
-        case 'vigilantes':
-            input.placeholder = 'Mensaje para vigilantes...';
-            break;
-        case 'residentes':
-            input.placeholder = 'Mensaje para residentes...';
-            break;
-        case 'privados':
-            input.placeholder = 'Selecciona una conversación privada...';
-            break;
+    if (userId) {
+        input.placeholder = `Mensaje para ${userName}...`;
+    } else {
+        switch(chatType) {
+            case 'general':
+                input.placeholder = 'Mensaje para toda la comunidad...';
+                break;
+            case 'admin':
+                input.placeholder = 'Mensaje para el administrador...';
+                break;
+            case 'vigilantes':
+                input.placeholder = 'Mensaje para vigilantes...';
+                break;
+            case 'residentes':
+                input.placeholder = 'Mensaje para residentes...';
+                break;
+            default:
+                input.placeholder = 'Escribe tu mensaje...';
+        }
     }
+}
+
+function updateChatHeader(chatType, userName = null) {
+    const iconEl = document.getElementById('chat-header-icon');
+    const titleEl = document.getElementById('chat-header-title');
+    const subtitleEl = document.getElementById('chat-header-subtitle');
+
+    if (userName) {
+        // Chat individual
+        iconEl.innerHTML = '<i class="fas fa-user text-white text-lg"></i>';
+        iconEl.className = 'w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center';
+        titleEl.textContent = userName;
+        subtitleEl.textContent = 'Chat privado';
+    } else {
+        switch(chatType) {
+            case 'general':
+                iconEl.innerHTML = '<i class="fas fa-users text-white text-lg"></i>';
+                iconEl.className = 'w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center';
+                titleEl.textContent = 'Chat General';
+                subtitleEl.textContent = 'Chat comunitario';
+                break;
+            case 'admin':
+                iconEl.innerHTML = '<i class="fas fa-user-shield text-white text-lg"></i>';
+                iconEl.className = 'w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center';
+                titleEl.textContent = 'Administrador';
+                subtitleEl.textContent = 'Chat con administración';
+                break;
+            case 'vigilantes':
+                iconEl.innerHTML = '<i class="fas fa-shield-alt text-white text-lg"></i>';
+                iconEl.className = 'w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center';
+                titleEl.textContent = 'Vigilantes';
+                subtitleEl.textContent = 'Chat con seguridad';
+                break;
+            case 'residentes':
+                iconEl.innerHTML = '<i class="fas fa-home text-white text-lg"></i>';
+                iconEl.className = 'w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center';
+                titleEl.textContent = 'Residentes';
+                subtitleEl.textContent = 'Chat con residentes';
+                break;
+        }
+    }
+}
+
+async function cargarListaUsuariosChat() {
+    try {
+        const usuarios = await window.firebaseAdapter.getCollection('usuarios');
+
+        // Cargar vigilantes para admin y residentes
+        if (currentUser.rol === 'admin' || currentUser.rol === 'residente') {
+            const vigilantes = usuarios.filter(u => u.rol === 'vigilante');
+            const vigilantesContainer = document.getElementById('lista-vigilantes-chat');
+            if (vigilantesContainer) {
+                vigilantesContainer.innerHTML = vigilantes.map(v => `
+                    <button onclick="switchChatTab('vigilante-individual', '${v.id}', '${v.nombre}')"
+                            id="chat-item-user-${v.id}"
+                            class="w-full p-3 flex items-center gap-3 hover:bg-orange-50 transition-colors chat-item-inactive border-b border-gray-50">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-semibold text-sm">
+                            ${v.nombre.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="flex-1 text-left">
+                            <div class="font-medium text-sm text-gray-900">${v.nombre}</div>
+                            <div class="text-xs text-gray-500">Vigilante</div>
+                        </div>
+                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                    </button>
+                `).join('');
+            }
+        }
+
+        // Cargar residentes para admin y vigilantes
+        if (currentUser.rol === 'admin' || currentUser.rol === 'vigilante') {
+            const residentes = usuarios.filter(u => u.rol === 'residente');
+            const residentesContainer = document.getElementById('lista-residentes-chat');
+            if (residentesContainer) {
+                residentesContainer.innerHTML = residentes.slice(0, 10).map(r => `
+                    <button onclick="switchChatTab('residente-individual', '${r.id}', '${r.nombre}')"
+                            id="chat-item-user-${r.id}"
+                            class="w-full p-3 flex items-center gap-3 hover:bg-indigo-50 transition-colors chat-item-inactive border-b border-gray-50">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                            ${r.nombre.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="flex-1 text-left">
+                            <div class="font-medium text-sm text-gray-900">${r.nombre}</div>
+                            <div class="text-xs text-gray-500">${r.apartamento || 'Residente'}</div>
+                        </div>
+                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                    </button>
+                `).join('');
+            }
+        }
+
+        // Cargar otros residentes para chats privados (solo para residentes)
+        if (currentUser.rol === 'residente') {
+            const otrosResidentes = usuarios.filter(u => u.rol === 'residente' && u.id !== currentUser.id);
+            const residentesPrivadosContainer = document.getElementById('lista-residentes-privados-chat');
+            if (residentesPrivadosContainer) {
+                residentesPrivadosContainer.innerHTML = otrosResidentes.slice(0, 10).map(r => `
+                    <button onclick="switchChatTab('privado-individual', '${r.id}', '${r.nombre}')"
+                            id="chat-item-user-${r.id}"
+                            class="w-full p-3 flex items-center gap-3 hover:bg-purple-50 transition-colors chat-item-inactive border-b border-gray-50">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-semibold text-sm">
+                            ${r.nombre.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="flex-1 text-left">
+                            <div class="font-medium text-sm text-gray-900">${r.nombre}</div>
+                            <div class="text-xs text-gray-500">${r.apartamento || 'Residente'}</div>
+                        </div>
+                        <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                    </button>
+                `).join('');
+            }
+        }
+    } catch (error) {
+        console.error('Error cargando usuarios para chat:', error);
+    }
+}
+
+function mostrarSelectorResidentes() {
+    showNotification('Info', 'Selecciona un residente de la lista para iniciar chat', 'info');
 }
 
 async function loadChatMessages(chatType) {
@@ -3828,42 +4016,83 @@ async function loadChatMessages(chatType) {
         const messagesArea = document.getElementById('chat-messages-area');
 
         if (data.success && data.mensajes && data.mensajes.length > 0) {
-            messagesArea.innerHTML = data.mensajes.map(mensaje => `
-                <div class="mb-4 ${mensaje.usuarioEmail === currentUser.email ? 'text-right' : 'text-left'}">
-                    <div class="inline-block max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        mensaje.usuarioEmail === currentUser.email
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-white border border-gray-200'
-                    }">
-                        ${mensaje.usuarioEmail !== currentUser.email ? `
-                            <div class="font-semibold text-sm text-gray-600 mb-1">
-                                ${mensaje.usuario}
+            messagesArea.innerHTML = data.mensajes.map(mensaje => {
+                const isOwn = mensaje.usuarioEmail === currentUser.email;
+                return `
+                    <div class="mb-4 ${isOwn ? 'flex justify-end' : 'flex justify-start'}">
+                        <div class="max-w-md ${isOwn ? 'order-2' : 'order-1'}">
+                            ${!isOwn ? `
+                                <div class="flex items-center gap-2 mb-1 px-1">
+                                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-xs font-semibold">
+                                        ${mensaje.usuario?.charAt(0)?.toUpperCase() || 'U'}
+                                    </div>
+                                    <span class="font-semibold text-sm text-gray-700">${mensaje.usuario}</span>
+                                </div>
+                            ` : ''}
+                            <div class="px-4 py-3 rounded-2xl shadow-sm ${
+                                isOwn
+                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-tr-none'
+                                : 'bg-white border border-gray-200 rounded-tl-none'
+                            }">
+                                <div class="text-sm break-words">${mensaje.mensaje}</div>
+                                <div class="text-xs ${isOwn ? 'text-blue-100' : 'text-gray-500'} mt-1">
+                                    ${new Date(mensaje.timestamp).toLocaleTimeString('es-CO', {
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </div>
                             </div>
-                        ` : ''}
-                        <div class="text-sm">${mensaje.mensaje}</div>
-                        <div class="text-xs opacity-75 mt-1">
-                            ${new Date(mensaje.timestamp).toLocaleTimeString('es-CO', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             // Scroll al final
-            messagesArea.scrollTop = messagesArea.scrollHeight;
+            setTimeout(() => {
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            }, 100);
         } else {
             messagesArea.innerHTML = `
-                <div class="text-center py-12 text-gray-500">
-                    <i class="fas fa-comment-slash text-3xl mb-3"></i>
-                    <p>No hay mensajes en este chat</p>
+                <div class="text-center py-12 text-gray-400">
+                    <i class="fas fa-comment-slash text-5xl mb-4 opacity-50"></i>
+                    <p class="text-lg font-medium">No hay mensajes en este chat</p>
                     <p class="text-sm">¡Sé el primero en escribir!</p>
                 </div>
             `;
         }
     } catch (error) {
         console.error('Error loading chat messages:', error);
+        const messagesArea = document.getElementById('chat-messages-area');
+        messagesArea.innerHTML = `
+            <div class="text-center py-12 text-red-400">
+                <i class="fas fa-exclamation-triangle text-5xl mb-4"></i>
+                <p class="text-lg font-medium">Error al cargar mensajes</p>
+                <p class="text-sm">Intenta nuevamente</p>
+            </div>
+        `;
+    }
+}
+
+async function loadChatMessagesWithUser(userId) {
+    try {
+        // Simular carga de mensajes privados con un usuario específico
+        // En producción, esto haría una llamada al backend: /api/chat/privado/${userId}
+        const messagesArea = document.getElementById('chat-messages-area');
+
+        messagesArea.innerHTML = `
+            <div class="text-center py-12 text-gray-400">
+                <i class="fas fa-user-friends text-5xl mb-4 opacity-50"></i>
+                <p class="text-lg font-medium">Chat privado</p>
+                <p class="text-sm">Los mensajes con ${currentChatUserName} aparecerán aquí</p>
+            </div>
+        `;
+
+        // Scroll al final
+        setTimeout(() => {
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }, 100);
+    } catch (error) {
+        console.error('Error loading private chat messages:', error);
     }
 }
 
