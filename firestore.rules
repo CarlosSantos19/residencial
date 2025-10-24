@@ -20,6 +20,12 @@ service cloud.firestore {
               get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin');
     }
 
+    // Función helper para verificar si es alcaldía
+    function isAlcaldia() {
+      return isSignedIn() &&
+             get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'alcaldia';
+    }
+
     // Función helper para verificar si es el dueño del recurso
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
@@ -54,10 +60,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Pagos - Usuarios ven los suyos, admin ve todos
+    // Pagos - Todos los usuarios autenticados pueden leer (filtrado en cliente), admin crea, usuarios actualizan estado
     match /pagos/{pagoId} {
-      allow read: if isSignedIn() && (isOwner(resource.data.usuarioId) || isAdmin());
-      allow write: if isAdmin();
+      allow read: if isSignedIn();
+      allow create, delete: if isAdmin();
+      allow update: if isSignedIn(); // Permite que los usuarios marquen pagos como pagados
     }
 
     // Emprendimientos - Todos pueden leer, dueño y admin pueden escribir
@@ -141,6 +148,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Sorteos (historial completo) - Admin escribe, todos leen
+    match /sorteos/{sorteoId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
     // Apartamentos en Arriendo - Todos leen, dueño y admin escriben
     match /apartamentosArriendo/{apartamentoId} {
       allow read: if isSignedIn();
@@ -148,11 +161,58 @@ service cloud.firestore {
       allow update, delete: if isAdmin() || isOwner(resource.data.usuarioId);
     }
 
-    // Incidentes (Alcaldía) - Todos leen y reportan
+    // Parqueaderos en Arriendo - Todos leen, dueño y admin escriben
+    match /parqueaderosArriendo/{parqueaderoId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || isOwner(resource.data.usuarioId);
+    }
+
+    // Incidentes (Alcaldía) - Todos leen y reportan, Alcaldía y Admin pueden actualizar
     match /incidentes/{incidenteId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
+      allow update: if isAdmin() || isAlcaldia();
+      allow delete: if isAdmin();
+    }
+
+    // Recibos de Parqueadero - Vigilantes crean, todos leen
+    match /recibosParqueadero/{reciboId} {
+      allow read: if isSignedIn();
+      allow create: if isVigilante();
       allow update, delete: if isAdmin();
+    }
+
+    // Sesiones - Registro de inicios de sesión
+    match /sesiones/{sesionId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+    }
+
+    // Formularios - Admin crea, todos leen
+    match /formularios/{formularioId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Respuestas de Formularios - Usuarios crean respuestas, admin lee todas
+    match /respuestasFormulario/{respuestaId} {
+      allow read: if isAdmin() || isOwner(resource.data.usuarioId);
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // Eventos de Registro - Admin crea y gestiona, todos leen eventos activos
+    match /eventosRegistro/{eventoId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Registros de Eventos - Usuarios crean sus registros, admin ve todos
+    match /registrosEventos/{registroId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin() || isOwner(resource.data.usuarioId);
     }
   }
 }

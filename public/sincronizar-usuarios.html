@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sincronizar Usuarios - Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTglrnttR2NKUHIsS9ddj37Yuwvz6Lv7A",
+            authDomain: "conjunto-residencial-2024.firebaseapp.com",
+            projectId: "conjunto-residencial-2024",
+            storageBucket: "conjunto-residencial-2024.firebasestorage.app",
+            messagingSenderId: "26128855451",
+            appId: "1:26128855451:web:d94aae5e71376e6808313e",
+            measurementId: "G-1PRFW148P0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Usuarios demo con sus datos completos
+        const usuariosDemo = [
+            {
+                email: 'car-cbs@hotmail.com',
+                password: 'password1',
+                nombre: 'Carlos Residente',
+                apartamento: 'Torre 1 - Apto 101',
+                torre: 'Torre 1',
+                telefono: '3001234567',
+                rol: 'residente',
+                activo: true,
+                interesadoParqueadero: true
+            },
+            {
+                email: 'shayoja@hotmail.com',
+                password: 'password2',
+                nombre: 'Sandra Administradora',
+                apartamento: 'Torre 2 - Apto 201',
+                torre: 'Torre 2',
+                telefono: '3009876543',
+                rol: 'admin',
+                activo: true,
+                interesadoParqueadero: false
+            },
+            {
+                email: 'car02cbs@gmail.com',
+                password: 'password3',
+                nombre: 'Juan Vigilante',
+                apartamento: 'Portería',
+                torre: 'N/A',
+                telefono: '3005551234',
+                rol: 'vigilante',
+                activo: true,
+                interesadoParqueadero: false
+            },
+            {
+                email: 'alcaldia@conjunto.com',
+                password: 'alcaldia123',
+                nombre: 'Alcaldía Municipal',
+                apartamento: 'Oficina Alcaldía',
+                torre: 'N/A',
+                telefono: '3001112233',
+                rol: 'alcaldia',
+                activo: true,
+                interesadoParqueadero: false
+            }
+        ];
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const colors = {
+                info: 'text-blue-600',
+                success: 'text-green-600',
+                warning: 'text-yellow-600',
+                error: 'text-red-600'
+            };
+            const icons = {
+                info: '🔄',
+                success: '✅',
+                warning: '⚠️',
+                error: '❌'
+            };
+
+            const timestamp = new Date().toLocaleTimeString('es-CO');
+            logDiv.innerHTML += `<div class="${colors[type]} text-sm">[${timestamp}] ${icons[type]} ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(email, status, color) {
+            const statusElements = document.querySelectorAll(`[data-email="${email}"]`);
+            statusElements.forEach(el => {
+                el.textContent = status;
+                el.className = `px-3 py-1 rounded text-sm font-semibold ${color}`;
+            });
+        }
+
+        window.sincronizarUsuarios = async function() {
+            const btn = document.getElementById('btnSincronizar');
+            btn.disabled = true;
+            btn.textContent = '⏳ Sincronizando...';
+
+            document.getElementById('log').innerHTML = '';
+            log('🚀 Iniciando proceso de sincronización...', 'info');
+
+            let sincronizados = 0;
+            let errores = 0;
+
+            for (const usuario of usuariosDemo) {
+                log(`\n📧 Procesando: ${usuario.email}`, 'info');
+                updateStatus(usuario.email, '⏳ Procesando...', 'bg-blue-100 text-blue-800');
+
+                try {
+                    // Paso 1: Autenticar para obtener UID
+                    log(`  → Autenticando...`, 'info');
+                    const userCredential = await signInWithEmailAndPassword(auth, usuario.email, usuario.password);
+                    const uid = userCredential.user.uid;
+                    log(`  → UID obtenido: ${uid}`, 'info');
+
+                    // Paso 2: Verificar si existe documento en Firestore
+                    const userDocRef = doc(db, 'usuarios', uid);
+                    const userDoc = await getDoc(userDocRef);
+
+                    if (userDoc.exists()) {
+                        log(`  → Documento ya existe en Firestore`, 'warning');
+                        updateStatus(usuario.email, '✅ Ya existe', 'bg-yellow-100 text-yellow-800');
+                    } else {
+                        // Paso 3: Crear documento en Firestore
+                        log(`  → Creando documento en Firestore...`, 'info');
+                        await setDoc(userDocRef, {
+                            id: uid,
+                            email: usuario.email,
+                            nombre: usuario.nombre,
+                            apartamento: usuario.apartamento,
+                            torre: usuario.torre,
+                            telefono: usuario.telefono,
+                            rol: usuario.rol,
+                            activo: usuario.activo,
+                            interesadoParqueadero: usuario.interesadoParqueadero,
+                            fechaRegistro: new Date().toISOString()
+                        });
+                        log(`  → ✅ Documento creado exitosamente`, 'success');
+                        updateStatus(usuario.email, '✅ Sincronizado', 'bg-green-100 text-green-800');
+                        sincronizados++;
+                    }
+
+                } catch (error) {
+                    log(`  → ❌ Error: ${error.message}`, 'error');
+                    updateStatus(usuario.email, '❌ Error', 'bg-red-100 text-red-800');
+                    errores++;
+                }
+
+                // Pausa entre usuarios
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            // Resumen final
+            log('\n' + '='.repeat(60), 'info');
+            log('🎉 PROCESO COMPLETADO', 'success');
+            log(`✅ Usuarios sincronizados: ${sincronizados}`, 'success');
+            log(`❌ Errores: ${errores}`, errores > 0 ? 'error' : 'success');
+
+            if (errores === 0) {
+                log('\n🎉 ¡Todos los usuarios están listos para usar!', 'success');
+                log('🔗 Puedes iniciar sesión en: https://conjunto-residencial-2024.web.app/', 'info');
+
+                // Mostrar botón de ir a la app
+                document.getElementById('resultado').innerHTML = `
+                    <div class="bg-green-50 border-2 border-green-300 rounded-lg p-6 mt-6">
+                        <h3 class="text-2xl font-bold text-green-700 mb-3">✅ Sincronización Exitosa</h3>
+                        <p class="text-green-800 mb-4">Todos los usuarios están configurados correctamente.</p>
+                        <a href="https://conjunto-residencial-2024.web.app/"
+                           class="inline-block bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 font-bold text-lg shadow-lg">
+                            🏠 Ir a la Aplicación
+                        </a>
+                        <a href="/diagnostico-firebase.html"
+                           class="inline-block ml-3 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-bold text-lg shadow-lg">
+                            🔍 Verificar con Diagnóstico
+                        </a>
+                    </div>
+                `;
+            } else {
+                document.getElementById('resultado').innerHTML = `
+                    <div class="bg-red-50 border-2 border-red-300 rounded-lg p-6 mt-6">
+                        <h3 class="text-2xl font-bold text-red-700 mb-3">⚠️ Algunos errores detectados</h3>
+                        <p class="text-red-800 mb-4">Revisa el log para más detalles.</p>
+                        <button onclick="sincronizarUsuarios()"
+                                class="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 font-bold">
+                            🔄 Reintentar
+                        </button>
+                    </div>
+                `;
+            }
+
+            btn.disabled = false;
+            btn.textContent = '🔄 Sincronizar Usuarios';
+        };
+
+        console.log('✅ Script de sincronización cargado');
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-2xl p-8 mb-6">
+            <h1 class="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                🔄 Sincronizar Usuarios Firebase
+            </h1>
+            <p class="text-gray-700 text-lg">
+                Sincroniza los usuarios de Firebase Auth con Firestore
+            </p>
+        </div>
+
+        <!-- Información -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg mb-6">
+            <h3 class="font-bold text-blue-900 mb-3 text-lg">ℹ️ ¿Qué hace esta herramienta?</h3>
+            <ol class="text-blue-800 space-y-2 list-decimal list-inside">
+                <li>Autentica cada usuario en Firebase Auth</li>
+                <li>Obtiene el UID de cada usuario</li>
+                <li>Verifica si existe su documento en Firestore</li>
+                <li>Si no existe, crea el documento con todos los datos necesarios</li>
+            </ol>
+        </div>
+
+        <!-- Estado de usuarios -->
+        <div class="bg-white rounded-2xl shadow-2xl p-8 mb-6">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">👥 Usuarios a sincronizar</h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <span class="text-lg font-bold">👤 Residente</span>
+                            <div class="text-sm text-gray-600">car-cbs@hotmail.com</div>
+                        </div>
+                        <span data-email="car-cbs@hotmail.com" class="px-3 py-1 rounded text-sm font-semibold bg-gray-100 text-gray-600">
+                            Pendiente
+                        </span>
+                    </div>
+                </div>
+
+                <div class="border-2 border-green-200 rounded-lg p-4 bg-green-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <span class="text-lg font-bold">👨‍💼 Administrador</span>
+                            <div class="text-sm text-gray-600">shayoja@hotmail.com</div>
+                        </div>
+                        <span data-email="shayoja@hotmail.com" class="px-3 py-1 rounded text-sm font-semibold bg-gray-100 text-gray-600">
+                            Pendiente
+                        </span>
+                    </div>
+                </div>
+
+                <div class="border-2 border-orange-200 rounded-lg p-4 bg-orange-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <span class="text-lg font-bold">🛡️ Vigilante</span>
+                            <div class="text-sm text-gray-600">car02cbs@gmail.com</div>
+                        </div>
+                        <span data-email="car02cbs@gmail.com" class="px-3 py-1 rounded text-sm font-semibold bg-gray-100 text-gray-600">
+                            Pendiente
+                        </span>
+                    </div>
+                </div>
+
+                <div class="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <span class="text-lg font-bold">🏛️ Alcaldía</span>
+                            <div class="text-sm text-gray-600">alcaldia@conjunto.com</div>
+                        </div>
+                        <span data-email="alcaldia@conjunto.com" class="px-3 py-1 rounded text-sm font-semibold bg-gray-100 text-gray-600">
+                            Pendiente
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btnSincronizar"
+                    onclick="sincronizarUsuarios()"
+                    class="w-full mt-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white px-8 py-4 rounded-lg hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 font-bold text-xl shadow-lg transform hover:scale-105 transition-all">
+                🔄 Sincronizar Usuarios
+            </button>
+        </div>
+
+        <!-- Log de proceso -->
+        <div class="bg-white rounded-2xl shadow-2xl p-8">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">📋 Log del Proceso</h2>
+            <div id="log" class="bg-black text-green-400 p-6 rounded-lg font-mono text-sm min-h-[300px] max-h-[500px] overflow-y-auto">
+                <div class="text-gray-500">Haz clic en "Sincronizar Usuarios" para comenzar...</div>
+            </div>
+        </div>
+
+        <!-- Resultado -->
+        <div id="resultado"></div>
+
+        <!-- Enlaces -->
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mt-6">
+            <h3 class="font-bold text-gray-800 mb-3">🔗 Enlaces Útiles</h3>
+            <div class="space-y-2">
+                <a href="/diagnostico-firebase.html" class="block text-blue-600 hover:underline">
+                    🔍 Diagnóstico Firebase
+                </a>
+                <a href="/crear-usuarios-firebase.html" class="block text-blue-600 hover:underline">
+                    👥 Crear Usuarios Demo
+                </a>
+                <a href="https://conjunto-residencial-2024.web.app/" class="block text-blue-600 hover:underline">
+                    🏠 Ir a la Aplicación
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reparar Usuarios - Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTglrnttR2NKUHIsS9ddj37Yuwvz6Lv7A",
+            authDomain: "conjunto-residencial-2024.firebaseapp.com",
+            projectId: "conjunto-residencial-2024",
+            storageBucket: "conjunto-residencial-2024.firebasestorage.app",
+            messagingSenderId: "26128855451",
+            appId: "1:26128855451:web:d94aae5e71376e6808313e",
+            measurementId: "G-1PRFW148P0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Usuarios demo con credenciales y datos completos
+        const usuariosDemo = [
+            {
+                email: 'car-cbs@hotmail.com',
+                password: 'password1',
+                nombre: 'Carlos Residente',
+                apartamento: 'Torre 1 - Apto 101',
+                torre: 'Torre 1',
+                telefono: '3001234567',
+                rol: 'residente',
+                activo: true,
+                interesadoParqueadero: true,
+                colorUI: 'blue'
+            },
+            {
+                email: 'shayoja@hotmail.com',
+                password: 'password2',
+                nombre: 'Sandra Administradora',
+                apartamento: 'Torre 2 - Apto 201',
+                torre: 'Torre 2',
+                telefono: '3009876543',
+                rol: 'admin',
+                activo: true,
+                interesadoParqueadero: false,
+                colorUI: 'green'
+            },
+            {
+                email: 'car02cbs@gmail.com',
+                password: 'password3',
+                nombre: 'Juan Vigilante',
+                apartamento: 'Portería',
+                torre: 'N/A',
+                telefono: '3005551234',
+                rol: 'vigilante',
+                activo: true,
+                interesadoParqueadero: false,
+                colorUI: 'orange'
+            },
+            {
+                email: 'alcaldia@conjunto.com',
+                password: 'alcaldia123',
+                nombre: 'Alcaldía Municipal',
+                apartamento: 'Oficina Alcaldía',
+                torre: 'N/A',
+                telefono: '3001112233',
+                rol: 'alcaldia',
+                activo: true,
+                interesadoParqueadero: false,
+                colorUI: 'purple'
+            }
+        ];
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const colors = {
+                info: 'text-blue-600',
+                success: 'text-green-600',
+                warning: 'text-yellow-600',
+                error: 'text-red-600',
+                debug: 'text-gray-500'
+            };
+            const icons = {
+                info: '🔵',
+                success: '✅',
+                warning: '⚠️',
+                error: '❌',
+                debug: '🔍'
+            };
+
+            const timestamp = new Date().toLocaleTimeString('es-CO');
+            logDiv.innerHTML += `<div class="${colors[type]} text-sm">[${timestamp}] ${icons[type]} ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(email, status, color) {
+            const statusEl = document.querySelector(`[data-email="${email}"]`);
+            if (statusEl) {
+                statusEl.textContent = status;
+                statusEl.className = `px-3 py-1 rounded text-xs font-bold ${color}`;
+            }
+        }
+
+        // Verificar estado actual de Firestore
+        window.verificarEstado = async function() {
+            log('🔍 Verificando estado de Firestore...', 'info');
+
+            try {
+                const usuariosSnap = await getDocs(collection(db, 'usuarios'));
+
+                if (usuariosSnap.empty) {
+                    log('❌ La colección "usuarios" está VACÍA', 'error');
+                    document.getElementById('estadoFirestore').innerHTML = `
+                        <div class="bg-red-50 border-2 border-red-300 rounded-lg p-4">
+                            <div class="text-red-700 font-bold text-lg mb-2">❌ Colección vacía</div>
+                            <div class="text-red-600">No hay documentos en Firestore. Necesitas ejecutar la reparación.</div>
+                        </div>
+                    `;
+                    return false;
+                } else {
+                    log(`✅ Se encontraron ${usuariosSnap.size} documentos en Firestore`, 'success');
+
+                    let tabla = '<div class="bg-green-50 border-2 border-green-300 rounded-lg p-4"><div class="text-green-700 font-bold mb-3">✅ Usuarios encontrados:</div><div class="space-y-2">';
+
+                    usuariosSnap.forEach(doc => {
+                        const data = doc.data();
+                        tabla += `<div class="bg-white p-2 rounded border border-gray-200 text-sm">
+                            <strong>${data.nombre || 'Sin nombre'}</strong> - ${data.email || 'Sin email'}
+                            <span class="text-xs bg-blue-100 px-2 py-0.5 rounded">${data.rol || 'sin rol'}</span>
+                        </div>`;
+                    });
+
+                    tabla += '</div></div>';
+                    document.getElementById('estadoFirestore').innerHTML = tabla;
+                    return true;
+                }
+            } catch (error) {
+                log(`❌ Error al verificar Firestore: ${error.message}`, 'error');
+                return false;
+            }
+        };
+
+        // Función principal de reparación
+        window.repararUsuarios = async function() {
+            const btn = document.getElementById('btnReparar');
+            btn.disabled = true;
+            btn.textContent = '⏳ Reparando...';
+
+            document.getElementById('log').innerHTML = '';
+            log('🚀 Iniciando reparación de usuarios...', 'info');
+            log('━'.repeat(60), 'debug');
+
+            let creados = 0;
+            let yaExistian = 0;
+            let errores = 0;
+
+            for (const usuario of usuariosDemo) {
+                log(`\n📧 Procesando: ${usuario.email}`, 'info');
+                updateStatus(usuario.email, '⏳ Procesando', 'bg-blue-100 text-blue-800');
+
+                try {
+                    // Paso 1: Autenticar para obtener UID
+                    log(`  ├─ Autenticando con Firebase Auth...`, 'debug');
+                    const userCredential = await signInWithEmailAndPassword(auth, usuario.email, usuario.password);
+                    const uid = userCredential.user.uid;
+                    log(`  ├─ UID obtenido: ${uid.substring(0, 8)}...`, 'success');
+
+                    // Paso 2: Verificar si ya existe en Firestore
+                    const docRef = doc(db, 'usuarios', uid);
+                    const docSnap = await getDoc(docRef);
+
+                    if (docSnap.exists()) {
+                        log(`  ├─ ⚠️  Documento YA existe en Firestore`, 'warning');
+                        log(`  └─ Saltando este usuario...`, 'debug');
+                        updateStatus(usuario.email, '✅ Ya existía', 'bg-yellow-100 text-yellow-800');
+                        yaExistian++;
+                    } else {
+                        // Paso 3: Crear documento en Firestore
+                        log(`  ├─ Creando documento en Firestore...`, 'info');
+
+                        const userData = {
+                            id: uid,
+                            email: usuario.email,
+                            nombre: usuario.nombre,
+                            apartamento: usuario.apartamento,
+                            torre: usuario.torre,
+                            telefono: usuario.telefono,
+                            rol: usuario.rol,
+                            activo: usuario.activo,
+                            interesadoParqueadero: usuario.interesadoParqueadero,
+                            fechaRegistro: new Date().toISOString(),
+                            fechaCreacion: new Date().toISOString()
+                        };
+
+                        await setDoc(docRef, userData);
+
+                        log(`  └─ ✅ Documento creado exitosamente`, 'success');
+                        updateStatus(usuario.email, '✅ Creado', 'bg-green-100 text-green-800');
+                        creados++;
+                    }
+
+                    // Cerrar sesión para el próximo usuario
+                    await signOut(auth);
+
+                } catch (error) {
+                    log(`  └─ ❌ Error: ${error.message}`, 'error');
+
+                    if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                        log(`  └─ 💡 Posible causa: Contraseña incorrecta o usuario no existe en Auth`, 'warning');
+                    }
+
+                    updateStatus(usuario.email, '❌ Error', 'bg-red-100 text-red-800');
+                    errores++;
+                }
+
+                // Pausa entre usuarios
+                await new Promise(resolve => setTimeout(resolve, 800));
+            }
+
+            // Resumen final
+            log('\n' + '━'.repeat(60), 'debug');
+            log('🎉 REPARACIÓN COMPLETADA', 'success');
+            log(`📊 Resumen:`, 'info');
+            log(`  ✅ Documentos creados: ${creados}`, creados > 0 ? 'success' : 'debug');
+            log(`  ⚠️  Ya existían: ${yaExistian}`, yaExistian > 0 ? 'warning' : 'debug');
+            log(`  ❌ Errores: ${errores}`, errores > 0 ? 'error' : 'debug');
+
+            // Actualizar resultado
+            if (errores === 0) {
+                document.getElementById('resultado').innerHTML = `
+                    <div class="bg-green-50 border-2 border-green-300 rounded-lg p-6 mt-6">
+                        <h3 class="text-2xl font-bold text-green-700 mb-3">🎉 ¡Reparación Exitosa!</h3>
+                        <div class="text-green-800 mb-4">
+                            <div class="text-lg mb-2">✅ ${creados} usuarios creados en Firestore</div>
+                            <div class="text-sm">⚠️ ${yaExistian} usuarios ya existían</div>
+                        </div>
+                        <div class="space-x-3">
+                            <a href="https://conjunto-residencial-2024.web.app/"
+                               class="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-bold shadow-lg">
+                                🏠 Probar Login en la App
+                            </a>
+                            <button onclick="verificarEstado()"
+                                    class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-bold shadow-lg">
+                                🔍 Verificar Estado
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                document.getElementById('resultado').innerHTML = `
+                    <div class="bg-red-50 border-2 border-red-300 rounded-lg p-6 mt-6">
+                        <h3 class="text-2xl font-bold text-red-700 mb-3">⚠️ Completado con errores</h3>
+                        <p class="text-red-800 mb-4">
+                            Se crearon ${creados} usuarios, pero ${errores} fallaron. Revisa el log para detalles.
+                        </p>
+                        <button onclick="repararUsuarios()"
+                                class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 font-bold">
+                            🔄 Reintentar
+                        </button>
+                    </div>
+                `;
+            }
+
+            btn.disabled = false;
+            btn.textContent = '🔧 Reparar Usuarios';
+
+            // Verificar estado actualizado
+            await verificarEstado();
+        };
+
+        // Inicialización
+        window.addEventListener('load', () => {
+            log('✅ Sistema inicializado correctamente', 'success');
+            verificarEstado();
+        });
+
+    </script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 min-h-screen p-8 text-white">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-2xl p-8 mb-6">
+            <h1 class="text-4xl font-bold mb-2">🔧 Reparación de Usuarios Firebase</h1>
+            <p class="text-blue-100 text-lg">
+                Soluciona el problema de usuarios sin documentos en Firestore
+            </p>
+        </div>
+
+        <!-- Estado actual -->
+        <div class="bg-gray-800 rounded-2xl shadow-2xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold">📊 Estado Actual de Firestore</h2>
+                <button onclick="verificarEstado()"
+                        class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded font-semibold text-sm">
+                    🔄 Actualizar
+                </button>
+            </div>
+            <div id="estadoFirestore" class="min-h-[100px]">
+                <div class="text-gray-400 text-center py-8">Cargando...</div>
+            </div>
+        </div>
+
+        <!-- Panel de usuarios -->
+        <div class="bg-gray-800 rounded-2xl shadow-2xl p-8 mb-6">
+            <h2 class="text-2xl font-bold mb-6">👥 Usuarios a Reparar</h2>
+
+            <div class="grid md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-blue-900 border-2 border-blue-500 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-xl font-bold">👤 Residente</div>
+                            <div class="text-sm text-blue-200">car-cbs@hotmail.com</div>
+                            <div class="text-xs text-blue-300 mt-1">Rol: residente | Torre 1 - Apto 101</div>
+                        </div>
+                        <span data-email="car-cbs@hotmail.com" class="px-3 py-1 rounded text-xs font-bold bg-gray-700 text-gray-300">
+                            Pendiente
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-green-900 border-2 border-green-500 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-xl font-bold">👨‍💼 Administrador</div>
+                            <div class="text-sm text-green-200">shayoja@hotmail.com</div>
+                            <div class="text-xs text-green-300 mt-1">Rol: admin | Torre 2 - Apto 201</div>
+                        </div>
+                        <span data-email="shayoja@hotmail.com" class="px-3 py-1 rounded text-xs font-bold bg-gray-700 text-gray-300">
+                            Pendiente
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-orange-900 border-2 border-orange-500 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-xl font-bold">🛡️ Vigilante</div>
+                            <div class="text-sm text-orange-200">car02cbs@gmail.com</div>
+                            <div class="text-xs text-orange-300 mt-1">Rol: vigilante | Portería</div>
+                        </div>
+                        <span data-email="car02cbs@gmail.com" class="px-3 py-1 rounded text-xs font-bold bg-gray-700 text-gray-300">
+                            Pendiente
+                        </span>
+                    </div>
+                </div>
+
+                <div class="bg-purple-900 border-2 border-purple-500 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-xl font-bold">🏛️ Alcaldía</div>
+                            <div class="text-sm text-purple-200">alcaldia@conjunto.com</div>
+                            <div class="text-xs text-purple-300 mt-1">Rol: alcaldia | Oficina Alcaldía</div>
+                        </div>
+                        <span data-email="alcaldia@conjunto.com" class="px-3 py-1 rounded text-xs font-bold bg-gray-700 text-gray-300">
+                            Pendiente
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btnReparar"
+                    onclick="repararUsuarios()"
+                    class="w-full bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600 hover:from-red-700 hover:via-orange-700 hover:to-yellow-700 text-white px-8 py-4 rounded-lg font-bold text-xl shadow-2xl transform hover:scale-105 transition-all">
+                🔧 Reparar Usuarios en Firestore
+            </button>
+        </div>
+
+        <!-- Log -->
+        <div class="bg-gray-800 rounded-2xl shadow-2xl p-8 mb-6">
+            <h2 class="text-2xl font-bold mb-4">📋 Log de Proceso</h2>
+            <div id="log" class="bg-black p-6 rounded-lg font-mono text-xs min-h-[300px] max-h-[500px] overflow-y-auto">
+                <div class="text-gray-500">Sistema listo. Haz clic en "Reparar Usuarios" para comenzar...</div>
+            </div>
+        </div>
+
+        <!-- Resultado -->
+        <div id="resultado"></div>
+
+        <!-- Info adicional -->
+        <div class="bg-blue-900 border-l-4 border-blue-500 rounded-r-lg p-6">
+            <h3 class="font-bold text-lg mb-3">ℹ️ ¿Qué hace esta herramienta?</h3>
+            <ol class="space-y-2 text-blue-100 list-decimal list-inside">
+                <li>Autentica cada usuario en Firebase Auth usando su email y contraseña</li>
+                <li>Obtiene el UID (ID único) del usuario autenticado</li>
+                <li>Verifica si ya existe un documento en la colección "usuarios" de Firestore</li>
+                <li>Si NO existe, crea el documento con todos los datos necesarios (nombre, rol, apartamento, etc.)</li>
+                <li>Repite el proceso para los 4 usuarios principales</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

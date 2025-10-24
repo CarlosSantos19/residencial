@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Usuarios Demo - Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTglrnttR2NKUHIsS9ddj37Yuwvz6Lv7A",
+            authDomain: "conjunto-residencial-2024.firebaseapp.com",
+            projectId: "conjunto-residencial-2024",
+            storageBucket: "conjunto-residencial-2024.firebasestorage.app",
+            messagingSenderId: "26128855451",
+            appId: "1:26128855451:web:d94aae5e71376e6808313e",
+            measurementId: "G-1PRFW148P0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Nombres y apellidos comunes para generar combinaciones
+        const nombres = ['Juan', 'María', 'Carlos', 'Ana', 'Luis', 'Laura', 'Pedro', 'Sofía', 'Miguel', 'Isabella',
+                        'Diego', 'Valentina', 'José', 'Camila', 'Andrés', 'Daniela', 'Jorge', 'Paula', 'Ricardo', 'Natalia',
+                        'Fernando', 'Carolina', 'Roberto', 'Juliana', 'Alejandro', 'Gabriela', 'Sergio', 'Mariana', 'Javier', 'Diana'];
+
+        const apellidos = ['García', 'Rodríguez', 'Martínez', 'López', 'González', 'Pérez', 'Sánchez', 'Ramírez', 'Torres', 'Flores',
+                          'Rivera', 'Gómez', 'Díaz', 'Cruz', 'Morales', 'Jiménez', 'Hernández', 'Ruiz', 'Reyes', 'Ortiz',
+                          'Castro', 'Vargas', 'Romero', 'Álvarez', 'Mendoza', 'Silva', 'Rojas', 'Medina', 'Aguilar', 'Santos'];
+
+        // Generar usuarios aleatorios
+        function generarUsuarios(cantidad) {
+            const usuarios = [];
+            const usados = new Set();
+
+            for (let i = 0; i < cantidad; i++) {
+                let nombre, apellido, email;
+                do {
+                    nombre = nombres[Math.floor(Math.random() * nombres.length)];
+                    apellido = apellidos[Math.floor(Math.random() * apellidos.length)];
+                    email = `${nombre.toLowerCase()}.${apellido.toLowerCase()}${i}@residencial.com`;
+                } while (usados.has(email));
+
+                usados.add(email);
+
+                // Generar torre y apartamento aleatorio
+                const torre = Math.floor(Math.random() * 3) + 1; // Torres 1-3
+                const piso = Math.floor(Math.random() * 10) + 1; // Pisos 1-10
+                const apto = String.fromCharCode(65 + Math.floor(Math.random() * 4)); // A-D
+
+                usuarios.push({
+                    email,
+                    password: 'demo123',
+                    nombre: `${nombre} ${apellido}`,
+                    apartamento: `Torre ${torre} - Apto ${piso}0${String(Math.floor(Math.random() * 4) + 1)}`,
+                    torre: `Torre ${torre}`,
+                    telefono: `300${String(Math.floor(Math.random() * 9000000) + 1000000)}`,
+                    rol: 'residente',
+                    activo: true,
+                    interesadoParqueadero: Math.random() > 0.3 // 70% quiere parqueadero
+                });
+            }
+
+            return usuarios;
+        }
+
+        window.crearUsuariosDemo = async function() {
+            const cantidad = parseInt(document.getElementById('cantidad').value);
+            const logDiv = document.getElementById('log');
+            const btn = document.getElementById('btnCrear');
+
+            if (!cantidad || cantidad < 1 || cantidad > 100) {
+                alert('Por favor ingresa una cantidad válida (1-100)');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Creando...';
+            logDiv.innerHTML = `<div class="text-xl font-bold mb-4 text-blue-600">🚀 Generando ${cantidad} usuarios...</div>`;
+
+            const usuarios = generarUsuarios(cantidad);
+            let exitosos = 0;
+            let fallidos = 0;
+
+            for (const usuario of usuarios) {
+                try {
+                    logDiv.innerHTML += `<div class="text-sm text-blue-600">📧 Creando: ${usuario.email}...</div>`;
+
+                    // Crear en Authentication
+                    const userCredential = await createUserWithEmailAndPassword(auth, usuario.email, usuario.password);
+                    const uid = userCredential.user.uid;
+
+                    // Crear en Firestore
+                    await setDoc(doc(db, 'usuarios', uid), {
+                        id: uid,
+                        email: usuario.email,
+                        nombre: usuario.nombre,
+                        apartamento: usuario.apartamento,
+                        torre: usuario.torre,
+                        telefono: usuario.telefono,
+                        rol: usuario.rol,
+                        activo: usuario.activo,
+                        interesadoParqueadero: usuario.interesadoParqueadero,
+                        fechaRegistro: new Date().toISOString()
+                    });
+
+                    logDiv.innerHTML += `<div class="text-sm text-green-600 mb-2">✅ ${usuario.nombre} - ${usuario.apartamento}</div>`;
+                    exitosos++;
+
+                } catch (error) {
+                    if (error.code === 'auth/email-already-exists') {
+                        logDiv.innerHTML += `<div class="text-sm text-yellow-600 mb-2">⚠️ Ya existe: ${usuario.email}</div>`;
+                    } else {
+                        logDiv.innerHTML += `<div class="text-sm text-red-600 mb-2">❌ Error: ${error.message}</div>`;
+                    }
+                    fallidos++;
+                }
+
+                // Pausa para no saturar Firebase
+                if (exitosos % 5 === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+
+            logDiv.innerHTML += `
+                <div class="bg-green-100 border border-green-300 rounded-lg p-6 mt-6">
+                    <h3 class="text-2xl font-bold text-green-700 mb-4">📊 Resumen</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded shadow">
+                            <div class="text-3xl font-bold text-green-600">${exitosos}</div>
+                            <div class="text-sm text-gray-600">Usuarios creados</div>
+                        </div>
+                        <div class="bg-white p-4 rounded shadow">
+                            <div class="text-3xl font-bold ${fallidos > 0 ? 'text-yellow-600' : 'text-gray-400'}">${fallidos}</div>
+                            <div class="text-sm text-gray-600">Ya existían</div>
+                        </div>
+                    </div>
+                    <div class="mt-6 space-x-3">
+                        <a href="/diagnostico-firebase.html" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
+                            🔍 Verificar Usuarios
+                        </a>
+                        <a href="/" class="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold">
+                            🏠 Ir a la Aplicación
+                        </a>
+                    </div>
+                </div>
+            `;
+
+            btn.disabled = false;
+            btn.textContent = 'Crear Usuarios';
+        };
+
+        console.log('✅ Script cargado');
+    </script>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-blue-100 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow-2xl p-8 mb-6">
+            <h1 class="text-4xl font-bold mb-4 text-indigo-600">👥 Crear Usuarios Demo</h1>
+            <p class="text-gray-700 mb-6 text-lg">
+                Genera usuarios de prueba automáticamente para probar el sorteo de parqueaderos y otras funcionalidades.
+            </p>
+
+            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                <h3 class="font-bold text-blue-800 mb-2">ℹ️ Información</h3>
+                <ul class="text-sm text-blue-700 space-y-1 list-disc list-inside">
+                    <li>Los usuarios se crean con contraseña: <code class="bg-white px-2 py-1 rounded">demo123</code></li>
+                    <li>Se asignan aleatoriamente a Torres 1, 2 o 3</li>
+                    <li>El 70% estará interesado en parqueadero</li>
+                    <li>Todos tendrán rol de "residente"</li>
+                    <li>Los emails tienen formato: nombre.apellido@residencial.com</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-lg font-semibold text-gray-700 mb-2">
+                    ¿Cuántos usuarios quieres crear?
+                </label>
+                <div class="flex gap-4 items-end">
+                    <div class="flex-1">
+                        <input
+                            type="number"
+                            id="cantidad"
+                            min="1"
+                            max="100"
+                            value="20"
+                            class="w-full px-4 py-3 border-2 border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg">
+                        <p class="text-sm text-gray-500 mt-1">Mínimo: 1, Máximo: 100</p>
+                    </div>
+                    <button
+                        id="btnCrear"
+                        onclick="crearUsuariosDemo()"
+                        class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-lg hover:from-indigo-700 hover:to-purple-700 font-bold text-lg shadow-lg transform hover:scale-105 transition-all">
+                        🚀 Crear Usuarios
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                <h3 class="font-bold text-yellow-800 mb-2">💡 Recomendaciones</h3>
+                <ul class="text-sm text-yellow-700 space-y-1 list-disc list-inside">
+                    <li><strong>Para sorteo de parqueaderos:</strong> Crea al menos 20-30 usuarios</li>
+                    <li><strong>Para probar chat:</strong> Con 5-10 usuarios es suficiente</li>
+                    <li><strong>Para probar emprendimientos:</strong> Con 10-15 usuarios puedes ver variedad</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-2xl p-8">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">📋 Proceso de Creación</h2>
+            <div id="log" class="bg-gray-50 p-4 rounded min-h-[200px] max-h-[600px] overflow-y-auto border border-gray-200">
+                <div class="text-gray-500 text-center py-8">
+                    Ingresa la cantidad de usuarios y haz clic en "Crear Usuarios"...
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

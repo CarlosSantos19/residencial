@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico PQRS - Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">🔍 Diagnóstico PQRS - Firebase</h1>
+
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Estado de la conexión</h2>
+            <div id="status" class="text-gray-600">Conectando a Firebase...</div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">PQRS en Firestore</h2>
+            <button onclick="cargarPQRS()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 mb-4">
+                Cargar PQRS
+            </button>
+            <div id="pqrs-list" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBXHiLS4B5zDKcHx9hPCLr8KYcD9kLPv6c",
+            authDomain: "conjunto-residencial-2024.firebaseapp.com",
+            projectId: "conjunto-residencial-2024",
+            storageBucket: "conjunto-residencial-2024.firebasestorage.app",
+            messagingSenderId: "642885821626",
+            appId: "1:642885821626:web:c4e5d6f7g8h9i0j1k2l3m4"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.getElementById('status').innerHTML = '✅ Conectado a Firebase correctamente';
+
+        // Función global para cargar PQRS
+        window.cargarPQRS = async function() {
+            const container = document.getElementById('pqrs-list');
+            container.innerHTML = '<p class="text-gray-600">Cargando PQRS...</p>';
+
+            try {
+                const pqrsSnapshot = await getDocs(collection(db, 'pqrs'));
+
+                if (pqrsSnapshot.empty) {
+                    container.innerHTML = '<p class="text-red-600 font-semibold">⚠️ No hay PQRS en Firestore</p>';
+                    return;
+                }
+
+                const pqrs = [];
+                pqrsSnapshot.forEach(doc => {
+                    pqrs.push({ id: doc.id, ...doc.data() });
+                });
+
+                container.innerHTML = `
+                    <p class="text-green-600 font-semibold mb-4">✅ Encontradas ${pqrs.length} PQRS en Firestore</p>
+                    ${pqrs.map(p => `
+                        <div class="border-2 border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="font-bold text-lg">${p.asunto || 'Sin asunto'}</h3>
+                                    <p class="text-sm text-gray-600">ID: ${p.id}</p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold ${
+                                    p.estado === 'Pendiente' ? 'bg-yellow-500 text-white' :
+                                    p.estado === 'Respondida' ? 'bg-green-500 text-white' :
+                                    p.estado === 'En proceso' ? 'bg-blue-500 text-white' :
+                                    'bg-gray-500 text-white'
+                                }">${p.estado || 'Sin estado'}</span>
+                            </div>
+                            <p class="text-sm text-gray-700 mb-2">${p.descripcion || 'Sin descripción'}</p>
+                            <div class="grid grid-cols-3 gap-2 text-xs text-gray-600">
+                                <div><strong>Tipo:</strong> ${p.tipo || 'N/A'}</div>
+                                <div><strong>Usuario:</strong> ${p.usuarioNombre || p.residente || 'N/A'}</div>
+                                <div><strong>Fecha:</strong> ${p.fecha ? new Date(p.fecha).toLocaleDateString('es-CO') : 'N/A'}</div>
+                            </div>
+                            ${p.respuesta ? `
+                                <div class="mt-3 p-3 bg-green-50 border-2 border-green-200 rounded-lg">
+                                    <p class="text-sm font-semibold text-green-900 mb-1">Respuesta:</p>
+                                    <p class="text-sm text-gray-700">${p.respuesta}</p>
+                                    <p class="text-xs text-gray-600 mt-1">Por: ${p.respondidoPor || 'N/A'} - ${p.fechaRespuesta ? new Date(p.fechaRespuesta).toLocaleDateString('es-CO') : 'N/A'}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = `<p class="text-red-600 font-semibold">❌ Error al cargar PQRS: ${error.message}</p>`;
+            }
+        };
+
+        // Cargar automáticamente al iniciar
+        window.cargarPQRS();
+    </script>
+</body>
+</html>

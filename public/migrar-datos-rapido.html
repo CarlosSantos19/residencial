@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migración Rápida a Firestore</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-4xl font-bold mb-2">⚡ Migración Rápida a Firestore</h1>
+        <p class="text-gray-400 mb-8">Migra datos desde el backend API a Firebase Firestore</p>
+
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">🎯 Estado de la Migración</h2>
+            <div id="status" class="space-y-2"></div>
+        </div>
+
+        <button onclick="iniciarMigracion()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg text-lg">
+            🚀 Iniciar Migración Completa
+        </button>
+
+        <div id="log" class="mt-6 bg-black rounded-lg p-4 font-mono text-sm h-96 overflow-y-auto"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBXHiLS4B5zDKcHx9hPCLr8KYcD9kLPv6c",
+            authDomain: "conjunto-residencial-2024.firebaseapp.com",
+            projectId: "conjunto-residencial-2024",
+            storageBucket: "conjunto-residencial-2024.firebasestorage.app",
+            messagingSenderId: "642885821626",
+            appId: "1:642885821626:web:c4e5d6f7g8h9i0j1k2l3m4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let logElement;
+
+        window.onload = function() {
+            logElement = document.getElementById('log');
+            log('✅ Firebase conectado correctamente', 'green');
+            log('⚠️ IMPORTANTE: Asegúrate de tener el backend corriendo en http://localhost:8081', 'yellow');
+        };
+
+        function log(message, color = 'white') {
+            const timestamp = new Date().toLocaleTimeString('es-CO');
+            logElement.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(collection, status, color) {
+            const statusDiv = document.getElementById('status');
+            const existingStatus = document.getElementById(`status-${collection}`);
+
+            if (existingStatus) {
+                existingStatus.innerHTML = `<span style="color: ${color}">${status}</span>`;
+            } else {
+                statusDiv.innerHTML += `
+                    <div class="flex justify-between items-center p-3 bg-gray-700 rounded">
+                        <span class="font-semibold">${collection}</span>
+                        <span id="status-${collection}" style="color: ${color}">${status}</span>
+                    </div>
+                `;
+            }
+        }
+
+        async function migrarColeccion(nombre, endpoint) {
+            log(`\n📦 Iniciando migración de ${nombre}...`, 'cyan');
+            updateStatus(nombre, '⏳ Cargando...', 'yellow');
+
+            try {
+                // Obtener datos del backend
+                const response = await fetch(`http://localhost:8081${endpoint}`);
+                const data = await response.json();
+
+                // Extraer array de datos
+                let items = Array.isArray(data) ? data : (data[nombre.toLowerCase()] || data.data || []);
+
+                if (!Array.isArray(items)) {
+                    log(`⚠️ ${nombre}: No se encontraron datos o formato incorrecto`, 'yellow');
+                    updateStatus(nombre, '⚠️ Sin datos', 'yellow');
+                    return;
+                }
+
+                log(`📊 ${nombre}: ${items.length} elementos encontrados`, 'white');
+
+                // Limpiar colección existente
+                const existingDocs = await getDocs(collection(db, nombre.toLowerCase()));
+                log(`🗑️ ${nombre}: Eliminando ${existingDocs.size} documentos existentes...`, 'orange');
+
+                for (const docSnapshot of existingDocs.docs) {
+                    await deleteDoc(doc(db, nombre.toLowerCase(), docSnapshot.id));
+                }
+
+                // Migrar datos
+                let migrados = 0;
+                for (const item of items) {
+                    try {
+                        await addDoc(collection(db, nombre.toLowerCase()), item);
+                        migrados++;
+                    } catch (error) {
+                        log(`❌ Error migrando item de ${nombre}: ${error.message}`, 'red');
+                    }
+                }
+
+                log(`✅ ${nombre}: ${migrados}/${items.length} elementos migrados exitosamente`, 'green');
+                updateStatus(nombre, `✅ ${migrados} migrados`, 'green');
+
+            } catch (error) {
+                log(`❌ ${nombre}: Error - ${error.message}`, 'red');
+                updateStatus(nombre, '❌ Error', 'red');
+            }
+        }
+
+        window.iniciarMigracion = async function() {
+            log('\n🚀 INICIANDO MIGRACIÓN COMPLETA\n', 'cyan');
+            document.querySelector('button').disabled = true;
+            document.querySelector('button').textContent = '⏳ Migrando...';
+
+            const colecciones = [
+                { nombre: 'usuarios', endpoint: '/api/admin/usuarios/todos' },
+                { nombre: 'noticias', endpoint: '/api/noticias' },
+                { nombre: 'pqrs', endpoint: '/api/pqrs' },
+                { nombre: 'reservas', endpoint: '/api/reservas' },
+                { nombre: 'pagos', endpoint: '/api/pagos' },
+                { nombre: 'paquetes', endpoint: '/api/paquetes' },
+                { nombre: 'vehiculosVisitantes', endpoint: '/api/vehiculos-visitantes' },
+                { nombre: 'emprendimientos', endpoint: '/api/residente/emprendimientos' },
+                { nombre: 'encuestas', endpoint: '/api/encuestas' },
+                { nombre: 'permisos', endpoint: '/api/residente/mis-permisos' }
+            ];
+
+            for (const col of colecciones) {
+                await migrarColeccion(col.nombre, col.endpoint);
+            }
+
+            log('\n\n🎉 ¡MIGRACIÓN COMPLETADA!', 'green');
+            log('✅ Todos los datos han sido migrados a Firestore', 'green');
+            log('🔄 Recarga la aplicación Firebase para ver los cambios', 'cyan');
+
+            document.querySelector('button').disabled = false;
+            document.querySelector('button').textContent = '✅ Migración Completada';
+        };
+    </script>
+</body>
+</html>

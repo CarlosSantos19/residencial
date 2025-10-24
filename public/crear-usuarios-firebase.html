@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Usuarios en Firebase Auth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-4xl font-bold mb-2">🔐 Crear Usuarios Demo en Firebase Auth</h1>
+        <p class="text-gray-400 mb-8">Crea los 4 usuarios principales para la aplicación</p>
+
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">Usuarios a Crear:</h2>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between p-3 bg-blue-900 rounded">
+                    <div>
+                        <span class="font-bold">👤 Residente</span>
+                        <p class="text-sm text-gray-300">car-cbs@hotmail.com / password1</p>
+                    </div>
+                    <span id="status-residente" class="text-gray-400">Pendiente</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-green-900 rounded">
+                    <div>
+                        <span class="font-bold">👨‍💼 Administrador</span>
+                        <p class="text-sm text-gray-300">shayoja@hotmail.com / password2</p>
+                    </div>
+                    <span id="status-admin" class="text-gray-400">Pendiente</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-orange-900 rounded">
+                    <div>
+                        <span class="font-bold">🛡️ Vigilante</span>
+                        <p class="text-sm text-gray-300">car02cbs@gmail.com / password3</p>
+                    </div>
+                    <span id="status-vigilante" class="text-gray-400">Pendiente</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-purple-900 rounded">
+                    <div>
+                        <span class="font-bold">🏛️ Alcaldía</span>
+                        <p class="text-sm text-gray-300">alcaldia@conjunto.com / alcaldia123</p>
+                    </div>
+                    <span id="status-alcaldia" class="text-gray-400">Pendiente</span>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="crearUsuarios()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg text-lg mb-6">
+            🚀 Crear Usuarios en Firebase Auth
+        </button>
+
+        <div id="log" class="bg-black rounded-lg p-4 font-mono text-sm h-96 overflow-y-auto"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTglrnttR2NKUHIsS9ddj37Yuwvz6Lv7A",
+            authDomain: "conjunto-residencial-2024.firebaseapp.com",
+            projectId: "conjunto-residencial-2024",
+            storageBucket: "conjunto-residencial-2024.firebasestorage.app",
+            messagingSenderId: "26128855451",
+            appId: "1:26128855451:web:d94aae5e71376e6808313e",
+            measurementId: "G-1PRFW148P0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let logElement;
+
+        window.onload = function() {
+            logElement = document.getElementById('log');
+            log('✅ Firebase conectado correctamente', 'green');
+        };
+
+        function log(message, color = 'white') {
+            const timestamp = new Date().toLocaleTimeString('es-CO');
+            logElement.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(userId, status, color) {
+            const statusEl = document.getElementById(`status-${userId}`);
+            statusEl.textContent = status;
+            statusEl.style.color = color;
+        }
+
+        window.crearUsuarios = async function() {
+            document.querySelector('button').disabled = true;
+            document.querySelector('button').textContent = '⏳ Creando usuarios...';
+
+            const usuarios = [
+                {
+                    id: 'residente',
+                    email: 'car-cbs@hotmail.com',
+                    password: 'password1',
+                    nombre: 'Carlos Benavides',
+                    rol: 'residente',
+                    apartamento: '101',
+                    torre: '1',
+                    telefono: '3001234567',
+                    activo: true,
+                    interesadoParqueadero: true
+                },
+                {
+                    id: 'admin',
+                    email: 'shayoja@hotmail.com',
+                    password: 'password2',
+                    nombre: 'Administrador Principal',
+                    rol: 'admin',
+                    apartamento: 'Administración',
+                    torre: '0',
+                    telefono: '3007654321',
+                    activo: true,
+                    interesadoParqueadero: false
+                },
+                {
+                    id: 'vigilante',
+                    email: 'car02cbs@gmail.com',
+                    password: 'password3',
+                    nombre: 'Vigilante de Turno',
+                    rol: 'vigilante',
+                    apartamento: 'Portería',
+                    torre: '0',
+                    telefono: '3009876543',
+                    activo: true,
+                    interesadoParqueadero: false
+                },
+                {
+                    id: 'alcaldia',
+                    email: 'alcaldia@conjunto.com',
+                    password: 'alcaldia123',
+                    nombre: 'Alcaldía Municipal',
+                    rol: 'alcaldia',
+                    apartamento: 'Oficina Alcaldía',
+                    torre: '0',
+                    telefono: '3001112233',
+                    activo: true,
+                    interesadoParqueadero: false
+                }
+            ];
+
+            for (const usuario of usuarios) {
+                log(`\n📝 Creando usuario: ${usuario.nombre} (${usuario.email})`, 'cyan');
+                updateStatus(usuario.id, '⏳ Creando...', 'yellow');
+
+                try {
+                    // Crear usuario en Firebase Auth
+                    const userCredential = await createUserWithEmailAndPassword(auth, usuario.email, usuario.password);
+                    const uid = userCredential.user.uid;
+
+                    log(`✅ Usuario Auth creado con UID: ${uid}`, 'green');
+
+                    // Crear documento en Firestore
+                    await setDoc(doc(db, 'usuarios', uid), {
+                        id: uid,
+                        nombre: usuario.nombre,
+                        email: usuario.email,
+                        rol: usuario.rol,
+                        apartamento: usuario.apartamento,
+                        torre: usuario.torre,
+                        telefono: usuario.telefono,
+                        activo: usuario.activo,
+                        interesadoParqueadero: usuario.interesadoParqueadero,
+                        fechaRegistro: new Date().toISOString()
+                    });
+
+                    log(`✅ Documento Firestore creado para ${usuario.nombre}`, 'green');
+                    updateStatus(usuario.id, '✅ Creado', 'green');
+
+                } catch (error) {
+                    if (error.code === 'auth/email-already-in-use') {
+                        log(`⚠️ Usuario ${usuario.email} ya existe en Firebase Auth`, 'yellow');
+                        updateStatus(usuario.id, '⚠️ Ya existe', 'yellow');
+                    } else {
+                        log(`❌ Error: ${error.message}`, 'red');
+                        updateStatus(usuario.id, '❌ Error', 'red');
+                    }
+                }
+            }
+
+            log('\n\n🎉 ¡PROCESO COMPLETADO!', 'green');
+            log('✅ Ahora puedes iniciar sesión en la aplicación', 'green');
+            log('🔗 https://conjunto-residencial-2024.web.app/', 'cyan');
+
+            document.querySelector('button').disabled = false;
+            document.querySelector('button').textContent = '✅ Usuarios Creados';
+        };
+    </script>
+</body>
+</html>

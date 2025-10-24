@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migración de Datos - Local</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen py-8 px-4">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <div class="text-center mb-8">
+                    <i class="fas fa-cloud-upload-alt text-6xl text-blue-500 mb-4"></i>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Migración de Datos a Firebase</h1>
+                    <p class="text-gray-600">Versión Local - Sin problemas de CORS</p>
+                </div>
+
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                    <p class="text-sm text-blue-700">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Esta versión se ejecuta desde localhost y no tiene problemas de CORS.
+                    </p>
+                </div>
+
+                <div class="space-y-4 mb-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        <span>Servidor local: http://localhost:8081</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        <span>Firebase: conjunto-residencial-2024</span>
+                    </div>
+                </div>
+
+                <button
+                    onclick="iniciarMigracion()"
+                    id="btnMigrar"
+                    class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-blue-800 transition shadow-lg flex items-center justify-center gap-3">
+                    <i class="fas fa-rocket"></i>
+                    Iniciar Migración Completa
+                </button>
+
+                <div id="progress-container" class="mt-8 hidden">
+                    <div class="mb-4">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-700">Progreso</span>
+                            <span class="text-sm font-medium text-gray-700" id="progress-text">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div id="progress-bar" class="bg-gradient-to-r from-blue-600 to-blue-700 h-3 rounded-full transition-all" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 text-green-400 p-4 rounded-lg font-mono text-sm max-h-96 overflow-y-auto" id="log">
+                    </div>
+                </div>
+
+                <div id="result-container" class="mt-8 hidden">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, collection, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTglrnttR2NKUHIsS9ddj37Yuwvz6Lv7A",
+            authDomain: "conjunto-residencial-2024.firebaseapp.com",
+            projectId: "conjunto-residencial-2024",
+            storageBucket: "conjunto-residencial-2024.firebasestorage.app",
+            messagingSenderId: "26128855451",
+            appId: "1:26128855451:web:d94aae5e71376e6808313e",
+            measurementId: "G-1PRFW148P0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.auth = auth;
+        window.db = db;
+
+        function log(mensaje, tipo = 'info') {
+            const logDiv = document.getElementById('log');
+            const iconos = {
+                info: '📡',
+                success: '✅',
+                error: '❌',
+                warning: '⚠️'
+            };
+            logDiv.innerHTML += `<div>${iconos[tipo]} ${mensaje}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function actualizarProgreso(porcentaje, texto) {
+            document.getElementById('progress-bar').style.width = porcentaje + '%';
+            document.getElementById('progress-text').textContent = porcentaje + '%';
+            if (texto) log(texto);
+        }
+
+        async function migrarUsuarios(usuarios) {
+            log('👥 Migrando usuarios a Firebase Auth y Firestore...', 'info');
+            let exitosos = 0;
+            let errores = 0;
+
+            for (let i = 0; i < usuarios.length; i++) {
+                const usuario = usuarios[i];
+                try {
+                    // Crear usuario en Firebase Auth
+                    const userCredential = await createUserWithEmailAndPassword(auth, usuario.email, usuario.password);
+
+                    // Guardar en Firestore
+                    await setDoc(doc(db, 'usuarios', userCredential.user.uid), {
+                        id: usuario.id,
+                        email: usuario.email,
+                        nombre: usuario.nombre,
+                        apartamento: usuario.apartamento,
+                        rol: usuario.rol,
+                        activo: usuario.activo,
+                        fechaRegistro: new Date().toISOString()
+                    });
+
+                    exitosos++;
+                    log(`✓ Usuario creado: ${usuario.email} (${usuario.rol})`, 'success');
+                } catch (error) {
+                    if (error.code === 'auth/email-already-in-use') {
+                        log(`⚠ Usuario ya existe: ${usuario.email}`, 'warning');
+                    } else {
+                        errores++;
+                        log(`✗ Error con ${usuario.email}: ${error.message}`, 'error');
+                    }
+                }
+                actualizarProgreso(10 + (i + 1) * 20 / usuarios.length);
+            }
+
+            return { exitosos, errores };
+        }
+
+        async function migrarColeccion(nombre, datos, totalPaso) {
+            if (!datos || datos.length === 0) {
+                log(`⊘ ${nombre}: sin datos`, 'warning');
+                return 0;
+            }
+
+            log(`📦 Migrando ${datos.length} documentos a ${nombre}...`, 'info');
+            const batch = writeBatch(db);
+
+            datos.forEach((item, index) => {
+                const docRef = doc(collection(db, nombre));
+                batch.set(docRef, item);
+            });
+
+            await batch.commit();
+            log(`✓ ${nombre}: ${datos.length} documentos migrados`, 'success');
+            return datos.length;
+        }
+
+        window.iniciarMigracion = async function() {
+            const btnMigrar = document.getElementById('btnMigrar');
+            const progressContainer = document.getElementById('progress-container');
+            const resultContainer = document.getElementById('result-container');
+
+            btnMigrar.disabled = true;
+            btnMigrar.classList.add('opacity-50', 'cursor-not-allowed');
+            progressContainer.classList.remove('hidden');
+            resultContainer.classList.add('hidden');
+
+            try {
+                log('🚀 Iniciando migración de datos...', 'info');
+                actualizarProgreso(2, '🔑 Autenticando como administrador...');
+
+                // Autenticar con usuario admin que ya existe
+                try {
+                    await signInWithEmailAndPassword(auth, 'shayoja@hotmail.com', 'password2');
+                    log('✓ Autenticación exitosa como admin', 'success');
+                } catch (error) {
+                    log('⚠ No se pudo autenticar, continuando...', 'warning');
+                }
+
+                actualizarProgreso(5, '📡 Obteniendo datos del servidor local...');
+
+                // Obtener datos del servidor local
+                const response = await fetch('http://localhost:8081/api/admin/exportar-datos');
+                if (!response.ok) throw new Error('Error al conectar con el servidor local');
+
+                const datos = await response.json();
+                log('✓ Datos obtenidos exitosamente', 'success');
+                actualizarProgreso(10);
+
+                // Migrar usuarios (30% del progreso: 10-40%)
+                const resultUsuarios = await migrarUsuarios(datos.usuarios);
+                actualizarProgreso(40);
+
+                // Migrar colecciones (60% del progreso: 40-100%)
+                let totalDocs = 0;
+                const colecciones = [
+                    { nombre: 'emprendimientos', datos: datos.emprendimientos },
+                    { nombre: 'reservas', datos: datos.reservas },
+                    { nombre: 'pagos', datos: datos.pagos },
+                    { nombre: 'noticias', datos: datos.noticias },
+                    { nombre: 'pqrs', datos: datos.pqrs },
+                    { nombre: 'encuestas', datos: datos.encuestas },
+                    { nombre: 'parqueaderos', datos: datos.parqueaderos },
+                    { nombre: 'vehiculosVisitantes', datos: datos.vehiculosVisitantes },
+                    { nombre: 'apartamentosArriendo', datos: datos.apartamentosArriendo }
+                ];
+
+                for (let i = 0; i < colecciones.length; i++) {
+                    const col = colecciones[i];
+                    const count = await migrarColeccion(col.nombre, col.datos);
+                    totalDocs += count;
+                    actualizarProgreso(40 + (i + 1) * 60 / colecciones.length);
+                }
+
+                // Migrar chats
+                log('💬 Migrando chats...', 'info');
+                try {
+                    await setDoc(doc(db, 'chats', 'general'), { mensajes: datos.chats.general || [] });
+                    await setDoc(doc(db, 'chats', 'admin'), { mensajes: datos.chats.admin || [] });
+                    await setDoc(doc(db, 'chats', 'vigilantes'), { mensajes: datos.chats.vigilantes || [] });
+                    log('✓ Chats migrados', 'success');
+                } catch (error) {
+                    log('⚠ No se pudieron migrar chats (se pueden crear manualmente después)', 'warning');
+                }
+                actualizarProgreso(100);
+
+                // Mostrar resultado
+                log('🎉 ¡Migración completada exitosamente!', 'success');
+
+                resultContainer.innerHTML = `
+                    <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-lg">
+                        <div class="flex items-center mb-4">
+                            <i class="fas fa-check-circle text-green-500 text-3xl mr-3"></i>
+                            <h3 class="text-xl font-bold text-green-800">¡Migración Exitosa! 🎉</h3>
+                        </div>
+                        <div class="space-y-2 text-green-700">
+                            <p><strong>Usuarios creados:</strong> ${resultUsuarios.exitosos} / ${datos.usuarios.length}</p>
+                            <p><strong>Documentos migrados:</strong> ${totalDocs}</p>
+                            <p><strong>Chats configurados:</strong> 3 canales</p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-green-200">
+                            <p class="text-sm text-green-600 mb-3">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                Ahora puedes usar la aplicación en Firebase con todos los datos migrados
+                            </p>
+                            <a href="https://conjunto-residencial-2024.web.app"
+                               target="_blank"
+                               class="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition">
+                                <i class="fas fa-external-link-alt mr-2"></i>
+                                Ir a la Aplicación
+                            </a>
+                        </div>
+                    </div>
+                `;
+                resultContainer.classList.remove('hidden');
+
+            } catch (error) {
+                log(`❌ Error en la migración: ${error.message}`, 'error');
+
+                resultContainer.innerHTML = `
+                    <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg">
+                        <div class="flex items-center mb-4">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-3xl mr-3"></i>
+                            <h3 class="text-xl font-bold text-red-800">Error en la Migración</h3>
+                        </div>
+                        <p class="text-red-700 mb-4">${error.message}</p>
+                        <button onclick="location.reload()"
+                                class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+                            <i class="fas fa-redo mr-2"></i>
+                            Intentar de Nuevo
+                        </button>
+                    </div>
+                `;
+                resultContainer.classList.remove('hidden');
+            }
+        };
+    </script>
+</body>
+</html>

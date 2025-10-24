@@ -189,7 +189,7 @@
         "usuario": "Carlos Andrés Santos Hernández",
         "apartamento": "Torre 2 - Apto 401A",
         "mensaje": "¡Hola a todos! Buenos días",
-        "fecha": "2025-10-04T14:41:07.450Z",
+        "fecha": "2025-10-16T22:39:38.616Z",
         "tipo": "general"
       }
     ],
@@ -207,7 +207,7 @@
       "prioridad": "Alta",
       "estado": "Reportado",
       "reportadoPor": "Administrador del Conjunto",
-      "fecha": "2025-10-04T14:41:07.454Z",
+      "fecha": "2025-10-16T22:39:38.617Z",
       "fotos": [],
       "respuestaAlcaldia": null,
       "fechaRespuesta": null
@@ -497,7 +497,7 @@
       ],
       "votantes": [],
       "estado": "activa",
-      "fechaCreacion": "2025-10-04T14:41:07.454Z",
+      "fechaCreacion": "2025-10-16T22:39:38.617Z",
       "fechaCierre": null,
       "creadoPor": "Administrador del Conjunto"
     }

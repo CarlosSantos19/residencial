@@ -6,10 +6,14 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Conjunto Aralia de Castilla - Sistema Completo v2.1</title>
+    <title>Conjunto Aralia de Castilla - Firebase Edition v3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Firebase Adapter -->
+    <script type="module" src="/firebase-adapter.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -506,7 +510,7 @@ const tabConfigs = {
         { id: 'sorteo-parqueadero', name: 'Mi Parqueadero', icon: 'fas fa-parking' },
         { id: 'control-vehiculos', name: 'Control Vehículos', icon: 'fas fa-car' },
         { id: 'permisos', name: 'Permisos', icon: 'fas fa-id-card' },
-        { id: 'paquetes', name: 'Correspondencia', icon: 'fas fa-envelope' },
+        { id: 'paquetes', name: 'Paquetes', icon: 'fas fa-box' },
         { id: 'chat', name: 'Chat', icon: 'fas fa-comments' },
         { id: 'camaras', name: 'Cámaras', icon: 'fas fa-video' },
         { id: 'juegos', name: 'Juegos', icon: 'fas fa-gamepad' },
@@ -527,7 +531,7 @@ const tabConfigs = {
         { id: 'pqrs-admin', name: 'PQRS', icon: 'fas fa-clipboard-list' },
         { id: 'incidentes-admin', name: 'Incidentes Alcaldía', icon: 'fas fa-city' },
         { id: 'encuestas-admin', name: 'Encuestas', icon: 'fas fa-poll' },
-        { id: 'paquetes-admin', name: 'Correspondencia', icon: 'fas fa-envelope' }
+        { id: 'paquetes-admin', name: 'Paquetes', icon: 'fas fa-box' }
     ],
     alcaldia: [
         { id: 'panel-alcaldia', name: 'Panel Alcaldía', icon: 'fas fa-landmark' },
@@ -539,7 +543,7 @@ const tabConfigs = {
         { id: 'permisos-vigilante', name: 'Gestión Permisos', icon: 'fas fa-key' },
         { id: 'registros', name: 'Registros', icon: 'fas fa-clipboard-list' },
         { id: 'camaras-vigilante', name: 'Cámaras', icon: 'fas fa-video' },
-        { id: 'paquetes-vigilante', name: 'Correspondencia', icon: 'fas fa-envelope' }
+        { id: 'paquetes-vigilante', name: 'Paquetes', icon: 'fas fa-box' }
     ]
 };
 
@@ -608,7 +612,7 @@ function loginDemo(email, password) {
     document.getElementById('login-form').dispatchEvent(new Event('submit'));
 }
 
-// Función de login
+// Función de login - FIREBASE VERSION
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -616,13 +620,12 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     const password = document.getElementById('login-password').value;
 
     try {
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
+        // Esperar a que Firebase Adapter esté listo
+        while (!window.firebaseLogin) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
 
-        const data = await response.json();
+        const data = await window.firebaseLogin(email, password);
 
         if (data.success) {
             currentUser = data.usuario;
@@ -634,7 +637,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
                 {
                     id: 1,
                     title: '¡Bienvenido!',
-                    message: `Hola ${currentUser.nombre}, has iniciado sesión correctamente`,
+                    message: `Hola ${currentUser.nombre}, has iniciado sesión correctamente con Firebase`,
                     type: 'info',
                     timestamp: new Date().toISOString(),
                     read: false
@@ -646,7 +649,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
             showNotification('Error de Autenticación', data.mensaje || 'Credenciales inválidas', 'error');
         }
     } catch (error) {
-        showNotification('Error de Conexión', 'No se pudo conectar con el servidor', 'error');
+        showNotification('Error de Conexión', 'Error al conectar con Firebase: ' + error.message, 'error');
     }
 });
 
@@ -1664,7 +1667,15 @@ async function loadReservasData() {
 }
 
 // Función auxiliar para hacer peticiones con autenticación
+// NOTA: Esta función es reemplazada por firebase-adapter.js
+// Si firebase-adapter.js no está cargado, esta función hará fallback a fetch normal
 async function fetchWithAuth(url, options = {}) {
+    // Si ya hay un fetchWithAuth en window (del firebase-adapter), usarlo
+    if (window.fetchWithAuth && window.fetchWithAuth !== fetchWithAuth) {
+        return window.fetchWithAuth(url, options);
+    }
+
+    // Fallback: usar fetch normal con token
     const token = localStorage.getItem('token');
     const defaultHeaders = {
         'Content-Type': 'application/json',
@@ -4453,7 +4464,7 @@ async function eliminarNoticia(id) {
     }
 }
 
-async function loadPagosAdmin() {
+function loadPagosAdmin() {
     const contentArea = document.getElementById('content-area');
     contentArea.innerHTML = `
         <div class="p-6 space-y-6">
@@ -4472,66 +4483,21 @@ async function loadPagosAdmin() {
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 class="text-xl font-semibold mb-4">Subir Pago Individual</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Selector de Residente -->
-                    <select id="pago-residente" class="border rounded-lg px-4 py-2">
-                        <option value="">Seleccionar Residente</option>
-                    </select>
-
-                    <!-- Selector de Torre -->
-                    <select id="pago-torre" class="border rounded-lg px-4 py-2">
-                        <option value="">Seleccionar Torre</option>
-                        <option value="Torre 1">Torre 1</option>
-                        <option value="Torre 2">Torre 2</option>
-                        <option value="Torre 3">Torre 3</option>
-                        <option value="Torre 4">Torre 4</option>
-                        <option value="Torre 5">Torre 5</option>
-                        <option value="Torre 6">Torre 6</option>
-                        <option value="Torre 7">Torre 7</option>
-                        <option value="Torre 8">Torre 8</option>
-                        <option value="Torre 9">Torre 9</option>
-                        <option value="Torre 10">Torre 10</option>
-                    </select>
-
-                    <input type="text" id="pago-apto" placeholder="Apartamento (ej: 401)"
+                    <input type="text" id="pago-torre" placeholder="Torre"
                            class="border rounded-lg px-4 py-2">
-
-                    <!-- Selector de Mes -->
-                    <select id="pago-mes" class="border rounded-lg px-4 py-2">
-                        <option value="">Seleccionar Mes</option>
-                        <option value="ENERO">ENERO</option>
-                        <option value="FEBRERO">FEBRERO</option>
-                        <option value="MARZO">MARZO</option>
-                        <option value="ABRIL">ABRIL</option>
-                        <option value="MAYO">MAYO</option>
-                        <option value="JUNIO">JUNIO</option>
-                        <option value="JULIO">JULIO</option>
-                        <option value="AGOSTO">AGOSTO</option>
-                        <option value="SEPTIEMBRE">SEPTIEMBRE</option>
-                        <option value="OCTUBRE">OCTUBRE</option>
-                        <option value="NOVIEMBRE">NOVIEMBRE</option>
-                        <option value="DICIEMBRE">DICIEMBRE</option>
-                    </select>
-
-                    <!-- Selector de Tipo de Valor según metros -->
-                    <select id="pago-tipo-valor" class="border rounded-lg px-4 py-2" onchange="actualizarValorPago()">
-                        <option value="">Seleccionar Tipo</option>
-                        <option value="300000">Menos de 80 m² - $300.000</option>
-                        <option value="350000">Hasta 82 m² - $350.000</option>
-                        <option value="370000">Más de 82 m² - $370.000</option>
-                    </select>
-
-                    <!-- Campo de Valor (con formato de miles) -->
-                    <input type="text" id="pago-valor" placeholder="Valor"
-                           class="border rounded-lg px-4 py-2 bg-gray-50" readonly>
-
-                    <input type="text" id="pago-concepto" placeholder="Concepto (ej: Administración)"
-                           class="border rounded-lg px-4 py-2" value="Administración">
-
+                    <input type="text" id="pago-apto" placeholder="Apartamento"
+                           class="border rounded-lg px-4 py-2">
+                    <input type="text" id="pago-concepto" placeholder="Concepto"
+                           class="border rounded-lg px-4 py-2">
+                    <input type="number" id="pago-valor" placeholder="Valor"
+                           class="border rounded-lg px-4 py-2">
+                    <input type="text" id="pago-mes" placeholder="Mes"
+                           class="border rounded-lg px-4 py-2">
                     <input type="date" id="pago-vencimiento"
                            class="border rounded-lg px-4 py-2">
                 </div>
                 <button onclick="crearPagoIndividual()"
-                        class="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                        class="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
                     <i class="fas fa-plus mr-2"></i>Crear Pago
                 </button>
             </div>
@@ -4577,41 +4543,6 @@ async function loadPagosAdmin() {
             </div>
         </div>
     `;
-
-    // Cargar lista de residentes
-    try {
-        const response = await fetchWithAuth('/api/admin/residentes');
-        const usuarios = await response.json();
-
-        const selectResidente = document.getElementById('pago-residente');
-        const residentes = usuarios.filter(u => u.rol === 'residente');
-
-        residentes.forEach(residente => {
-            const option = document.createElement('option');
-            option.value = residente.id;
-            option.textContent = `${residente.nombre} - ${residente.apartamento}`;
-            option.setAttribute('data-apartamento', residente.apartamento);
-            selectResidente.appendChild(option);
-        });
-
-        // Autocompletar torre y apartamento cuando se selecciona un residente
-        selectResidente.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const apartamento = selectedOption.getAttribute('data-apartamento');
-
-            if (apartamento) {
-                // Extraer torre y número de apartamento
-                // Formato esperado: "Torre X - Apto YYY"
-                const match = apartamento.match(/Torre (\d+)\s*-\s*(?:Apto\s*)?(\w+)/i);
-                if (match) {
-                    document.getElementById('pago-torre').value = `Torre ${match[1]}`;
-                    document.getElementById('pago-apto').value = match[2];
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Error cargando residentes:', error);
-    }
 }
 
 function mostrarCargaMasiva() {
@@ -4672,76 +4603,6 @@ async function generarReportePagos() {
         `;
     } catch (error) {
         showNotification('Error', 'No se pudo generar el reporte', 'error');
-    }
-}
-
-// Función para actualizar el valor del pago según el tipo seleccionado
-function actualizarValorPago() {
-    const tipoValor = document.getElementById('pago-tipo-valor').value;
-    const inputValor = document.getElementById('pago-valor');
-
-    if (tipoValor) {
-        // Formatear el valor con separador de miles
-        const valorFormateado = parseInt(tipoValor).toLocaleString('es-CO');
-        inputValor.value = `$${valorFormateado}`;
-    } else {
-        inputValor.value = '';
-    }
-}
-
-// Función para crear un pago individual
-async function crearPagoIndividual() {
-    const residenteId = document.getElementById('pago-residente').value;
-    const torre = document.getElementById('pago-torre').value;
-    const apartamento = document.getElementById('pago-apto').value;
-    const mes = document.getElementById('pago-mes').value;
-    const tipoValor = document.getElementById('pago-tipo-valor').value;
-    const concepto = document.getElementById('pago-concepto').value;
-    const vencimiento = document.getElementById('pago-vencimiento').value;
-
-    // Validar campos
-    if (!torre || !apartamento || !mes || !tipoValor || !concepto || !vencimiento) {
-        showNotification('Error', 'Por favor completa todos los campos', 'error');
-        return;
-    }
-
-    const pago = {
-        torre: torre,
-        apartamento: apartamento,
-        concepto: concepto,
-        valor: tipoValor,  // Valor numérico sin formato
-        mes: mes,
-        vencimiento: vencimiento,
-        estado: 'Pendiente',
-        fechaCreacion: new Date().toISOString()
-    };
-
-    try {
-        const response = await fetchWithAuth('/api/admin/pagos', {
-            method: 'POST',
-            body: JSON.stringify(pago)
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showNotification('Éxito', 'Pago creado exitosamente', 'success');
-
-            // Limpiar formulario
-            document.getElementById('pago-residente').value = '';
-            document.getElementById('pago-torre').value = '';
-            document.getElementById('pago-apto').value = '';
-            document.getElementById('pago-mes').value = '';
-            document.getElementById('pago-tipo-valor').value = '';
-            document.getElementById('pago-valor').value = '';
-            document.getElementById('pago-concepto').value = 'Administración';
-            document.getElementById('pago-vencimiento').value = '';
-        } else {
-            showNotification('Error', result.message || 'No se pudo crear el pago', 'error');
-        }
-    } catch (error) {
-        showNotification('Error', 'Error al crear el pago', 'error');
-        console.error('Error:', error);
     }
 }
 
@@ -5588,18 +5449,316 @@ async function loadEncuestasResidente() {
     const content = document.getElementById('content-area');
 
     content.innerHTML = `
-        <div class="max-w-4xl mx-auto">
+        <div class="max-w-4xl mx-auto p-6">
             <h1 class="text-3xl font-bold text-blue-700 mb-6">
-                <i class="fas fa-poll mr-2"></i>Encuestas y Votaciones
+                <i class="fas fa-poll mr-2"></i>Encuestas y Registro
             </h1>
 
-            <div id="encuestas-list-residente" class="space-y-6">
-                <p class="text-gray-500">Cargando encuestas...</p>
+            <!-- Sub-pestañas -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+                <div class="border-b border-gray-200">
+                    <nav class="flex space-x-8 px-6" id="encuestas-tabs">
+                        <button onclick="switchEncuestasTab('votaciones')" id="encuestas-tab-votaciones"
+                                class="py-4 px-2 border-b-2 border-blue-600 font-medium text-sm text-blue-600">
+                            <i class="fas fa-poll mr-2"></i>Votaciones
+                        </button>
+                        <button onclick="switchEncuestasTab('registros')" id="encuestas-tab-registros"
+                                class="py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            <i class="fas fa-clipboard-list mr-2"></i>Registro de Eventos
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Contenedor dinámico -->
+            <div id="encuestas-content-area" class="space-y-6">
+                <p class="text-gray-500">Cargando...</p>
             </div>
         </div>
     `;
 
-    cargarEncuestasResidente();
+    // Cargar votaciones por defecto
+    switchEncuestasTab('votaciones');
+}
+
+function switchEncuestasTab(tabName) {
+    // Actualizar estilos de pestañas
+    document.querySelectorAll('[id^="encuestas-tab-"]').forEach(tab => {
+        tab.className = 'py-4 px-2 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300';
+    });
+
+    document.getElementById(`encuestas-tab-${tabName}`).className = 'py-4 px-2 border-b-2 border-blue-600 font-medium text-sm text-blue-600';
+
+    // Cargar contenido según pestaña
+    if (tabName === 'votaciones') {
+        cargarEncuestasResidente();
+    } else if (tabName === 'registros') {
+        cargarRegistrosEventos();
+    }
+}
+
+async function cargarRegistrosEventos() {
+    const container = document.getElementById('encuestas-content-area');
+
+    container.innerHTML = `
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-blue-600">
+                    <i class="fas fa-calendar-check mr-2"></i>Registro de Eventos
+                </h2>
+                <button onclick="mostrarFormularioRegistroEvento()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-plus mr-2"></i>Nuevo Registro
+                </button>
+            </div>
+
+            <!-- Formulario oculto -->
+            <div id="formulario-registro-evento" class="hidden mb-6 p-6 bg-blue-50 rounded-lg border-2 border-blue-200">
+                <h3 class="text-lg font-bold mb-4 text-blue-900">Registrar Asistentes para Evento</h3>
+                <form id="form-registro-evento" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nombre del Evento</label>
+                        <input type="text" id="nombre-evento" required placeholder="Ej: Halloween 2025, Fiesta de Fin de Año, etc." class="w-full p-3 border border-gray-300 rounded-lg">
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h4 class="font-semibold text-gray-800 mb-3">Asistentes (Máximo 5 personas)</h4>
+                        <div id="asistentes-container" class="space-y-3">
+                            <!-- Asistente 1 (obligatorio) -->
+                            <div class="asistente-item p-3 bg-white rounded border border-gray-300">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-medium text-sm text-gray-700">Asistente 1 *</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <input type="text" id="asistente-1-nombre" required placeholder="Nombre completo" class="p-2 border border-gray-300 rounded">
+                                    <input type="number" id="asistente-1-edad" required placeholder="Edad" min="1" max="120" class="p-2 border border-gray-300 rounded">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" onclick="agregarAsistente()" id="btn-agregar-asistente" class="mt-3 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                            <i class="fas fa-plus-circle mr-1"></i>Agregar otro asistente
+                        </button>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Notas adicionales (opcional)</label>
+                        <textarea id="notas-evento" rows="2" placeholder="Información adicional sobre el registro..." class="w-full p-3 border border-gray-300 rounded-lg"></textarea>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-semibold">
+                            <i class="fas fa-save mr-2"></i>Guardar Registro
+                        </button>
+                        <button type="button" onclick="ocultarFormularioRegistroEvento()" class="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de registros -->
+            <div id="lista-registros-eventos">
+                <p class="text-gray-500">Cargando registros...</p>
+            </div>
+        </div>
+    `;
+
+    // Variable global para contar asistentes
+    window.contadorAsistentes = 1;
+
+    // Manejar formulario
+    document.getElementById('form-registro-evento').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const nombreEvento = document.getElementById('nombre-evento').value;
+        const notas = document.getElementById('notas-evento').value;
+
+        // Recolectar asistentes
+        const asistentes = [];
+        for (let i = 1; i <= window.contadorAsistentes; i++) {
+            const nombre = document.getElementById(`asistente-${i}-nombre`)?.value;
+            const edad = document.getElementById(`asistente-${i}-edad`)?.value;
+
+            if (nombre && edad) {
+                asistentes.push({
+                    nombre: nombre.trim(),
+                    edad: parseInt(edad)
+                });
+            }
+        }
+
+        if (asistentes.length === 0) {
+            showNotification('Debe registrar al menos un asistente', 'warning');
+            return;
+        }
+
+        try {
+            const response = await fetchWithAuth('/api/registros-eventos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombreEvento,
+                    asistentes,
+                    notas: notas.trim()
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showNotification('Registro guardado exitosamente', 'success');
+                document.getElementById('form-registro-evento').reset();
+                window.contadorAsistentes = 1;
+                ocultarFormularioRegistroEvento();
+                cargarRegistrosEventos();
+            } else {
+                showNotification('Error al guardar registro', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Error al guardar registro', 'error');
+        }
+    });
+
+    // Cargar registros existentes
+    try {
+        const response = await fetchWithAuth('/api/registros-eventos');
+        const data = await response.json();
+
+        const listaContainer = document.getElementById('lista-registros-eventos');
+
+        let registros = [];
+        if (Array.isArray(data)) {
+            registros = data;
+        } else if (data.registros) {
+            registros = data.registros;
+        }
+
+        if (registros.length === 0) {
+            listaContainer.innerHTML = `
+                <div class="text-center py-12 bg-blue-50 rounded-lg">
+                    <i class="fas fa-calendar-alt text-6xl text-blue-300 mb-4"></i>
+                    <p class="text-lg text-gray-600">No hay registros de eventos aún</p>
+                </div>
+            `;
+            return;
+        }
+
+        listaContainer.innerHTML = `
+            <div class="space-y-4">
+                ${registros.map(r => `
+                    <div class="bg-white border-2 border-blue-200 rounded-lg p-5 hover:shadow-lg transition">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="font-bold text-xl text-gray-900">${r.nombreEvento}</h3>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    <i class="fas fa-calendar mr-1"></i>
+                                    ${new Date(r.fechaRegistro).toLocaleString('es-CO')}
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    <i class="fas fa-home mr-1"></i>${r.apartamento || 'N/A'}
+                                </p>
+                            </div>
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                                ${r.asistentes?.length || 0} ${r.asistentes?.length === 1 ? 'persona' : 'personas'}
+                            </span>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-700 mb-3">Asistentes:</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                ${r.asistentes?.map(a => `
+                                    <div class="flex items-center space-x-3 bg-white p-3 rounded border border-gray-200">
+                                        <div class="bg-blue-100 p-2 rounded-full">
+                                            <i class="fas fa-user text-blue-600"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900">${a.nombre}</p>
+                                            <p class="text-sm text-gray-600">${a.edad} años</p>
+                                        </div>
+                                    </div>
+                                `).join('') || '<p class="text-gray-500">Sin asistentes</p>'}
+                            </div>
+                        </div>
+
+                        ${r.notas ? `
+                            <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                                <p class="text-sm text-gray-700"><i class="fas fa-sticky-note mr-2 text-yellow-600"></i>${r.notas}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('lista-registros-eventos').innerHTML = `
+            <div class="text-center py-12 bg-red-50 rounded-lg">
+                <p class="text-red-600">Error al cargar registros</p>
+            </div>
+        `;
+    }
+}
+
+function agregarAsistente() {
+    if (window.contadorAsistentes >= 5) {
+        showNotification('Máximo 5 asistentes permitidos', 'warning');
+        return;
+    }
+
+    window.contadorAsistentes++;
+    const container = document.getElementById('asistentes-container');
+
+    const nuevoAsistente = document.createElement('div');
+    nuevoAsistente.className = 'asistente-item p-3 bg-white rounded border border-gray-300';
+    nuevoAsistente.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+            <span class="font-medium text-sm text-gray-700">Asistente ${window.contadorAsistentes}</span>
+            <button type="button" onclick="eliminarAsistente(this)" class="text-red-600 hover:text-red-700">
+                <i class="fas fa-times-circle"></i>
+            </button>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <input type="text" id="asistente-${window.contadorAsistentes}-nombre" placeholder="Nombre completo" class="p-2 border border-gray-300 rounded">
+            <input type="number" id="asistente-${window.contadorAsistentes}-edad" placeholder="Edad" min="1" max="120" class="p-2 border border-gray-300 rounded">
+        </div>
+    `;
+
+    container.appendChild(nuevoAsistente);
+
+    if (window.contadorAsistentes >= 5) {
+        document.getElementById('btn-agregar-asistente').style.display = 'none';
+    }
+}
+
+function eliminarAsistente(btn) {
+    btn.closest('.asistente-item').remove();
+    window.contadorAsistentes--;
+
+    // Renumerar asistentes
+    const asistentes = document.querySelectorAll('.asistente-item');
+    asistentes.forEach((item, index) => {
+        const numero = index + 1;
+        item.querySelector('span').textContent = `Asistente ${numero}${numero === 1 ? ' *' : ''}`;
+    });
+
+    document.getElementById('btn-agregar-asistente').style.display = 'block';
+}
+
+function mostrarFormularioRegistroEvento() {
+    document.getElementById('formulario-registro-evento').classList.remove('hidden');
+    window.contadorAsistentes = 1;
+}
+
+function ocultarFormularioRegistroEvento() {
+    document.getElementById('formulario-registro-evento').classList.add('hidden');
+    // Reset contador y limpiar asistentes adicionales
+    window.contadorAsistentes = 1;
+    const container = document.getElementById('asistentes-container');
+    const asistentes = container.querySelectorAll('.asistente-item');
+    asistentes.forEach((item, index) => {
+        if (index > 0) item.remove();
+    });
+    document.getElementById('btn-agregar-asistente').style.display = 'block';
 }
 
 async function cargarEncuestasResidente() {
@@ -5607,7 +5766,7 @@ async function cargarEncuestasResidente() {
         const response = await fetchWithAuth('/api/encuestas');
         const data = await response.json();
 
-        const container = document.getElementById('encuestas-list-residente');
+        const container = document.getElementById('encuestas-content-area');
 
         if (!data.encuestas || data.encuestas.length === 0) {
             container.innerHTML = `
@@ -6060,15 +6219,14 @@ async function cargarDashboardVigilante() {
 
         // Cargar paquetes
         const paquetesResponse = await fetchWithAuth('/api/paquetes');
-        const paquetesData = await paquetesResponse.json();
-        const paquetes = paquetesData.paquetes || paquetesData || [];
-        const paquetesPendientes = Array.isArray(paquetes) ? paquetes.filter(p => !p.retirado) : [];
+        const paquetes = await paquetesResponse.json();
+        const paquetesPendientes = paquetes.filter(p => !p.retirado);
         document.getElementById('paquetes-pendientes-count').textContent = paquetesPendientes.length;
 
         // Mostrar últimos 5 paquetes
         const paquetesContainer = document.getElementById('paquetes-recientes');
         const hoy = new Date().toDateString();
-        const paquetesHoy = Array.isArray(paquetes) ? paquetes.filter(p => new Date(p.fechaLlegada).toDateString() === hoy) : [];
+        const paquetesHoy = paquetes.filter(p => new Date(p.fechaLlegada).toDateString() === hoy);
 
         if (paquetesHoy.length === 0) {
             paquetesContainer.innerHTML = '<p class="text-gray-500 text-sm">No hay paquetes registrados hoy</p>';
@@ -6106,8 +6264,8 @@ async function loadPaquetesVigilante() {
         <div class="p-6 space-y-6">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-3xl font-bold text-gray-900 flex items-center">
-                    <i class="fas fa-envelope text-orange-600 mr-3"></i>
-                    Registro de Correspondencia
+                    <i class="fas fa-box text-orange-600 mr-3"></i>
+                    Registro de Paquetes
                 </h2>
             </div>
 
@@ -6292,10 +6450,10 @@ async function loadPaquetes() {
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h2 class="text-3xl font-bold text-gray-900 flex items-center">
-                        <i class="fas fa-envelope text-blue-600 mr-3"></i>
-                        Mi Correspondencia
+                        <i class="fas fa-box text-blue-600 mr-3"></i>
+                        Mis Paquetes
                     </h2>
-                    <p class="text-gray-600 mt-1">Paquetes y correspondencia recibida</p>
+                    <p class="text-gray-600 mt-1">Paquetes y encomiendas recibidas</p>
                 </div>
             </div>
 
@@ -6962,7 +7120,6 @@ async function loadPermisosResidente() {
                             <select id="tipo-permiso" class="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500" required onchange="actualizarCamposPermiso()">
                                 <option value="">Seleccione...</option>
                                 <option value="visitante">👤 Visitante</option>
-                                <option value="objeto">📦 Objeto/Paquete Grande</option>
                                 <option value="trasteo">🚚 Trasteo/Mudanza</option>
                                 <option value="domicilio">🛵 Domicilio</option>
                             </select>
@@ -7063,9 +7220,12 @@ async function loadPermisosResidente() {
         const response = await fetchWithAuth('/api/residente/mis-permisos');
         const data = await response.json();
 
+        console.log('[FRONTEND] Data recibida:', data);
+        console.log('[FRONTEND] Permisos:', data.permisos);
+
         const container = document.getElementById('permisos-container');
 
-        if (!data.success || data.permisos.length === 0) {
+        if (!data.success || !data.permisos || data.permisos.length === 0) {
             container.innerHTML = `
                 <div class="bg-white rounded-xl p-12 text-center border-2 border-dashed border-gray-300">
                     <i class="fas fa-id-card text-6xl text-gray-300 mb-4"></i>
@@ -7076,53 +7236,105 @@ async function loadPermisosResidente() {
             return;
         }
 
-        const vigentes = data.permisos.filter(p => p.estado === 'Vigente');
-        const ingresados = data.permisos.filter(p => p.estado === 'Ingresado');
-        const finalizados = data.permisos.filter(p => p.estado === 'Finalizado');
-
+        // Mostrar todos los permisos en una sola lista
         container.innerHTML = `
-            ${vigentes.length > 0 ? `
-                <div class="bg-white rounded-lg shadow-sm border-2 border-green-200 mb-6">
-                    <div class="bg-green-50 px-6 py-4 border-b border-green-200">
-                        <h3 class="text-xl font-semibold text-green-900 flex items-center">
-                            <i class="fas fa-check-circle mr-2"></i>
-                            Permisos Vigentes (${vigentes.length})
-                        </h3>
-                    </div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${vigentes.map(p => renderPermisoCard(p, 'vigente')).join('')}
-                    </div>
+            <div class="bg-white rounded-lg shadow-sm border-2 border-blue-200">
+                <div class="bg-blue-50 px-6 py-4 border-b border-blue-200">
+                    <h3 class="text-xl font-semibold text-blue-900 flex items-center">
+                        <i class="fas fa-id-card mr-2"></i>
+                        Mis Permisos (${data.permisos.length})
+                    </h3>
                 </div>
-            ` : ''}
+                <div class="p-6 space-y-4">
+                    ${data.permisos.map((p, index) => `
+                        <div class="border-2 border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- Información del permiso -->
+                                <div class="md:col-span-2">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div>
+                                            <h4 class="font-bold text-lg text-gray-900">${p.nombre || 'Sin nombre'}</h4>
+                                            <p class="text-sm text-gray-600">Tipo: ${p.tipo || 'No especificado'}</p>
+                                        </div>
+                                        <span class="px-3 py-1 rounded-full text-xs font-semibold ${p.vigente ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                            ${p.vigente ? '✓ Vigente' : '✗ Expirado'}
+                                        </span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3 text-sm">
+                                        <div>
+                                            <span class="text-gray-500">Fecha ingreso:</span>
+                                            <span class="font-medium ml-1">${p.fechaIngreso || 'N/A'}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500">Hora:</span>
+                                            <span class="font-medium ml-1">${p.horaIngreso || 'N/A'}</span>
+                                        </div>
+                                        ${p.cedula ? `
+                                            <div class="col-span-2">
+                                                <span class="text-gray-500">Cédula:</span>
+                                                <span class="font-medium ml-1">${p.cedula}</span>
+                                            </div>
+                                        ` : ''}
+                                        ${p.placa ? `
+                                            <div class="col-span-2">
+                                                <span class="text-gray-500">Placa:</span>
+                                                <span class="font-medium ml-1">${p.placa}</span>
+                                            </div>
+                                        ` : ''}
+                                        ${p.descripcion ? `
+                                            <div class="col-span-2">
+                                                <span class="text-gray-500">Descripción:</span>
+                                                <span class="font-medium ml-1">${p.descripcion}</span>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
 
-            ${ingresados.length > 0 ? `
-                <div class="bg-white rounded-lg shadow-sm border-2 border-blue-200 mb-6">
-                    <div class="bg-blue-50 px-6 py-4 border-b border-blue-200">
-                        <h3 class="text-xl font-semibold text-blue-900 flex items-center">
-                            <i class="fas fa-sign-in-alt mr-2"></i>
-                            En el Conjunto (${ingresados.length})
-                        </h3>
-                    </div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${ingresados.map(p => renderPermisoCard(p, 'ingresado')).join('')}
-                    </div>
+                                <!-- Código QR -->
+                                <div class="flex flex-col items-center justify-center bg-gray-50 rounded-lg p-4">
+                                    <div id="qr-${p.id || index}" class="mb-3"></div>
+                                    <button onclick="compartirPermisoQR('${p.id || index}', '${p.nombre}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition">
+                                        <i class="fas fa-share-alt mr-2"></i>Compartir QR
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
-            ` : ''}
-
-            ${finalizados.length > 0 ? `
-                <div class="bg-white rounded-lg shadow-sm border-2 border-gray-200">
-                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                        <h3 class="text-xl font-semibold text-gray-900 flex items-center">
-                            <i class="fas fa-history mr-2"></i>
-                            Historial (${finalizados.length})
-                        </h3>
-                    </div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ${finalizados.slice(0, 6).map(p => renderPermisoCard(p, 'finalizado')).join('')}
-                    </div>
-                </div>
-            ` : ''}
+            </div>
         `;
+
+        // Generar códigos QR para cada permiso
+        setTimeout(() => {
+            data.permisos.forEach((p, index) => {
+                const qrContainer = document.getElementById(`qr-${p.id || index}`);
+                if (qrContainer) {
+                    // Limpiar contenido previo
+                    qrContainer.innerHTML = '';
+
+                    // Datos del QR: ID del permiso + información básica
+                    const qrData = JSON.stringify({
+                        permisoId: p.id,
+                        nombre: p.nombre,
+                        tipo: p.tipo,
+                        fechaIngreso: p.fechaIngreso,
+                        horaIngreso: p.horaIngreso,
+                        apartamento: currentUser.apartamento
+                    });
+
+                    // Generar QR
+                    new QRCode(qrContainer, {
+                        text: qrData,
+                        width: 150,
+                        height: 150,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                }
+            });
+        }, 100);
+
     } catch (error) {
         console.error('Error:', error);
         document.getElementById('permisos-container').innerHTML = `
@@ -7132,6 +7344,54 @@ async function loadPermisosResidente() {
             </div>
         `;
     }
+}
+
+// Función para compartir el QR del permiso
+async function compartirPermisoQR(permisoId, nombre) {
+    try {
+        const qrContainer = document.getElementById(`qr-${permisoId}`);
+        const canvas = qrContainer.querySelector('canvas');
+
+        if (!canvas) {
+            showNotification('Error al obtener el código QR', 'error');
+            return;
+        }
+
+        // Convertir canvas a blob
+        canvas.toBlob(async (blob) => {
+            const file = new File([blob], `permiso-${nombre}.png`, { type: 'image/png' });
+
+            // Verificar si el navegador soporta la API de compartir
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: `Permiso de Ingreso - ${nombre}`,
+                        text: `Código QR para permiso de ingreso al Conjunto Aralia de Castilla`,
+                        files: [file]
+                    });
+                    showNotification('QR compartido exitosamente', 'success');
+                } catch (shareError) {
+                    if (shareError.name !== 'AbortError') {
+                        descargarQR(canvas, nombre);
+                    }
+                }
+            } else {
+                // Fallback: descargar imagen
+                descargarQR(canvas, nombre);
+            }
+        });
+    } catch (error) {
+        console.error('Error al compartir QR:', error);
+        showNotification('Error al compartir el código QR', 'error');
+    }
+}
+
+function descargarQR(canvas, nombre) {
+    const link = document.createElement('a');
+    link.download = `permiso-${nombre}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+    showNotification('QR descargado exitosamente', 'success');
 }
 
 function mostrarFormularioPermiso() {
@@ -7327,6 +7587,10 @@ async function loadPermisosVigilante() {
                     </h2>
                     <p class="text-gray-600 mt-1">Control de permisos de ingreso al conjunto</p>
                 </div>
+                <button onclick="mostrarEscanerQR()" class="bg-gradient-to-r from-orange-600 to-orange-700 text-white px-6 py-3 rounded-lg hover:shadow-lg transition flex items-center gap-2">
+                    <i class="fas fa-qrcode"></i>
+                    Escanear QR
+                </button>
             </div>
 
             <!-- Filtros -->
@@ -7595,6 +7859,140 @@ async function registrarSalidaPermiso(id) {
     }
 }
 
+// Escáner QR para vigilantes
+function mostrarEscanerQR() {
+    const modal = document.createElement('div');
+    modal.id = 'modal-escaner-qr';
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75';
+    modal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-2xl w-11/12 max-w-2xl p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold text-gray-900">
+                    <i class="fas fa-qrcode text-orange-600 mr-2"></i>
+                    Escanear QR de Permiso
+                </h3>
+                <button onclick="cerrarEscanerQR()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <p class="text-gray-600">Ingresa manualmente el código del permiso o pega los datos del QR:</p>
+
+                <textarea id="input-qr-data" rows="6" placeholder='Pega aquí los datos del QR escaneado o ingresa el ID del permiso...'
+                    class="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-orange-500 font-mono text-sm"></textarea>
+
+                <div class="flex gap-3">
+                    <button onclick="procesarQRPermiso()" class="flex-1 bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 font-semibold">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Confirmar Ingreso
+                    </button>
+                    <button onclick="cerrarEscanerQR()" class="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+
+            <div id="resultado-qr" class="mt-4"></div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    document.getElementById('input-qr-data').focus();
+}
+
+function cerrarEscanerQR() {
+    const modal = document.getElementById('modal-escaner-qr');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function procesarQRPermiso() {
+    const inputData = document.getElementById('input-qr-data').value.trim();
+    const resultadoDiv = document.getElementById('resultado-qr');
+
+    if (!inputData) {
+        resultadoDiv.innerHTML = `
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p class="text-yellow-800">Por favor ingresa los datos del QR</p>
+            </div>
+        `;
+        return;
+    }
+
+    try {
+        // Intentar parsear como JSON (datos completos del QR)
+        let permisoData;
+        try {
+            permisoData = JSON.parse(inputData);
+        } catch {
+            // Si no es JSON, asumir que es solo el ID
+            permisoData = { permisoId: inputData };
+        }
+
+        resultadoDiv.innerHTML = `
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p class="text-blue-800"><i class="fas fa-spinner fa-spin mr-2"></i>Verificando permiso...</p>
+            </div>
+        `;
+
+        // Confirmar ingreso con el backend
+        const response = await fetchWithAuth(`/api/permisos/${permisoData.permisoId}/confirmar-ingreso`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                escanedoPor: currentUser.nombre,
+                fechaEscaneo: new Date().toISOString()
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            resultadoDiv.innerHTML = `
+                <div class="bg-green-50 border-2 border-green-500 rounded-lg p-6">
+                    <div class="flex items-start gap-4">
+                        <div class="bg-green-500 rounded-full p-3">
+                            <i class="fas fa-check text-white text-2xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-xl text-green-900 mb-2">¡Ingreso Confirmado!</h4>
+                            ${permisoData.nombre ? `<p class="text-green-800"><strong>Visitante:</strong> ${permisoData.nombre}</p>` : ''}
+                            ${permisoData.tipo ? `<p class="text-green-800"><strong>Tipo:</strong> ${permisoData.tipo}</p>` : ''}
+                            ${permisoData.apartamento ? `<p class="text-green-800"><strong>Apartamento:</strong> ${permisoData.apartamento}</p>` : ''}
+                            <p class="text-green-700 text-sm mt-2">Hora: ${new Date().toLocaleTimeString('es-CO')}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            showNotification('Ingreso confirmado exitosamente', 'success');
+
+            // Cerrar modal después de 3 segundos
+            setTimeout(() => {
+                cerrarEscanerQR();
+                loadPermisosVigilante(); // Recargar lista
+            }, 3000);
+
+        } else {
+            resultadoDiv.innerHTML = `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p class="text-red-800"><i class="fas fa-times-circle mr-2"></i>${data.mensaje || 'Error al confirmar ingreso'}</p>
+                </div>
+            `;
+        }
+
+    } catch (error) {
+        console.error('Error:', error);
+        resultadoDiv.innerHTML = `
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p class="text-red-800"><i class="fas fa-exclamation-triangle mr-2"></i>Error al procesar el QR. Verifica los datos.</p>
+            </div>
+        `;
+    }
+}
+
 function loadPermisosAdmin() {
     loadPermisosVigilante(); // Admin tiene la misma vista que vigilante
 }
@@ -7710,10 +8108,24 @@ async function loadPQRSResidente() {
 
     // Cargar PQRS existentes
     try {
-        const response = await fetch('/api/pqrs');
-        const pqrs = await response.json();
+        const response = await fetchWithAuth('/api/pqrs');
+        const data = await response.json();
+
+        console.log('[FRONTEND PQRS] Data recibida:', data);
 
         const container = document.getElementById('pqrs-container');
+
+        // Manejar diferentes formatos de respuesta
+        let pqrs = [];
+        if (Array.isArray(data)) {
+            pqrs = data;
+        } else if (data.success && Array.isArray(data.pqrs)) {
+            pqrs = data.pqrs;
+        } else if (data.pqrs) {
+            pqrs = data.pqrs;
+        }
+
+        console.log('[FRONTEND PQRS] PQRS procesadas:', pqrs);
 
         if (!pqrs || pqrs.length === 0) {
             container.innerHTML = `
@@ -7956,7 +8368,7 @@ async function loadPQRSAdmin() {
 
 async function cargarPQRSAdmin(filtroTipo = '', filtroEstado = '') {
     try {
-        const response = await fetchWithAuth('/api/pqrs');
+        const response = await fetch('/api/pqrs');
         let pqrs = await response.json();
 
         // Aplicar filtros
@@ -8237,366 +8649,6 @@ async function cambiarEstadoPQRS(id, nuevoEstado) {
         console.error('Error:', error);
         showNotification('Error al cambiar estado', 'error');
     }
-}
-
-// ============= SISTEMA DE CHAT COMPLETO =============
-
-let currentChatChannel = 'general';
-let currentPrivateChatUser = null;
-let chatRefreshInterval = null;
-
-function loadChat() {
-    const contentArea = document.getElementById('content-area');
-
-    const canales = [];
-    canales.push({ id: 'general', nombre: 'General', icon: 'fa-users', color: 'blue' });
-
-    if (currentUser.rol === 'admin') {
-        canales.push({ id: 'admin', nombre: 'Admin', icon: 'fa-user-shield', color: 'green' });
-    }
-
-    if (currentUser.rol === 'vigilante' || currentUser.rol === 'admin') {
-        canales.push({ id: 'vigilantes', nombre: 'Vigilantes', icon: 'fa-shield-alt', color: 'orange' });
-    }
-
-    if (currentUser.rol === 'residente') {
-        canales.push({ id: 'privados', nombre: 'Privados', icon: 'fa-lock', color: 'purple' });
-    }
-
-    contentArea.innerHTML = `
-        <div class="p-6 space-y-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-3xl font-bold text-gray-900 flex items-center">
-                        <i class="fas fa-comments text-blue-600 mr-3"></i>
-                        Chat
-                    </h2>
-                    <p class="text-gray-600 mt-1">Comunícate con la comunidad</p>
-                </div>
-                ${currentUser.rol === 'residente' ? `
-                    <button onclick="mostrarNuevoChatPrivado()" class="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-lg hover:shadow-lg transition flex items-center gap-2">
-                        <i class="fas fa-plus"></i>
-                        Nuevo Chat Privado
-                    </button>
-                ` : ''}
-            </div>
-
-            <!-- Canales de Chat -->
-            <div class="bg-white rounded-lg shadow-sm border-2 border-gray-200">
-                <div class="border-b border-gray-200 bg-gray-50 px-6 py-3">
-                    <div class="flex space-x-4">
-                        ${canales.map(canal => `
-                            <button onclick="cambiarCanalChat('${canal.id}')" id="canal-${canal.id}"
-                                class="canal-chat px-4 py-2 rounded-lg font-semibold transition ${canal.id === 'general' ? 'bg-'+canal.color+'-600 text-white' : 'text-gray-600 hover:bg-gray-200'}">
-                                <i class="fas ${canal.icon} mr-2"></i>
-                                ${canal.nombre}
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <!-- Área de Mensajes -->
-                <div id="chat-mensajes" class="h-96 overflow-y-auto p-6 bg-gradient-to-b from-gray-50 to-white">
-                    <div class="text-center py-12">
-                        <i class="fas fa-spinner fa-spin text-4xl text-blue-400 mb-4"></i>
-                        <p class="text-gray-600">Cargando mensajes...</p>
-                    </div>
-                </div>
-
-                <!-- Input de Mensaje -->
-                <div class="border-t border-gray-200 p-4 bg-white">
-                    <form id="form-mensaje-chat" class="flex gap-3">
-                        <input type="text" id="input-mensaje-chat"
-                            class="flex-1 p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500"
-                            placeholder="Escribe tu mensaje..." required>
-                        <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
-                            <i class="fas fa-paper-plane mr-2"></i>
-                            Enviar
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.getElementById('form-mensaje-chat').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const input = document.getElementById('input-mensaje-chat');
-        const mensaje = input.value.trim();
-
-        if (!mensaje) return;
-
-        if (currentChatChannel === 'privados' && !currentPrivateChatUser) {
-            showNotification('Selecciona un chat privado primero', 'error');
-            return;
-        }
-
-        try {
-            let url, body;
-
-            if (currentChatChannel === 'privados') {
-                url = `/api/chat/privado/${currentPrivateChatUser.id}`;
-                body = { mensaje };
-            } else {
-                url = `/api/chat/${currentChatChannel}`;
-                body = { mensaje };
-            }
-
-            const response = await fetchWithAuth(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                input.value = '';
-                cargarMensajesChat();
-            } else {
-                showNotification('Error al enviar mensaje', 'error');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showNotification('Error al enviar mensaje', 'error');
-        }
-    });
-
-    cargarMensajesChat();
-
-    // Actualizar mensajes cada 3 segundos
-    if (chatRefreshInterval) clearInterval(chatRefreshInterval);
-    chatRefreshInterval = setInterval(cargarMensajesChat, 3000);
-}
-
-function cambiarCanalChat(canal) {
-    currentChatChannel = canal;
-    currentPrivateChatUser = null;
-
-    // Actualizar estilos de botones
-    document.querySelectorAll('.canal-chat').forEach(btn => {
-        btn.className = 'canal-chat px-4 py-2 rounded-lg font-semibold transition text-gray-600 hover:bg-gray-200';
-    });
-
-    const colores = {
-        general: 'blue',
-        admin: 'green',
-        vigilantes: 'orange',
-        privados: 'purple'
-    };
-
-    const boton = document.getElementById(`canal-${canal}`);
-    if (boton) {
-        boton.className = `canal-chat px-4 py-2 rounded-lg font-semibold transition bg-${colores[canal]}-600 text-white`;
-    }
-
-    if (canal === 'privados') {
-        cargarListaChatsPrivados();
-    } else {
-        cargarMensajesChat();
-    }
-}
-
-async function cargarMensajesChat() {
-    try {
-        let url;
-
-        if (currentChatChannel === 'privados') {
-            if (!currentPrivateChatUser) return;
-            url = `/api/chat/privado/${currentPrivateChatUser.id}`;
-        } else {
-            url = `/api/chat/${currentChatChannel}`;
-        }
-
-        const response = await fetchWithAuth(url);
-        const data = await response.json();
-
-        const container = document.getElementById('chat-mensajes');
-
-        if (!data.success || !data.mensajes || data.mensajes.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-12">
-                    <i class="fas fa-comment-slash text-6xl text-gray-300 mb-4"></i>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay mensajes</h3>
-                    <p class="text-gray-600">¡Sé el primero en escribir!</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = data.mensajes.map(msg => {
-            const esMio = currentChatChannel === 'privados'
-                ? msg.usuarioId === currentUser.id
-                : msg.usuario === currentUser.nombre;
-
-            const fecha = new Date(msg.fecha);
-
-            if (esMio) {
-                return `
-                    <div class="flex justify-end mb-4">
-                        <div class="max-w-md">
-                            <div class="bg-blue-600 text-white rounded-lg rounded-tr-none p-3 shadow">
-                                <p class="text-sm">${msg.mensaje}</p>
-                            </div>
-                            <div class="text-xs text-gray-500 mt-1 text-right">
-                                ${fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                return `
-                    <div class="flex justify-start mb-4">
-                        <div class="max-w-md">
-                            <div class="bg-white border-2 border-gray-200 rounded-lg rounded-tl-none p-3 shadow">
-                                <div class="font-bold text-sm text-gray-900 mb-1">
-                                    ${msg.usuario}
-                                    ${msg.apartamento ? `<span class="text-xs font-normal text-gray-500">- ${msg.apartamento}</span>` : ''}
-                                </div>
-                                <p class="text-sm text-gray-700">${msg.mensaje}</p>
-                            </div>
-                            <div class="text-xs text-gray-500 mt-1">
-                                ${fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        }).join('');
-
-        // Scroll al final
-        container.scrollTop = container.scrollHeight;
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-
-async function cargarListaChatsPrivados() {
-    try {
-        const response = await fetchWithAuth('/api/chat/privados/lista');
-        const data = await response.json();
-
-        const container = document.getElementById('chat-mensajes');
-
-        if (!data.success || data.chats.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-12">
-                    <i class="fas fa-user-friends text-6xl text-gray-300 mb-4"></i>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">No tienes chats privados</h3>
-                    <p class="text-gray-600 mb-4">Inicia una conversación con otro residente</p>
-                    <button onclick="mostrarNuevoChatPrivado()" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition">
-                        <i class="fas fa-plus mr-2"></i>
-                        Nuevo Chat
-                    </button>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = `
-            <div class="space-y-3">
-                ${data.chats.map(chat => {
-                    const ultimoMensaje = chat.ultimoMensaje;
-                    const fecha = ultimoMensaje ? new Date(ultimoMensaje.fecha) : null;
-
-                    return `
-                        <div onclick="abrirChatPrivado(${chat.otroUsuario.id}, '${chat.otroUsuario.nombre}')"
-                            class="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-purple-400 hover:shadow-lg transition cursor-pointer">
-                            <div class="flex items-center gap-3">
-                                <div class="bg-purple-100 p-3 rounded-full">
-                                    <i class="fas fa-user text-purple-600 text-xl"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <h4 class="font-bold text-gray-900">${chat.otroUsuario.nombre}</h4>
-                                    <p class="text-sm text-gray-600">${chat.otroUsuario.apartamento}</p>
-                                    ${ultimoMensaje ? `
-                                        <p class="text-xs text-gray-500 mt-1 truncate">${ultimoMensaje.mensaje}</p>
-                                    ` : ''}
-                                </div>
-                                ${fecha ? `
-                                    <div class="text-xs text-gray-400">
-                                        ${fecha.toLocaleDateString('es-CO')}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-
-function abrirChatPrivado(usuarioId, nombreUsuario) {
-    currentPrivateChatUser = { id: usuarioId, nombre: nombreUsuario };
-
-    // Actualizar placeholder
-    document.getElementById('input-mensaje-chat').placeholder = `Mensaje para ${nombreUsuario}...`;
-
-    cargarMensajesChat();
-}
-
-async function mostrarNuevoChatPrivado() {
-    try {
-        const response = await fetchWithAuth('/api/residentes/lista');
-        const data = await response.json();
-
-        if (!data.success || data.residentes.length === 0) {
-            showNotification('No hay residentes disponibles', 'info');
-            return;
-        }
-
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
-        modal.innerHTML = `
-            <div class="bg-white rounded-xl shadow-2xl w-11/12 max-w-md">
-                <div class="bg-purple-600 text-white p-6 rounded-t-xl">
-                    <h3 class="text-2xl font-bold flex items-center">
-                        <i class="fas fa-user-plus mr-3"></i>
-                        Nuevo Chat Privado
-                    </h3>
-                </div>
-                <div class="p-6">
-                    <p class="text-gray-600 mb-4">Selecciona un residente para iniciar una conversación:</p>
-                    <div class="space-y-2 max-h-96 overflow-y-auto">
-                        ${data.residentes.map(r => `
-                            <button onclick="iniciarChatConResidente(${r.id}, '${r.nombre}')"
-                                class="w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition">
-                                <div class="flex items-center gap-3">
-                                    <div class="bg-purple-100 p-2 rounded-full">
-                                        <i class="fas fa-user text-purple-600"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-bold text-gray-900">${r.nombre}</h4>
-                                        <p class="text-sm text-gray-600">${r.apartamento}</p>
-                                    </div>
-                                </div>
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-                <div class="p-6 border-t border-gray-200">
-                    <button onclick="this.closest('.fixed').remove()"
-                        class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition font-semibold">
-                        Cancelar
-                    </button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-    } catch (error) {
-        console.error('Error:', error);
-        showNotification('Error al cargar residentes', 'error');
-    }
-}
-
-function iniciarChatConResidente(id, nombre) {
-    document.querySelector('.fixed.inset-0').remove();
-    cambiarCanalChat('privados');
-    abrirChatPrivado(id, nombre);
 }
 
 // ============= JUEGOS MULTIJUGADOR =============

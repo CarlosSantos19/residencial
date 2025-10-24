@@ -828,10 +828,8 @@ app.get('/api/residente/mis-permisos', (req, res) => {
   res.json({ success: true, permisos: misPermisos });
 });
 
-// Paquetes
-app.get('/api/paquetes', (req, res) => {
-  res.json(data.paquetes);
-});
+// Paquetes - Endpoint movido a la sección de ENDPOINTS DE PAQUETES (línea ~1354)
+// Este endpoint está duplicado y se usa el de abajo
 
 app.post('/api/paquetes/registrar', (req, res) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
@@ -2111,6 +2109,36 @@ app.delete('/api/admin/noticias/:id', verificarAdmin, (req, res) => {
   } else {
     res.status(404).json({ success: false, mensaje: 'Noticia no encontrada' });
   }
+});
+
+// === PAGOS INDIVIDUALES ===
+app.post('/api/admin/pagos', verificarAdmin, (req, res) => {
+  const { torre, apartamento, concepto, valor, mes, vencimiento, estado } = req.body;
+
+  // Validar campos requeridos
+  if (!torre || !apartamento || !concepto || !valor || !mes || !vencimiento) {
+    return res.status(400).json({
+      success: false,
+      message: 'Todos los campos son requeridos'
+    });
+  }
+
+  const nuevoPago = {
+    id: data.pagos.length + 1,
+    torre: torre,
+    apartamento: apartamento,
+    concepto: concepto,
+    valor: parseFloat(valor),
+    mes: mes,
+    estado: estado || 'Pendiente',
+    vencimiento: vencimiento,
+    fechaCreacion: new Date().toISOString()
+  };
+
+  data.pagos.push(nuevoPago);
+  guardarDatos();
+
+  res.json({ success: true, pago: nuevoPago });
 });
 
 // === PAGOS MASIVOS ===

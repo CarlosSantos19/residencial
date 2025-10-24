@@ -6,10 +6,12 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Conjunto Aralia de Castilla - Sistema Completo v2.1</title>
+    <title>Conjunto Aralia de Castilla - Firebase Edition v3.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase Adapter -->
+    <script type="module" src="/firebase-adapter.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -179,29 +181,29 @@
 
     <!-- Navegación por Tabs -->
     <nav id="tab-navigation" class="bg-white shadow-sm border-b sticky top-16 z-30">
-        <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
-            <div class="relative flex items-center gap-1 sm:gap-2 py-2 sm:py-3">
-                <!-- Botón Scroll Izquierda - Visible también en móvil -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="relative flex items-center gap-2 py-3">
+                <!-- Botón Scroll Izquierda -->
                 <button id="scroll-left-btn" onclick="scrollTabs('left')"
-                        class="flex flex-shrink-0 items-center justify-center w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 hover:bg-gray-200 rounded-full transition shadow-sm">
-                    <i class="fas fa-chevron-left text-gray-600 text-xs sm:text-sm"></i>
+                        class="hidden md:flex flex-shrink-0 items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full transition shadow-sm">
+                    <i class="fas fa-chevron-left text-gray-600"></i>
                 </button>
 
-                <!-- Contenedor con scroll horizontal mejorado para móvil -->
-                <div id="tab-container" class="flex gap-1 sm:gap-2 overflow-x-auto flex-1 scrollbar-hide scroll-smooth snap-x snap-mandatory">
+                <!-- Contenedor con scroll horizontal -->
+                <div id="tab-container" class="flex gap-2 overflow-x-auto flex-1 scrollbar-hide scroll-smooth">
                     <!-- Las tabs se generarán dinámicamente según el rol -->
                 </div>
 
-                <!-- Botón Scroll Derecha - Visible también en móvil -->
+                <!-- Botón Scroll Derecha -->
                 <button id="scroll-right-btn" onclick="scrollTabs('right')"
-                        class="flex flex-shrink-0 items-center justify-center w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 hover:bg-gray-200 rounded-full transition shadow-sm">
-                    <i class="fas fa-chevron-right text-gray-600 text-xs sm:text-sm"></i>
+                        class="hidden md:flex flex-shrink-0 items-center justify-center w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full transition shadow-sm">
+                    <i class="fas fa-chevron-right text-gray-600"></i>
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- Estilos para scrollbar personalizado y responsive -->
+    <!-- Estilos para scrollbar personalizado -->
     <style>
         /* Ocultar scrollbar pero mantener funcionalidad */
         .scrollbar-hide {
@@ -217,39 +219,19 @@
             overflow: hidden;
         }
 
-        /* Transición suave al hacer scroll con snap points */
+        /* Transición suave al hacer scroll */
         #tab-container {
             scroll-behavior: smooth;
             max-width: 100%;
             overflow-x: auto;
             overflow-y: hidden;
-            -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
         }
 
-        /* Asegurar que las pestañas no se compriman */
+        /* Asegurar que las pestañas no se compriman ni se salgan */
         #tab-container button {
             flex-shrink: 0;
             white-space: nowrap;
-            scroll-snap-align: start;
-        }
-
-        /* Tamaños responsivos para tabs en móvil */
-        @media (max-width: 640px) {
-            #tab-container button {
-                min-height: 2rem;
-                font-size: 0.75rem;
-                padding: 0.375rem 0.5rem !important;
-            }
-            #tab-container button i {
-                font-size: 0.7rem;
-                margin-right: 0.25rem !important;
-            }
-        }
-
-        @media (min-width: 641px) {
-            #tab-container button {
-                min-height: 2.5rem;
-            }
+            min-height: 2.5rem;
         }
 
         /* Botones de scroll con animación */
@@ -260,37 +242,10 @@
         #scroll-left-btn:hover, #scroll-right-btn:hover {
             transform: scale(1.1);
         }
-        #scroll-left-btn:active, #scroll-right-btn:active {
-            transform: scale(0.95);
-        }
 
         /* Asegurar que el contenedor padre no se desborde */
         #tab-navigation .relative {
             overflow: visible;
-        }
-
-        /* Indicadores visuales de scroll disponible */
-        #tab-container::before,
-        #tab-container::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 20px;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-
-        /* Gradiente izquierdo cuando hay scroll disponible */
-        #tab-container.can-scroll-left::before {
-            left: 0;
-            background: linear-gradient(to right, rgba(255,255,255,0.9), transparent);
-        }
-
-        /* Gradiente derecho cuando hay scroll disponible */
-        #tab-container.can-scroll-right::after {
-            right: 0;
-            background: linear-gradient(to left, rgba(255,255,255,0.9), transparent);
         }
     </style>
 
@@ -506,7 +461,7 @@ const tabConfigs = {
         { id: 'sorteo-parqueadero', name: 'Mi Parqueadero', icon: 'fas fa-parking' },
         { id: 'control-vehiculos', name: 'Control Vehículos', icon: 'fas fa-car' },
         { id: 'permisos', name: 'Permisos', icon: 'fas fa-id-card' },
-        { id: 'paquetes', name: 'Correspondencia', icon: 'fas fa-envelope' },
+        { id: 'paquetes', name: 'Paquetes', icon: 'fas fa-box' },
         { id: 'chat', name: 'Chat', icon: 'fas fa-comments' },
         { id: 'camaras', name: 'Cámaras', icon: 'fas fa-video' },
         { id: 'juegos', name: 'Juegos', icon: 'fas fa-gamepad' },
@@ -527,7 +482,7 @@ const tabConfigs = {
         { id: 'pqrs-admin', name: 'PQRS', icon: 'fas fa-clipboard-list' },
         { id: 'incidentes-admin', name: 'Incidentes Alcaldía', icon: 'fas fa-city' },
         { id: 'encuestas-admin', name: 'Encuestas', icon: 'fas fa-poll' },
-        { id: 'paquetes-admin', name: 'Correspondencia', icon: 'fas fa-envelope' }
+        { id: 'paquetes-admin', name: 'Paquetes', icon: 'fas fa-box' }
     ],
     alcaldia: [
         { id: 'panel-alcaldia', name: 'Panel Alcaldía', icon: 'fas fa-landmark' },
@@ -539,7 +494,7 @@ const tabConfigs = {
         { id: 'permisos-vigilante', name: 'Gestión Permisos', icon: 'fas fa-key' },
         { id: 'registros', name: 'Registros', icon: 'fas fa-clipboard-list' },
         { id: 'camaras-vigilante', name: 'Cámaras', icon: 'fas fa-video' },
-        { id: 'paquetes-vigilante', name: 'Correspondencia', icon: 'fas fa-envelope' }
+        { id: 'paquetes-vigilante', name: 'Paquetes', icon: 'fas fa-box' }
     ]
 };
 
@@ -608,7 +563,7 @@ function loginDemo(email, password) {
     document.getElementById('login-form').dispatchEvent(new Event('submit'));
 }
 
-// Función de login
+// Función de login - FIREBASE VERSION
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -616,13 +571,12 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     const password = document.getElementById('login-password').value;
 
     try {
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
+        // Esperar a que Firebase Adapter esté listo
+        while (!window.firebaseLogin) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
 
-        const data = await response.json();
+        const data = await window.firebaseLogin(email, password);
 
         if (data.success) {
             currentUser = data.usuario;
@@ -634,7 +588,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
                 {
                     id: 1,
                     title: '¡Bienvenido!',
-                    message: `Hola ${currentUser.nombre}, has iniciado sesión correctamente`,
+                    message: `Hola ${currentUser.nombre}, has iniciado sesión correctamente con Firebase`,
                     type: 'info',
                     timestamp: new Date().toISOString(),
                     read: false
@@ -646,7 +600,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
             showNotification('Error de Autenticación', data.mensaje || 'Credenciales inválidas', 'error');
         }
     } catch (error) {
-        showNotification('Error de Conexión', 'No se pudo conectar con el servidor', 'error');
+        showNotification('Error de Conexión', 'Error al conectar con Firebase: ' + error.message, 'error');
     }
 });
 
@@ -731,23 +685,23 @@ function generateTabs() {
     tabs.forEach(tab => {
         const tabElement = document.createElement('button');
 
-        // Colores de pestañas según el rol - Con clases responsivas
+        // Colores de pestañas según el rol
         let tabClasses = '';
         switch(currentUser.rol) {
             case 'residente':
-                tabClasses = 'flex items-center px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors border-2 border-transparent text-white hover:text-blue-100 hover:bg-blue-600';
+                tabClasses = 'flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors border-2 border-transparent text-white hover:text-blue-100 hover:bg-blue-600';
                 break;
             case 'admin':
-                tabClasses = 'flex items-center px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors border-2 border-transparent text-white hover:text-green-100 hover:bg-green-600';
+                tabClasses = 'flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors border-2 border-transparent text-white hover:text-green-100 hover:bg-green-600';
                 break;
             case 'vigilante':
-                tabClasses = 'flex items-center px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors border-2 border-transparent text-gray-800 hover:text-gray-900 hover:bg-yellow-300';
+                tabClasses = 'flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors border-2 border-transparent text-gray-800 hover:text-gray-900 hover:bg-yellow-300';
                 break;
         }
 
         tabElement.className = tabClasses;
         tabElement.id = `tab-${tab.id}`;
-        tabElement.innerHTML = `<i class="${tab.icon} mr-1 sm:mr-2"></i><span class="truncate">${tab.name}</span>`;
+        tabElement.innerHTML = `<i class="${tab.icon} mr-2"></i>${tab.name}`;
         tabElement.onclick = () => switchTab(tab.id);
 
         tabContainer.appendChild(tabElement);
@@ -763,13 +717,13 @@ function switchTab(tabId) {
     document.querySelectorAll('[id^="tab-"]').forEach(tab => {
         switch(currentUser.rol) {
             case 'residente':
-                tab.className = 'flex items-center px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors border-2 border-transparent text-white hover:text-blue-100 hover:bg-blue-600';
+                tab.className = 'flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors border-2 border-transparent text-white hover:text-blue-100 hover:bg-blue-600';
                 break;
             case 'admin':
-                tab.className = 'flex items-center px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors border-2 border-transparent text-white hover:text-green-100 hover:bg-green-600';
+                tab.className = 'flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors border-2 border-transparent text-white hover:text-green-100 hover:bg-green-600';
                 break;
             case 'vigilante':
-                tab.className = 'flex items-center px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors border-2 border-transparent text-gray-800 hover:text-gray-900 hover:bg-yellow-300';
+                tab.className = 'flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors border-2 border-transparent text-gray-800 hover:text-gray-900 hover:bg-yellow-300';
                 break;
         }
     });
@@ -789,10 +743,7 @@ function switchTab(tabId) {
                 activeClass = 'bg-yellow-200 text-gray-900 border-yellow-400 shadow-md';
                 break;
         }
-        selectedTab.className = `flex items-center px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors border-2 ${activeClass}`;
-
-        // Scroll al tab seleccionado en móvil
-        selectedTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        selectedTab.className = `flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors border-2 ${activeClass}`;
     }
 
     currentTab = tabId;
@@ -1664,7 +1615,15 @@ async function loadReservasData() {
 }
 
 // Función auxiliar para hacer peticiones con autenticación
+// NOTA: Esta función es reemplazada por firebase-adapter.js
+// Si firebase-adapter.js no está cargado, esta función hará fallback a fetch normal
 async function fetchWithAuth(url, options = {}) {
+    // Si ya hay un fetchWithAuth en window (del firebase-adapter), usarlo
+    if (window.fetchWithAuth && window.fetchWithAuth !== fetchWithAuth) {
+        return window.fetchWithAuth(url, options);
+    }
+
+    // Fallback: usar fetch normal con token
     const token = localStorage.getItem('token');
     const defaultHeaders = {
         'Content-Type': 'application/json',
@@ -1753,13 +1712,10 @@ function closeNotificationModal() {
     }
 }
 
-// Función para hacer scroll en las pestañas - Mejorada para móvil
+// Función para hacer scroll en las pestañas
 function scrollTabs(direction) {
     const container = document.getElementById('tab-container');
-
-    // Scroll más corto en móvil
-    const isMobile = window.innerWidth < 640;
-    const scrollAmount = isMobile ? 150 : 300;
+    const scrollAmount = 300; // Cantidad de píxeles a desplazar
 
     if (direction === 'left') {
         container.scrollLeft -= scrollAmount;
@@ -4453,7 +4409,7 @@ async function eliminarNoticia(id) {
     }
 }
 
-async function loadPagosAdmin() {
+function loadPagosAdmin() {
     const contentArea = document.getElementById('content-area');
     contentArea.innerHTML = `
         <div class="p-6 space-y-6">
@@ -4472,66 +4428,21 @@ async function loadPagosAdmin() {
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 class="text-xl font-semibold mb-4">Subir Pago Individual</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Selector de Residente -->
-                    <select id="pago-residente" class="border rounded-lg px-4 py-2">
-                        <option value="">Seleccionar Residente</option>
-                    </select>
-
-                    <!-- Selector de Torre -->
-                    <select id="pago-torre" class="border rounded-lg px-4 py-2">
-                        <option value="">Seleccionar Torre</option>
-                        <option value="Torre 1">Torre 1</option>
-                        <option value="Torre 2">Torre 2</option>
-                        <option value="Torre 3">Torre 3</option>
-                        <option value="Torre 4">Torre 4</option>
-                        <option value="Torre 5">Torre 5</option>
-                        <option value="Torre 6">Torre 6</option>
-                        <option value="Torre 7">Torre 7</option>
-                        <option value="Torre 8">Torre 8</option>
-                        <option value="Torre 9">Torre 9</option>
-                        <option value="Torre 10">Torre 10</option>
-                    </select>
-
-                    <input type="text" id="pago-apto" placeholder="Apartamento (ej: 401)"
+                    <input type="text" id="pago-torre" placeholder="Torre"
                            class="border rounded-lg px-4 py-2">
-
-                    <!-- Selector de Mes -->
-                    <select id="pago-mes" class="border rounded-lg px-4 py-2">
-                        <option value="">Seleccionar Mes</option>
-                        <option value="ENERO">ENERO</option>
-                        <option value="FEBRERO">FEBRERO</option>
-                        <option value="MARZO">MARZO</option>
-                        <option value="ABRIL">ABRIL</option>
-                        <option value="MAYO">MAYO</option>
-                        <option value="JUNIO">JUNIO</option>
-                        <option value="JULIO">JULIO</option>
-                        <option value="AGOSTO">AGOSTO</option>
-                        <option value="SEPTIEMBRE">SEPTIEMBRE</option>
-                        <option value="OCTUBRE">OCTUBRE</option>
-                        <option value="NOVIEMBRE">NOVIEMBRE</option>
-                        <option value="DICIEMBRE">DICIEMBRE</option>
-                    </select>
-
-                    <!-- Selector de Tipo de Valor según metros -->
-                    <select id="pago-tipo-valor" class="border rounded-lg px-4 py-2" onchange="actualizarValorPago()">
-                        <option value="">Seleccionar Tipo</option>
-                        <option value="300000">Menos de 80 m² - $300.000</option>
-                        <option value="350000">Hasta 82 m² - $350.000</option>
-                        <option value="370000">Más de 82 m² - $370.000</option>
-                    </select>
-
-                    <!-- Campo de Valor (con formato de miles) -->
-                    <input type="text" id="pago-valor" placeholder="Valor"
-                           class="border rounded-lg px-4 py-2 bg-gray-50" readonly>
-
-                    <input type="text" id="pago-concepto" placeholder="Concepto (ej: Administración)"
-                           class="border rounded-lg px-4 py-2" value="Administración">
-
+                    <input type="text" id="pago-apto" placeholder="Apartamento"
+                           class="border rounded-lg px-4 py-2">
+                    <input type="text" id="pago-concepto" placeholder="Concepto"
+                           class="border rounded-lg px-4 py-2">
+                    <input type="number" id="pago-valor" placeholder="Valor"
+                           class="border rounded-lg px-4 py-2">
+                    <input type="text" id="pago-mes" placeholder="Mes"
+                           class="border rounded-lg px-4 py-2">
                     <input type="date" id="pago-vencimiento"
                            class="border rounded-lg px-4 py-2">
                 </div>
                 <button onclick="crearPagoIndividual()"
-                        class="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                        class="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
                     <i class="fas fa-plus mr-2"></i>Crear Pago
                 </button>
             </div>
@@ -4577,41 +4488,6 @@ async function loadPagosAdmin() {
             </div>
         </div>
     `;
-
-    // Cargar lista de residentes
-    try {
-        const response = await fetchWithAuth('/api/admin/residentes');
-        const usuarios = await response.json();
-
-        const selectResidente = document.getElementById('pago-residente');
-        const residentes = usuarios.filter(u => u.rol === 'residente');
-
-        residentes.forEach(residente => {
-            const option = document.createElement('option');
-            option.value = residente.id;
-            option.textContent = `${residente.nombre} - ${residente.apartamento}`;
-            option.setAttribute('data-apartamento', residente.apartamento);
-            selectResidente.appendChild(option);
-        });
-
-        // Autocompletar torre y apartamento cuando se selecciona un residente
-        selectResidente.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const apartamento = selectedOption.getAttribute('data-apartamento');
-
-            if (apartamento) {
-                // Extraer torre y número de apartamento
-                // Formato esperado: "Torre X - Apto YYY"
-                const match = apartamento.match(/Torre (\d+)\s*-\s*(?:Apto\s*)?(\w+)/i);
-                if (match) {
-                    document.getElementById('pago-torre').value = `Torre ${match[1]}`;
-                    document.getElementById('pago-apto').value = match[2];
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Error cargando residentes:', error);
-    }
 }
 
 function mostrarCargaMasiva() {
@@ -4672,76 +4548,6 @@ async function generarReportePagos() {
         `;
     } catch (error) {
         showNotification('Error', 'No se pudo generar el reporte', 'error');
-    }
-}
-
-// Función para actualizar el valor del pago según el tipo seleccionado
-function actualizarValorPago() {
-    const tipoValor = document.getElementById('pago-tipo-valor').value;
-    const inputValor = document.getElementById('pago-valor');
-
-    if (tipoValor) {
-        // Formatear el valor con separador de miles
-        const valorFormateado = parseInt(tipoValor).toLocaleString('es-CO');
-        inputValor.value = `$${valorFormateado}`;
-    } else {
-        inputValor.value = '';
-    }
-}
-
-// Función para crear un pago individual
-async function crearPagoIndividual() {
-    const residenteId = document.getElementById('pago-residente').value;
-    const torre = document.getElementById('pago-torre').value;
-    const apartamento = document.getElementById('pago-apto').value;
-    const mes = document.getElementById('pago-mes').value;
-    const tipoValor = document.getElementById('pago-tipo-valor').value;
-    const concepto = document.getElementById('pago-concepto').value;
-    const vencimiento = document.getElementById('pago-vencimiento').value;
-
-    // Validar campos
-    if (!torre || !apartamento || !mes || !tipoValor || !concepto || !vencimiento) {
-        showNotification('Error', 'Por favor completa todos los campos', 'error');
-        return;
-    }
-
-    const pago = {
-        torre: torre,
-        apartamento: apartamento,
-        concepto: concepto,
-        valor: tipoValor,  // Valor numérico sin formato
-        mes: mes,
-        vencimiento: vencimiento,
-        estado: 'Pendiente',
-        fechaCreacion: new Date().toISOString()
-    };
-
-    try {
-        const response = await fetchWithAuth('/api/admin/pagos', {
-            method: 'POST',
-            body: JSON.stringify(pago)
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            showNotification('Éxito', 'Pago creado exitosamente', 'success');
-
-            // Limpiar formulario
-            document.getElementById('pago-residente').value = '';
-            document.getElementById('pago-torre').value = '';
-            document.getElementById('pago-apto').value = '';
-            document.getElementById('pago-mes').value = '';
-            document.getElementById('pago-tipo-valor').value = '';
-            document.getElementById('pago-valor').value = '';
-            document.getElementById('pago-concepto').value = 'Administración';
-            document.getElementById('pago-vencimiento').value = '';
-        } else {
-            showNotification('Error', result.message || 'No se pudo crear el pago', 'error');
-        }
-    } catch (error) {
-        showNotification('Error', 'Error al crear el pago', 'error');
-        console.error('Error:', error);
     }
 }
 
@@ -6060,15 +5866,14 @@ async function cargarDashboardVigilante() {
 
         // Cargar paquetes
         const paquetesResponse = await fetchWithAuth('/api/paquetes');
-        const paquetesData = await paquetesResponse.json();
-        const paquetes = paquetesData.paquetes || paquetesData || [];
-        const paquetesPendientes = Array.isArray(paquetes) ? paquetes.filter(p => !p.retirado) : [];
+        const paquetes = await paquetesResponse.json();
+        const paquetesPendientes = paquetes.filter(p => !p.retirado);
         document.getElementById('paquetes-pendientes-count').textContent = paquetesPendientes.length;
 
         // Mostrar últimos 5 paquetes
         const paquetesContainer = document.getElementById('paquetes-recientes');
         const hoy = new Date().toDateString();
-        const paquetesHoy = Array.isArray(paquetes) ? paquetes.filter(p => new Date(p.fechaLlegada).toDateString() === hoy) : [];
+        const paquetesHoy = paquetes.filter(p => new Date(p.fechaLlegada).toDateString() === hoy);
 
         if (paquetesHoy.length === 0) {
             paquetesContainer.innerHTML = '<p class="text-gray-500 text-sm">No hay paquetes registrados hoy</p>';
@@ -6106,8 +5911,8 @@ async function loadPaquetesVigilante() {
         <div class="p-6 space-y-6">
             <div class="flex items-center justify-between mb-6">
                 <h2 class="text-3xl font-bold text-gray-900 flex items-center">
-                    <i class="fas fa-envelope text-orange-600 mr-3"></i>
-                    Registro de Correspondencia
+                    <i class="fas fa-box text-orange-600 mr-3"></i>
+                    Registro de Paquetes
                 </h2>
             </div>
 
@@ -6292,10 +6097,10 @@ async function loadPaquetes() {
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h2 class="text-3xl font-bold text-gray-900 flex items-center">
-                        <i class="fas fa-envelope text-blue-600 mr-3"></i>
-                        Mi Correspondencia
+                        <i class="fas fa-box text-blue-600 mr-3"></i>
+                        Mis Paquetes
                     </h2>
-                    <p class="text-gray-600 mt-1">Paquetes y correspondencia recibida</p>
+                    <p class="text-gray-600 mt-1">Paquetes y encomiendas recibidas</p>
                 </div>
             </div>
 
@@ -7956,7 +7761,7 @@ async function loadPQRSAdmin() {
 
 async function cargarPQRSAdmin(filtroTipo = '', filtroEstado = '') {
     try {
-        const response = await fetchWithAuth('/api/pqrs');
+        const response = await fetch('/api/pqrs');
         let pqrs = await response.json();
 
         // Aplicar filtros
@@ -8237,366 +8042,6 @@ async function cambiarEstadoPQRS(id, nuevoEstado) {
         console.error('Error:', error);
         showNotification('Error al cambiar estado', 'error');
     }
-}
-
-// ============= SISTEMA DE CHAT COMPLETO =============
-
-let currentChatChannel = 'general';
-let currentPrivateChatUser = null;
-let chatRefreshInterval = null;
-
-function loadChat() {
-    const contentArea = document.getElementById('content-area');
-
-    const canales = [];
-    canales.push({ id: 'general', nombre: 'General', icon: 'fa-users', color: 'blue' });
-
-    if (currentUser.rol === 'admin') {
-        canales.push({ id: 'admin', nombre: 'Admin', icon: 'fa-user-shield', color: 'green' });
-    }
-
-    if (currentUser.rol === 'vigilante' || currentUser.rol === 'admin') {
-        canales.push({ id: 'vigilantes', nombre: 'Vigilantes', icon: 'fa-shield-alt', color: 'orange' });
-    }
-
-    if (currentUser.rol === 'residente') {
-        canales.push({ id: 'privados', nombre: 'Privados', icon: 'fa-lock', color: 'purple' });
-    }
-
-    contentArea.innerHTML = `
-        <div class="p-6 space-y-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-3xl font-bold text-gray-900 flex items-center">
-                        <i class="fas fa-comments text-blue-600 mr-3"></i>
-                        Chat
-                    </h2>
-                    <p class="text-gray-600 mt-1">Comunícate con la comunidad</p>
-                </div>
-                ${currentUser.rol === 'residente' ? `
-                    <button onclick="mostrarNuevoChatPrivado()" class="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-lg hover:shadow-lg transition flex items-center gap-2">
-                        <i class="fas fa-plus"></i>
-                        Nuevo Chat Privado
-                    </button>
-                ` : ''}
-            </div>
-
-            <!-- Canales de Chat -->
-            <div class="bg-white rounded-lg shadow-sm border-2 border-gray-200">
-                <div class="border-b border-gray-200 bg-gray-50 px-6 py-3">
-                    <div class="flex space-x-4">
-                        ${canales.map(canal => `
-                            <button onclick="cambiarCanalChat('${canal.id}')" id="canal-${canal.id}"
-                                class="canal-chat px-4 py-2 rounded-lg font-semibold transition ${canal.id === 'general' ? 'bg-'+canal.color+'-600 text-white' : 'text-gray-600 hover:bg-gray-200'}">
-                                <i class="fas ${canal.icon} mr-2"></i>
-                                ${canal.nombre}
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <!-- Área de Mensajes -->
-                <div id="chat-mensajes" class="h-96 overflow-y-auto p-6 bg-gradient-to-b from-gray-50 to-white">
-                    <div class="text-center py-12">
-                        <i class="fas fa-spinner fa-spin text-4xl text-blue-400 mb-4"></i>
-                        <p class="text-gray-600">Cargando mensajes...</p>
-                    </div>
-                </div>
-
-                <!-- Input de Mensaje -->
-                <div class="border-t border-gray-200 p-4 bg-white">
-                    <form id="form-mensaje-chat" class="flex gap-3">
-                        <input type="text" id="input-mensaje-chat"
-                            class="flex-1 p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500"
-                            placeholder="Escribe tu mensaje..." required>
-                        <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-semibold">
-                            <i class="fas fa-paper-plane mr-2"></i>
-                            Enviar
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.getElementById('form-mensaje-chat').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const input = document.getElementById('input-mensaje-chat');
-        const mensaje = input.value.trim();
-
-        if (!mensaje) return;
-
-        if (currentChatChannel === 'privados' && !currentPrivateChatUser) {
-            showNotification('Selecciona un chat privado primero', 'error');
-            return;
-        }
-
-        try {
-            let url, body;
-
-            if (currentChatChannel === 'privados') {
-                url = `/api/chat/privado/${currentPrivateChatUser.id}`;
-                body = { mensaje };
-            } else {
-                url = `/api/chat/${currentChatChannel}`;
-                body = { mensaje };
-            }
-
-            const response = await fetchWithAuth(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                input.value = '';
-                cargarMensajesChat();
-            } else {
-                showNotification('Error al enviar mensaje', 'error');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showNotification('Error al enviar mensaje', 'error');
-        }
-    });
-
-    cargarMensajesChat();
-
-    // Actualizar mensajes cada 3 segundos
-    if (chatRefreshInterval) clearInterval(chatRefreshInterval);
-    chatRefreshInterval = setInterval(cargarMensajesChat, 3000);
-}
-
-function cambiarCanalChat(canal) {
-    currentChatChannel = canal;
-    currentPrivateChatUser = null;
-
-    // Actualizar estilos de botones
-    document.querySelectorAll('.canal-chat').forEach(btn => {
-        btn.className = 'canal-chat px-4 py-2 rounded-lg font-semibold transition text-gray-600 hover:bg-gray-200';
-    });
-
-    const colores = {
-        general: 'blue',
-        admin: 'green',
-        vigilantes: 'orange',
-        privados: 'purple'
-    };
-
-    const boton = document.getElementById(`canal-${canal}`);
-    if (boton) {
-        boton.className = `canal-chat px-4 py-2 rounded-lg font-semibold transition bg-${colores[canal]}-600 text-white`;
-    }
-
-    if (canal === 'privados') {
-        cargarListaChatsPrivados();
-    } else {
-        cargarMensajesChat();
-    }
-}
-
-async function cargarMensajesChat() {
-    try {
-        let url;
-
-        if (currentChatChannel === 'privados') {
-            if (!currentPrivateChatUser) return;
-            url = `/api/chat/privado/${currentPrivateChatUser.id}`;
-        } else {
-            url = `/api/chat/${currentChatChannel}`;
-        }
-
-        const response = await fetchWithAuth(url);
-        const data = await response.json();
-
-        const container = document.getElementById('chat-mensajes');
-
-        if (!data.success || !data.mensajes || data.mensajes.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-12">
-                    <i class="fas fa-comment-slash text-6xl text-gray-300 mb-4"></i>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay mensajes</h3>
-                    <p class="text-gray-600">¡Sé el primero en escribir!</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = data.mensajes.map(msg => {
-            const esMio = currentChatChannel === 'privados'
-                ? msg.usuarioId === currentUser.id
-                : msg.usuario === currentUser.nombre;
-
-            const fecha = new Date(msg.fecha);
-
-            if (esMio) {
-                return `
-                    <div class="flex justify-end mb-4">
-                        <div class="max-w-md">
-                            <div class="bg-blue-600 text-white rounded-lg rounded-tr-none p-3 shadow">
-                                <p class="text-sm">${msg.mensaje}</p>
-                            </div>
-                            <div class="text-xs text-gray-500 mt-1 text-right">
-                                ${fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                return `
-                    <div class="flex justify-start mb-4">
-                        <div class="max-w-md">
-                            <div class="bg-white border-2 border-gray-200 rounded-lg rounded-tl-none p-3 shadow">
-                                <div class="font-bold text-sm text-gray-900 mb-1">
-                                    ${msg.usuario}
-                                    ${msg.apartamento ? `<span class="text-xs font-normal text-gray-500">- ${msg.apartamento}</span>` : ''}
-                                </div>
-                                <p class="text-sm text-gray-700">${msg.mensaje}</p>
-                            </div>
-                            <div class="text-xs text-gray-500 mt-1">
-                                ${fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        }).join('');
-
-        // Scroll al final
-        container.scrollTop = container.scrollHeight;
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-
-async function cargarListaChatsPrivados() {
-    try {
-        const response = await fetchWithAuth('/api/chat/privados/lista');
-        const data = await response.json();
-
-        const container = document.getElementById('chat-mensajes');
-
-        if (!data.success || data.chats.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-12">
-                    <i class="fas fa-user-friends text-6xl text-gray-300 mb-4"></i>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">No tienes chats privados</h3>
-                    <p class="text-gray-600 mb-4">Inicia una conversación con otro residente</p>
-                    <button onclick="mostrarNuevoChatPrivado()" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition">
-                        <i class="fas fa-plus mr-2"></i>
-                        Nuevo Chat
-                    </button>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = `
-            <div class="space-y-3">
-                ${data.chats.map(chat => {
-                    const ultimoMensaje = chat.ultimoMensaje;
-                    const fecha = ultimoMensaje ? new Date(ultimoMensaje.fecha) : null;
-
-                    return `
-                        <div onclick="abrirChatPrivado(${chat.otroUsuario.id}, '${chat.otroUsuario.nombre}')"
-                            class="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-purple-400 hover:shadow-lg transition cursor-pointer">
-                            <div class="flex items-center gap-3">
-                                <div class="bg-purple-100 p-3 rounded-full">
-                                    <i class="fas fa-user text-purple-600 text-xl"></i>
-                                </div>
-                                <div class="flex-1">
-                                    <h4 class="font-bold text-gray-900">${chat.otroUsuario.nombre}</h4>
-                                    <p class="text-sm text-gray-600">${chat.otroUsuario.apartamento}</p>
-                                    ${ultimoMensaje ? `
-                                        <p class="text-xs text-gray-500 mt-1 truncate">${ultimoMensaje.mensaje}</p>
-                                    ` : ''}
-                                </div>
-                                ${fecha ? `
-                                    <div class="text-xs text-gray-400">
-                                        ${fecha.toLocaleDateString('es-CO')}
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-
-function abrirChatPrivado(usuarioId, nombreUsuario) {
-    currentPrivateChatUser = { id: usuarioId, nombre: nombreUsuario };
-
-    // Actualizar placeholder
-    document.getElementById('input-mensaje-chat').placeholder = `Mensaje para ${nombreUsuario}...`;
-
-    cargarMensajesChat();
-}
-
-async function mostrarNuevoChatPrivado() {
-    try {
-        const response = await fetchWithAuth('/api/residentes/lista');
-        const data = await response.json();
-
-        if (!data.success || data.residentes.length === 0) {
-            showNotification('No hay residentes disponibles', 'info');
-            return;
-        }
-
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50';
-        modal.innerHTML = `
-            <div class="bg-white rounded-xl shadow-2xl w-11/12 max-w-md">
-                <div class="bg-purple-600 text-white p-6 rounded-t-xl">
-                    <h3 class="text-2xl font-bold flex items-center">
-                        <i class="fas fa-user-plus mr-3"></i>
-                        Nuevo Chat Privado
-                    </h3>
-                </div>
-                <div class="p-6">
-                    <p class="text-gray-600 mb-4">Selecciona un residente para iniciar una conversación:</p>
-                    <div class="space-y-2 max-h-96 overflow-y-auto">
-                        ${data.residentes.map(r => `
-                            <button onclick="iniciarChatConResidente(${r.id}, '${r.nombre}')"
-                                class="w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-purple-400 hover:bg-purple-50 transition">
-                                <div class="flex items-center gap-3">
-                                    <div class="bg-purple-100 p-2 rounded-full">
-                                        <i class="fas fa-user text-purple-600"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-bold text-gray-900">${r.nombre}</h4>
-                                        <p class="text-sm text-gray-600">${r.apartamento}</p>
-                                    </div>
-                                </div>
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-                <div class="p-6 border-t border-gray-200">
-                    <button onclick="this.closest('.fixed').remove()"
-                        class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition font-semibold">
-                        Cancelar
-                    </button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-    } catch (error) {
-        console.error('Error:', error);
-        showNotification('Error al cargar residentes', 'error');
-    }
-}
-
-function iniciarChatConResidente(id, nombre) {
-    document.querySelector('.fixed.inset-0').remove();
-    cambiarCanalChat('privados');
-    abrirChatPrivado(id, nombre);
 }
 
 // ============= JUEGOS MULTIJUGADOR =============

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migración de Datos a Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+            <div class="text-center mb-8">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-database text-3xl text-white"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Migración de Datos a Firestore</h1>
+                <p class="text-gray-600">Migra todos los datos desde tu servidor local a Firebase</p>
+            </div>
+
+            <!-- Estado de la migración -->
+            <div id="migration-status" class="mb-6">
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                        <p class="text-blue-700">
+                            Este proceso migrará TODOS los datos desde tu servidor local (http://localhost:8081) a Firestore.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botón de migración -->
+            <div class="text-center mb-6">
+                <button id="migrate-btn" onclick="iniciarMigracion()"
+                        class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg text-lg font-semibold">
+                    <i class="fas fa-cloud-upload-alt mr-2"></i>
+                    Iniciar Migración Completa
+                </button>
+            </div>
+
+            <!-- Progreso -->
+            <div id="progress-container" class="hidden mb-6">
+                <div class="bg-gray-200 rounded-full h-4 mb-2">
+                    <div id="progress-bar" class="bg-gradient-to-r from-blue-600 to-indigo-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="progress-text" class="text-center text-gray-600 text-sm"></p>
+            </div>
+
+            <!-- Log de migración -->
+            <div id="migration-log" class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto hidden">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Log de Migración</h3>
+                <div id="log-content" class="space-y-2 font-mono text-sm"></div>
+            </div>
+
+            <!-- Resultado -->
+            <div id="result-container" class="hidden mt-6"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, doc, setDoc, addDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Configuración Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTglrnttR2NKUHIsS9ddj37Yuwvz6Lv7A",
+            authDomain: "conjunto-residencial-2024.firebaseapp.com",
+            projectId: "conjunto-residencial-2024",
+            storageBucket: "conjunto-residencial-2024.firebasestorage.app",
+            messagingSenderId: "26128855451",
+            appId: "1:26128855451:web:d94aae5e71376e6808313e",
+            measurementId: "G-1PRFW148P0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.firebaseApp = { app, auth, db };
+
+        function addLog(mensaje, tipo = 'info') {
+            const logContent = document.getElementById('log-content');
+            const logEntry = document.createElement('div');
+
+            let icon = 'fa-info-circle';
+            let color = 'text-blue-600';
+
+            if (tipo === 'success') {
+                icon = 'fa-check-circle';
+                color = 'text-green-600';
+            } else if (tipo === 'error') {
+                icon = 'fa-exclamation-circle';
+                color = 'text-red-600';
+            } else if (tipo === 'warning') {
+                icon = 'fa-exclamation-triangle';
+                color = 'text-yellow-600';
+            }
+
+            logEntry.innerHTML = `
+                <div class="flex items-start">
+                    <i class="fas ${icon} ${color} mr-2 mt-1"></i>
+                    <span class="text-gray-700">${mensaje}</span>
+                </div>
+            `;
+            logContent.appendChild(logEntry);
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        function updateProgress(porcentaje, texto) {
+            document.getElementById('progress-bar').style.width = porcentaje + '%';
+            document.getElementById('progress-text').textContent = texto;
+        }
+
+        window.iniciarMigracion = async function() {
+            const btn = document.getElementById('migrate-btn');
+            const logContainer = document.getElementById('migration-log');
+            const progressContainer = document.getElementById('progress-container');
+            const logContent = document.getElementById('log-content');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Migrando...';
+            logContainer.classList.remove('hidden');
+            progressContainer.classList.remove('hidden');
+            logContent.innerHTML = '';
+
+            try {
+                addLog('🚀 Iniciando migración de datos...', 'info');
+                updateProgress(5, 'Conectando con servidor local...');
+
+                // Obtener datos del servidor local
+                addLog('📡 Obteniendo datos del servidor local (http://localhost:8081)...', 'info');
+                const response = await fetch('http://localhost:8081/api/admin/exportar-datos');
+
+                if (!response.ok) {
+                    throw new Error('No se pudo conectar con el servidor local. Asegúrate de que esté corriendo en http://localhost:8081');
+                }
+
+                const data = await response.json();
+                addLog(`✅ Datos obtenidos correctamente`, 'success');
+                updateProgress(10, 'Datos obtenidos del servidor local');
+
+                // Migrar usuarios a Firebase Auth y Firestore
+                if (data.usuarios && data.usuarios.length > 0) {
+                    addLog(`👥 Migrando ${data.usuarios.length} usuarios...`, 'info');
+                    updateProgress(15, `Migrando usuarios (0/${data.usuarios.length})...`);
+
+                    for (let i = 0; i < data.usuarios.length; i++) {
+                        const usuario = data.usuarios[i];
+                        try {
+                            // Crear usuario en Firebase Auth
+                            const userCredential = await createUserWithEmailAndPassword(auth, usuario.email, usuario.password);
+
+                            // Guardar datos en Firestore
+                            await setDoc(doc(db, 'usuarios', userCredential.user.uid), {
+                                id: usuario.id,
+                                email: usuario.email,
+                                nombre: usuario.nombre,
+                                apartamento: usuario.apartamento,
+                                rol: usuario.rol,
+                                activo: usuario.activo,
+                                fechaRegistro: new Date().toISOString()
+                            });
+
+                            addLog(`✓ Usuario creado: ${usuario.email} (${usuario.rol})`, 'success');
+                            updateProgress(15 + (i + 1) / data.usuarios.length * 20, `Usuarios: ${i + 1}/${data.usuarios.length}`);
+                        } catch (error) {
+                            if (error.code === 'auth/email-already-in-use') {
+                                addLog(`⚠ Usuario ya existe: ${usuario.email}`, 'warning');
+                            } else {
+                                addLog(`❌ Error con usuario ${usuario.email}: ${error.message}`, 'error');
+                            }
+                        }
+                    }
+                }
+
+                // Migrar emprendimientos
+                if (data.emprendimientos && data.emprendimientos.length > 0) {
+                    addLog(`🏪 Migrando ${data.emprendimientos.length} emprendimientos...`, 'info');
+                    updateProgress(40, 'Migrando emprendimientos...');
+
+                    for (const emp of data.emprendimientos) {
+                        await addDoc(collection(db, 'emprendimientos'), {
+                            ...emp,
+                            fechaCreacion: emp.fechaCreacion || new Date().toISOString()
+                        });
+                    }
+                    addLog(`✅ ${data.emprendimientos.length} emprendimientos migrados`, 'success');
+                }
+
+                // Migrar reservas
+                if (data.reservas && data.reservas.length > 0) {
+                    addLog(`📅 Migrando ${data.reservas.length} reservas...`, 'info');
+                    updateProgress(50, 'Migrando reservas...');
+
+                    for (const reserva of data.reservas) {
+                        await addDoc(collection(db, 'reservas'), {
+                            ...reserva,
+                            fechaCreacion: reserva.fechaCreacion || new Date().toISOString()
+                        });
+                    }
+                    addLog(`✅ ${data.reservas.length} reservas migradas`, 'success');
+                }
+
+                // Migrar pagos
+                if (data.pagos && data.pagos.length > 0) {
+                    addLog(`💰 Migrando ${data.pagos.length} pagos...`, 'info');
+                    updateProgress(60, 'Migrando pagos...');
+
+                    for (const pago of data.pagos) {
+                        await addDoc(collection(db, 'pagos'), {
+                            ...pago,
+                            fechaCreacion: pago.fechaCreacion || new Date().toISOString()
+                        });
+                    }
+                    addLog(`✅ ${data.pagos.length} pagos migrados`, 'success');
+                }
+
+                // Migrar noticias
+                if (data.noticias && data.noticias.length > 0) {
+                    addLog(`📰 Migrando ${data.noticias.length} noticias...`, 'info');
+                    updateProgress(70, 'Migrando noticias...');
+
+                    for (const noticia of data.noticias) {
+                        await addDoc(collection(db, 'noticias'), {
+                            ...noticia,
+                            fechaPublicacion: noticia.fechaPublicacion || new Date().toISOString()
+                        });
+                    }
+                    addLog(`✅ ${data.noticias.length} noticias migradas`, 'success');
+                }
+
+                // Migrar PQRS
+                if (data.pqrs && data.pqrs.length > 0) {
+                    addLog(`📝 Migrando ${data.pqrs.length} PQRS...`, 'info');
+                    updateProgress(80, 'Migrando PQRS...');
+
+                    for (const pqr of data.pqrs) {
+                        await addDoc(collection(db, 'pqrs'), {
+                            ...pqr,
+                            fechaCreacion: pqr.fechaCreacion || new Date().toISOString()
+                        });
+                    }
+                    addLog(`✅ ${data.pqrs.length} PQRS migrados`, 'success');
+                }
+
+                // Migrar encuestas
+                if (data.encuestas && data.encuestas.length > 0) {
+                    addLog(`📊 Migrando ${data.encuestas.length} encuestas...`, 'info');
+                    updateProgress(90, 'Migrando encuestas...');
+
+                    for (const encuesta of data.encuestas) {
+                        await addDoc(collection(db, 'encuestas'), {
+                            ...encuesta,
+                            fechaCreacion: encuesta.fechaCreacion || new Date().toISOString()
+                        });
+                    }
+                    addLog(`✅ ${data.encuestas.length} encuestas migradas`, 'success');
+                }
+
+                updateProgress(100, '¡Migración completada!');
+                addLog('🎉 ¡Migración completada exitosamente!', 'success');
+
+                // Mostrar resultado
+                document.getElementById('result-container').innerHTML = `
+                    <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-lg">
+                        <div class="flex items-center mb-4">
+                            <i class="fas fa-check-circle text-green-500 text-3xl mr-4"></i>
+                            <div>
+                                <h3 class="text-xl font-bold text-green-800">¡Migración Exitosa!</h3>
+                                <p class="text-green-700">Todos los datos han sido migrados a Firestore</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <a href="/" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 inline-block">
+                                <i class="fas fa-home mr-2"></i>Ir a la Aplicación
+                            </a>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('result-container').classList.remove('hidden');
+
+                btn.innerHTML = '<i class="fas fa-check mr-2"></i>Migración Completada';
+                btn.classList.remove('from-blue-600', 'to-indigo-600');
+                btn.classList.add('from-green-600', 'to-green-700');
+
+            } catch (error) {
+                console.error('Error en migración:', error);
+                addLog(`❌ Error: ${error.message}`, 'error');
+
+                document.getElementById('result-container').innerHTML = `
+                    <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle text-red-500 text-3xl mr-4"></i>
+                            <div>
+                                <h3 class="text-xl font-bold text-red-800">Error en la Migración</h3>
+                                <p class="text-red-700">${error.message}</p>
+                                <p class="text-red-600 text-sm mt-2">Asegúrate de que el servidor local esté corriendo en http://localhost:8081</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('result-container').classList.remove('hidden');
+
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-redo mr-2"></i>Reintentar Migración';
+            }
+        };
+    </script>
+</body>
+</html>
