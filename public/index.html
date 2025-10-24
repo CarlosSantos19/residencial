@@ -4091,15 +4091,15 @@ function loadPanelAdmin() {
                 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Ingresos del Mes</p>
+                            <p class="text-sm font-medium text-gray-600">Accesos del Mes</p>
                             <p class="text-3xl font-bold text-blue-600" id="ingresos-mes">--</p>
                             <p class="text-sm text-blue-600 flex items-center mt-1">
-                                <i class="fas fa-calendar text-xs mr-1"></i>
-                                <span>Septiembre 2025</span>
+                                <i class="fas fa-sign-in-alt text-xs mr-1"></i>
+                                <span>Inicios de sesión</span>
                             </p>
                         </div>
                         <div class="p-3 bg-blue-100 rounded-lg">
-                            <i class="fas fa-dollar-sign text-blue-600 text-xl"></i>
+                            <i class="fas fa-sign-in-alt text-blue-600 text-xl"></i>
                         </div>
                     </div>
                 </div>
@@ -4262,29 +4262,34 @@ async function loadEstadisticasGenerales() {
         const vehiculosActivos = vehiculos.filter(v => v.activo).length;
         const pqrsPendientes = pqrs.filter(p => p.estado === 'pendiente' || p.estado === 'Pendiente').length;
 
-        // Calcular ingresos del mes actual
+        // Calcular accesos/inicios de sesión del mes actual
         const mesActual = new Date().getMonth();
         const añoActual = new Date().getFullYear();
-        const ingresosMes = pagos
-            .filter(p => {
-                if (!p.fechaPago) return false;
-                const fechaPago = new Date(p.fechaPago);
-                return fechaPago.getMonth() === mesActual && fechaPago.getFullYear() === añoActual;
-            })
-            .reduce((sum, p) => sum + (p.valor || 0), 0);
+
+        // Obtener sesiones del mes actual desde Firebase
+        let accesosMes = 0;
+        try {
+            const sesiones = await window.firebaseAdapter.getCollection('sesiones');
+            accesosMes = sesiones.filter(s => {
+                if (!s.fecha) return false;
+                const fechaSesion = new Date(s.fecha);
+                return fechaSesion.getMonth() === mesActual && fechaSesion.getFullYear() === añoActual;
+            }).length;
+        } catch (error) {
+            console.warn('No se pudieron cargar sesiones, usando contador por defecto');
+            accesosMes = 0;
+        }
+
+        console.log(`📊 Accesos del mes: ${mesActual + 1}/${añoActual} = ${accesosMes} inicios de sesión`);
 
         // Actualizar UI de forma segura
         const totalResidentesEl = document.getElementById('total-residentes');
-        const ingresosMesEl = document.getElementById('ingresos-mes');
+        const accesosMesEl = document.getElementById('ingresos-mes');
         const vehiculosActivosEl = document.getElementById('vehiculos-activos');
         const pqrsPendientesEl = document.getElementById('pqrs-pendientes');
 
         if (totalResidentesEl) totalResidentesEl.textContent = totalResidentes;
-        if (ingresosMesEl) ingresosMesEl.textContent = new Intl.NumberFormat('es-CO', {
-            style: 'currency',
-            currency: 'COP',
-            minimumFractionDigits: 0
-        }).format(ingresosMes);
+        if (accesosMesEl) accesosMesEl.textContent = accesosMes.toLocaleString('es-CO');
         if (vehiculosActivosEl) vehiculosActivosEl.textContent = vehiculosActivos;
         if (pqrsPendientesEl) pqrsPendientesEl.textContent = pqrsPendientes;
 
@@ -4296,7 +4301,7 @@ async function loadEstadisticasGenerales() {
             if (el) el.textContent = value;
         };
         safeUpdate('total-residentes', '0');
-        safeUpdate('ingresos-mes', '$0');
+        safeUpdate('ingresos-mes', '0');
         safeUpdate('vehiculos-activos', '0');
         safeUpdate('pqrs-pendientes', '0');
     }
@@ -4371,36 +4376,320 @@ async function loadEstadoTorres() {
         return;
     }
 
-    const torres = Array.from({length: 10}, (_, i) => ({
-        numero: i + 1,
-        ocupacion: Math.floor(Math.random() * 20) + 15, // Entre 15-35 apartamentos ocupados
-        total: 40,
-        porcentaje: null
-    }));
+    try {
+        // Cargar usuarios reales desde Firebase
+        const usuarios = await window.firebaseAdapter.getCollection('usuarios');
+        const residentes = usuarios.filter(u => u.rol === 'residente' && u.torre);
 
-    torres.forEach(torre => {
-        torre.porcentaje = Math.round((torre.ocupacion / torre.total) * 100);
-    });
+        // Agrupar residentes por torre
+        const torresCounts = {};
+        const apartamentosPorTorre = {};
 
-    container.innerHTML = torres.map(torre => `
-        <div class="text-center p-4 border border-gray-200 rounded-lg">
-            <div class="w-16 h-16 mx-auto mb-3 relative">
-                <div class="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-building text-green-600 text-xl"></i>
+        residentes.forEach(r => {
+            const torreNum = parseInt(r.torre) || 0;
+            if (torreNum > 0) {
+                if (!torresCounts[torreNum]) {
+                    torresCounts[torreNum] = 0;
+                    apartamentosPorTorre[torreNum] = new Set();
+                }
+                // Contar apartamentos únicos
+                if (r.apartamento) {
+                    apartamentosPorTorre[torreNum].add(r.apartamento);
+                }
+            }
+        });
+
+        // Convertir a array y calcular ocupación
+        const torres = Object.keys(torresCounts).map(num => ({
+            numero: parseInt(num),
+            ocupacion: apartamentosPorTorre[num].size,
+            total: 40, // Asumiendo 40 apartamentos por torre
+            porcentaje: Math.round((apartamentosPorTorre[num].size / 40) * 100),
+            residentes: torresCounts[num]
+        })).sort((a, b) => a.numero - b.numero);
+
+        // Si no hay torres con datos, mostrar las 10 torres vacías
+        if (torres.length === 0) {
+            for (let i = 1; i <= 10; i++) {
+                torres.push({
+                    numero: i,
+                    ocupacion: 0,
+                    total: 40,
+                    porcentaje: 0,
+                    residentes: 0
+                });
+            }
+        }
+
+        container.innerHTML = torres.map(torre => {
+            const colorClass = torre.porcentaje > 80 ? 'text-green-600' : torre.porcentaje > 50 ? 'text-blue-600' : 'text-orange-600';
+            const bgColorClass = torre.porcentaje > 80 ? 'bg-green-600' : torre.porcentaje > 50 ? 'bg-blue-600' : 'bg-orange-600';
+
+            return `
+                <div class="text-center p-4 border-2 border-gray-200 rounded-lg hover:shadow-lg transition-all cursor-pointer hover:border-blue-500"
+                     onclick="mostrarDetallesTorre(${torre.numero})">
+                    <div class="w-16 h-16 mx-auto mb-3 relative">
+                        <div class="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-building ${colorClass} text-2xl"></i>
+                        </div>
+                        <div class="absolute -top-1 -right-1 w-6 h-6 ${bgColorClass} text-white text-xs rounded-full flex items-center justify-center font-bold">
+                            ${torre.numero}
+                        </div>
+                    </div>
+                    <p class="text-sm font-bold text-gray-900">Torre ${torre.numero}</p>
+                    <p class="text-xs text-gray-600 font-semibold">${torre.ocupacion}/${torre.total} apartamentos</p>
+                    <div class="mt-2 bg-gray-200 rounded-full h-2.5">
+                        <div class="${bgColorClass} h-2.5 rounded-full transition-all duration-300"
+                             style="width: ${torre.porcentaje}%"></div>
+                    </div>
+                    <p class="text-xs font-semibold ${colorClass} mt-1">${torre.porcentaje}% ocupado</p>
+                    ${torre.residentes > 0 ? `
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-users mr-1"></i>${torre.residentes} residentes
+                        </p>
+                    ` : ''}
                 </div>
-                <div class="absolute -top-1 -right-1 w-6 h-6 bg-green-600 text-white text-xs rounded-full flex items-center justify-center">
-                    ${torre.numero}
+            `;
+        }).join('');
+
+        console.log('📊 Torres cargadas:', torres.length);
+    } catch (error) {
+        console.error('Error loading torres:', error);
+        // Mostrar torres por defecto si hay error
+        container.innerHTML = Array.from({length: 10}, (_, i) => {
+            const num = i + 1;
+            return `
+                <div class="text-center p-4 border border-gray-200 rounded-lg opacity-50">
+                    <div class="w-16 h-16 mx-auto mb-3 relative">
+                        <div class="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-building text-gray-400 text-2xl"></i>
+                        </div>
+                        <div class="absolute -top-1 -right-1 w-6 h-6 bg-gray-400 text-white text-xs rounded-full flex items-center justify-center">
+                            ${num}
+                        </div>
+                    </div>
+                    <p class="text-sm font-medium text-gray-500">Torre ${num}</p>
+                    <p class="text-xs text-gray-400">Sin datos</p>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+async function mostrarDetallesTorre(numeroTorre) {
+    try {
+        // Cargar residentes de la torre específica
+        const usuarios = await window.firebaseAdapter.getCollection('usuarios');
+        const residentesTorre = usuarios.filter(u =>
+            u.rol === 'residente' && parseInt(u.torre) === numeroTorre
+        ).sort((a, b) => {
+            const aptoA = parseInt(a.apartamento) || 0;
+            const aptoB = parseInt(b.apartamento) || 0;
+            return aptoA - aptoB;
+        });
+
+        // Obtener IDs de los residentes de esta torre
+        const residentesIds = residentesTorre.map(r => r.id);
+
+        // Cargar PQRS de los residentes de esta torre
+        const pqrs = await window.firebaseAdapter.getCollection('pqrs');
+        const pqrsTorre = pqrs.filter(p => residentesIds.includes(p.usuarioId));
+        const pqrsPendientes = pqrsTorre.filter(p => p.estado === 'Pendiente' || p.estado === 'pendiente');
+
+        // Crear modal con detalles
+        const modal = document.createElement('div');
+        modal.id = 'modal-detalle-torre';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <i class="fas fa-building mr-3"></i>
+                        Torre ${numeroTorre} - Información Detallada
+                    </h2>
+                    <button onclick="cerrarDetalleTorre()" class="text-white hover:text-gray-200">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+
+                <div class="p-6 overflow-y-auto max-h-[calc(85vh-80px)]">
+                    <!-- Estadísticas Generales -->
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                        <div class="bg-blue-50 rounded-lg p-4 text-center border-2 border-blue-200">
+                            <p class="text-2xl font-bold text-blue-600">${residentesTorre.length}</p>
+                            <p class="text-xs text-gray-600 font-semibold">
+                                <i class="fas fa-users mr-1"></i>Residentes
+                            </p>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4 text-center border-2 border-green-200">
+                            <p class="text-2xl font-bold text-green-600">${new Set(residentesTorre.map(r => r.apartamento)).size}</p>
+                            <p class="text-xs text-gray-600 font-semibold">
+                                <i class="fas fa-home mr-1"></i>Apartamentos
+                            </p>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-4 text-center border-2 border-purple-200">
+                            <p class="text-2xl font-bold text-purple-600">${Math.round((new Set(residentesTorre.map(r => r.apartamento)).size / 40) * 100)}%</p>
+                            <p class="text-xs text-gray-600 font-semibold">
+                                <i class="fas fa-chart-pie mr-1"></i>Ocupación
+                            </p>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4 text-center border-2 border-orange-200">
+                            <p class="text-2xl font-bold text-orange-600">${pqrsTorre.length}</p>
+                            <p class="text-xs text-gray-600 font-semibold">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>PQRS Total
+                            </p>
+                        </div>
+                        <div class="bg-red-50 rounded-lg p-4 text-center border-2 border-red-200">
+                            <p class="text-2xl font-bold text-red-600">${pqrsPendientes.length}</p>
+                            <p class="text-xs text-gray-600 font-semibold">
+                                <i class="fas fa-clock mr-1"></i>PQRS Pendientes
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Tabs para navegar entre secciones -->
+                    <div class="mb-4 border-b border-gray-200">
+                        <div class="flex gap-2">
+                            <button onclick="cambiarTabTorre('residentes')" id="tab-residentes" class="px-4 py-2 font-semibold text-blue-600 border-b-2 border-blue-600">
+                                <i class="fas fa-users mr-2"></i>Residentes (${residentesTorre.length})
+                            </button>
+                            <button onclick="cambiarTabTorre('pqrs')" id="tab-pqrs" class="px-4 py-2 font-semibold text-gray-600 hover:text-blue-600">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>PQRS (${pqrsTorre.length})
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Contenido Tab Residentes -->
+                    <div id="contenido-residentes" class="tab-content">
+
+                        ${residentesTorre.length > 0 ? `
+                            <div class="space-y-2">
+                                ${residentesTorre.map(r => `
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-blue-600"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-gray-900">${r.nombre || 'Sin nombre'}</p>
+                                                <p class="text-sm text-gray-600">
+                                                    <i class="fas fa-home mr-1"></i>
+                                                    Apartamento ${r.apartamento || 'N/A'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            ${r.email ? `
+                                                <p class="text-xs text-gray-500">
+                                                    <i class="fas fa-envelope mr-1"></i>${r.email}
+                                                </p>
+                                            ` : ''}
+                                            ${r.telefono ? `
+                                                <p class="text-xs text-gray-500">
+                                                    <i class="fas fa-phone mr-1"></i>${r.telefono}
+                                                </p>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="text-center py-12">
+                                <i class="fas fa-users text-gray-300 text-6xl mb-4"></i>
+                                <p class="text-gray-600">No hay residentes registrados en esta torre</p>
+                            </div>
+                        `}
+                    </div>
+
+                    <!-- Contenido Tab PQRS -->
+                    <div id="contenido-pqrs" class="tab-content hidden">
+                        ${pqrsTorre.length > 0 ? `
+                            <div class="space-y-3">
+                                ${pqrsTorre.map(p => {
+                                    const residente = residentesTorre.find(r => r.id === p.usuarioId);
+                                    const fecha = p.fecha ? new Date(p.fecha).toLocaleDateString('es-CO') : 'N/A';
+                                    const estadoColors = {
+                                        'Pendiente': 'bg-yellow-100 border-yellow-300 text-yellow-800',
+                                        'pendiente': 'bg-yellow-100 border-yellow-300 text-yellow-800',
+                                        'En proceso': 'bg-blue-100 border-blue-300 text-blue-800',
+                                        'Respondida': 'bg-green-100 border-green-300 text-green-800',
+                                        'Resuelta': 'bg-gray-100 border-gray-300 text-gray-800'
+                                    };
+                                    const estadoClass = estadoColors[p.estado] || 'bg-gray-100 border-gray-300 text-gray-800';
+
+                                    return `
+                                        <div class="border-2 ${estadoClass} rounded-lg p-4">
+                                            <div class="flex justify-between items-start mb-2">
+                                                <div class="flex-1">
+                                                    <div class="flex items-center gap-2 mb-1">
+                                                        <span class="px-2 py-1 rounded text-xs font-bold ${estadoClass}">
+                                                            ${p.tipo || 'N/A'}
+                                                        </span>
+                                                        <span class="px-2 py-1 rounded text-xs font-semibold bg-white border">
+                                                            ${p.estado || 'Pendiente'}
+                                                        </span>
+                                                    </div>
+                                                    <h4 class="font-bold text-gray-900">${p.asunto || 'Sin asunto'}</h4>
+                                                    <p class="text-sm text-gray-700 mt-1">${p.descripcion || 'Sin descripción'}</p>
+                                                </div>
+                                            </div>
+                                            <div class="flex justify-between items-center text-xs text-gray-600 mt-3 pt-3 border-t">
+                                                <span>
+                                                    <i class="fas fa-user mr-1"></i>
+                                                    ${residente?.nombre || p.usuarioNombre || 'Residente'} - Apto ${residente?.apartamento || 'N/A'}
+                                                </span>
+                                                <span>
+                                                    <i class="fas fa-calendar mr-1"></i>
+                                                    ${fecha}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : `
+                            <div class="text-center py-12">
+                                <i class="fas fa-clipboard-check text-gray-300 text-6xl mb-4"></i>
+                                <p class="text-gray-600">No hay PQRS registradas para esta torre</p>
+                                <p class="text-sm text-gray-500 mt-2">¡Excelente! Los residentes están satisfechos</p>
+                            </div>
+                        `}
+                    </div>
                 </div>
             </div>
-            <p class="text-sm font-medium text-gray-900">Torre ${torre.numero}</p>
-            <p class="text-xs text-gray-600">${torre.ocupacion}/${torre.total}</p>
-            <div class="mt-2 bg-gray-200 rounded-full h-2">
-                <div class="bg-green-600 h-2 rounded-full transition-all duration-300"
-                     style="width: ${torre.porcentaje}%"></div>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">${torre.porcentaje}%</p>
-        </div>
-    `).join('');
+        `;
+
+        document.body.appendChild(modal);
+    } catch (error) {
+        console.error('Error mostrando detalles torre:', error);
+        showNotification('Error al cargar detalles de la torre', 'error');
+    }
+}
+
+function cerrarDetalleTorre() {
+    const modal = document.getElementById('modal-detalle-torre');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function cambiarTabTorre(tab) {
+    // Ocultar todos los contenidos
+    document.getElementById('contenido-residentes').classList.add('hidden');
+    document.getElementById('contenido-pqrs').classList.add('hidden');
+
+    // Remover estilos activos de todos los tabs
+    document.getElementById('tab-residentes').className = 'px-4 py-2 font-semibold text-gray-600 hover:text-blue-600';
+    document.getElementById('tab-pqrs').className = 'px-4 py-2 font-semibold text-gray-600 hover:text-blue-600';
+
+    // Mostrar contenido seleccionado y activar tab
+    if (tab === 'residentes') {
+        document.getElementById('contenido-residentes').classList.remove('hidden');
+        document.getElementById('tab-residentes').className = 'px-4 py-2 font-semibold text-blue-600 border-b-2 border-blue-600';
+    } else if (tab === 'pqrs') {
+        document.getElementById('contenido-pqrs').classList.remove('hidden');
+        document.getElementById('tab-pqrs').className = 'px-4 py-2 font-semibold text-blue-600 border-b-2 border-blue-600';
+    }
 }
 
 async function loadAlertasSistema() {
@@ -8202,6 +8491,401 @@ async function cargarDashboardVigilante() {
     } catch (error) {
         console.error('Error cargando dashboard:', error);
     }
+}
+
+// ========================================
+// CONTROL DE VEHÍCULOS VIGILANTE
+// ========================================
+
+function loadControlVehiculosVigilante() {
+    const contentArea = document.getElementById('content-area');
+    contentArea.innerHTML = `
+        <div class="p-6 space-y-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-3xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-car text-orange-600 mr-3"></i>
+                    Control de Vehículos Visitantes
+                </h2>
+                <button onclick="mostrarReporteVehiculosVigilante()"
+                        class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700">
+                    <i class="fas fa-file-pdf mr-2"></i>Generar Reporte
+                </button>
+            </div>
+
+            <!-- Formulario de Ingreso -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-xl font-semibold mb-4">Registrar Ingreso de Vehículo</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="vehiculo-placa-vigilante" placeholder="Placa"
+                           class="border rounded-lg px-4 py-2">
+                    <select id="vehiculo-tipo-vigilante" class="border rounded-lg px-4 py-2">
+                        <option value="Carro">Carro</option>
+                        <option value="Moto">Moto</option>
+                    </select>
+                    <select id="vehiculo-residente-vigilante" class="border rounded-lg px-4 py-2">
+                        <option value="">Cargando residentes...</option>
+                    </select>
+                </div>
+                <button onclick="registrarIngresoVehiculoVigilante()"
+                        class="mt-4 bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700">
+                    <i class="fas fa-plus mr-2"></i>Registrar Ingreso
+                </button>
+            </div>
+
+            <!-- Lista de Vehículos Activos -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-xl font-semibold mb-4">Vehículos en el Conjunto</h3>
+                <div id="vehiculos-activos-list-vigilante" class="space-y-3">
+                    <p class="text-gray-500">Cargando vehículos...</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    cargarVehiculosActivosVigilante();
+    cargarResidentesParaVehiculosVigilante();
+}
+
+async function cargarResidentesParaVehiculosVigilante() {
+    try {
+        const usuarios = await window.firebaseAdapter.getCollection('usuarios');
+        const residentes = usuarios.filter(u => u.rol === 'residente' && u.apartamento);
+
+        const select = document.getElementById('vehiculo-residente-vigilante');
+        select.innerHTML = '<option value="">Seleccione residente...</option>' +
+            residentes.map(r => `
+                <option value="${r.apartamento}" data-nombre="${r.nombre}">
+                    ${r.apartamento} - ${r.nombre}
+                </option>
+            `).join('');
+    } catch (error) {
+        console.error('Error cargando residentes:', error);
+    }
+}
+
+async function registrarIngresoVehiculoVigilante() {
+    const placa = document.getElementById('vehiculo-placa-vigilante').value;
+    const tipo = document.getElementById('vehiculo-tipo-vigilante').value;
+    const selectResidente = document.getElementById('vehiculo-residente-vigilante');
+    const apartamento = selectResidente.value;
+    const nombreResidente = selectResidente.selectedOptions[0]?.getAttribute('data-nombre') || '';
+
+    if (!placa || !apartamento) {
+        showNotification('Error', 'Completa todos los campos', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetchWithAuth('/api/vehiculos-visitantes/ingreso', {
+            method: 'POST',
+            body: JSON.stringify({
+                placa: placa.toUpperCase(),
+                tipoVehiculo: tipo,
+                visitaA: apartamento,
+                nombreResidente: nombreResidente
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showNotification('Éxito', 'Vehículo registrado', 'success');
+            document.getElementById('vehiculo-placa-vigilante').value = '';
+            selectResidente.selectedIndex = 0;
+            cargarVehiculosActivosVigilante();
+        }
+    } catch (error) {
+        showNotification('Error', error.message || 'Error al registrar', 'error');
+    }
+}
+
+async function cargarVehiculosActivosVigilante() {
+    try {
+        const vehiculos = await window.firebaseAdapter.getCollection('vehiculosVisitantes');
+
+        const activos = vehiculos.filter(v => v.activo);
+        const container = document.getElementById('vehiculos-activos-list-vigilante');
+
+        console.log('🚗 Vehículos activos (Vigilante):', activos);
+
+        if (activos.length === 0) {
+            container.innerHTML = '<p class="text-gray-500">No hay vehículos en el conjunto</p>';
+            return;
+        }
+
+        container.innerHTML = activos.map(v => {
+            const ingreso = new Date(v.fechaIngreso);
+            const ahora = new Date();
+            const horas = Math.floor((ahora - ingreso) / (1000 * 60 * 60));
+            const minutos = Math.floor(((ahora - ingreso) % (1000 * 60 * 60)) / (1000 * 60));
+
+            return `
+                <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-orange-400 transition-colors">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="bg-orange-100 p-3 rounded-lg">
+                                    <i class="fas fa-car text-orange-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-xl text-gray-900">${v.placa}</p>
+                                    <p class="text-sm text-gray-600">${v.tipoVehiculo}</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-3 mb-3">
+                                <div class="bg-blue-50 p-3 rounded-lg">
+                                    <p class="text-xs text-blue-600 font-medium mb-1">
+                                        <i class="fas fa-building mr-1"></i>Apartamento
+                                    </p>
+                                    <p class="font-semibold text-gray-900">${v.visitaA}</p>
+                                </div>
+                                ${v.nombreResidente ? `
+                                <div class="bg-green-50 p-3 rounded-lg">
+                                    <p class="text-xs text-green-600 font-medium mb-1">
+                                        <i class="fas fa-user mr-1"></i>Residente
+                                    </p>
+                                    <p class="font-semibold text-gray-900 text-sm">${v.nombreResidente}</p>
+                                </div>
+                                ` : ''}
+                                <div class="bg-purple-50 p-3 rounded-lg">
+                                    <p class="text-xs text-purple-600 font-medium mb-1">
+                                        <i class="fas fa-clock mr-1"></i>Tiempo
+                                    </p>
+                                    <p class="font-semibold text-gray-900">${horas}h ${minutos}min</p>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-gray-500">
+                                <i class="fas fa-calendar mr-1"></i>
+                                Ingreso: ${ingreso.toLocaleString('es-CO')}
+                            </p>
+                        </div>
+
+                        <button onclick="procesarSalidaVehiculoVigilante('${v.id}')"
+                                class="ml-4 bg-red-600 text-white px-5 py-3 rounded-lg hover:bg-red-700 transition-colors shadow-lg">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Salida
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function procesarSalidaVehiculoVigilante(vehiculoId) {
+    try {
+        // Obtener el vehículo
+        const vehiculo = await window.firebaseAdapter.getDocument('vehiculosVisitantes', vehiculoId);
+
+        if (!vehiculo || !vehiculo.activo) {
+            showNotification('Error', 'Vehículo no encontrado o ya procesado', 'error');
+            return;
+        }
+
+        // Calcular tiempo y tarifa
+        const fechaIngreso = new Date(vehiculo.fechaIngreso);
+        const fechaSalida = new Date();
+
+        // Calcular diferencia en milisegundos
+        const diferenciaMs = fechaSalida - fechaIngreso;
+        const totalHoras = diferenciaMs / (1000 * 60 * 60);
+        const dias = Math.floor(totalHoras / 24);
+        const horasRestantes = totalHoras % 24;
+
+        console.log('⏱️ Cálculo de tiempo:', {
+            ingreso: fechaIngreso,
+            salida: fechaSalida,
+            totalHoras: totalHoras.toFixed(2),
+            dias,
+            horasRestantes: horasRestantes.toFixed(2)
+        });
+
+        // Tarifas según tipo de vehículo
+        const tarifaPorHora = vehiculo.tipoVehiculo.toLowerCase().includes('moto') ? 2000 : 3000;
+        const tarifaDiaria = 16000;
+
+        let totalCobrado = 0;
+        let detalleCobro = [];
+
+        // Cálculo por días completos
+        if (dias > 0) {
+            totalCobrado += dias * tarifaDiaria;
+            detalleCobro.push(`${dias} día(s) x $${tarifaDiaria.toLocaleString('es-CO')} = $${(dias * tarifaDiaria).toLocaleString('es-CO')}`);
+        }
+
+        // Cálculo de horas restantes
+        if (horasRestantes > 0) {
+            if (horasRestantes <= 2) {
+                // Primeras 2 horas gratis
+                detalleCobro.push('Primeras 2 horas: Gratis');
+            } else if (horasRestantes < 10) {
+                // Entre 2 y 10 horas: cobro por hora
+                const horasCobrar = Math.ceil(horasRestantes) - 2; // Restar las 2 horas gratis
+                const costoPorHoras = horasCobrar * tarifaPorHora;
+                totalCobrado += costoPorHoras;
+                detalleCobro.push(`Primeras 2 horas: Gratis`);
+                detalleCobro.push(`${horasCobrar} hora(s) x $${tarifaPorHora.toLocaleString('es-CO')} = $${costoPorHoras.toLocaleString('es-CO')}`);
+            } else {
+                // 10 horas o más: tarifa diaria
+                totalCobrado += tarifaDiaria;
+                detalleCobro.push(`10+ horas (tarifa diaria): $${tarifaDiaria.toLocaleString('es-CO')}`);
+            }
+        } else if (dias === 0 && horasRestantes === 0) {
+            // Menos de 1 hora
+            detalleCobro.push('Menos de 1 hora: Gratis');
+        }
+
+        // Actualizar vehículo en Firestore
+        await window.firebaseAdapter.updateDocument('vehiculosVisitantes', vehiculoId, {
+            activo: false,
+            fechaSalida: fechaSalida.toISOString(),
+            totalCobrado,
+            detalleCobro: detalleCobro.join('\n'),
+            horasTotales: totalHoras.toFixed(2),
+            dias
+        });
+
+        // Crear recibo en Firestore
+        const recibo = {
+            vehiculoId,
+            placa: vehiculo.placa,
+            tipoVehiculo: vehiculo.tipoVehiculo,
+            visitaA: vehiculo.visitaA,
+            fechaIngreso: vehiculo.fechaIngreso,
+            fechaSalida: fechaSalida.toISOString(),
+            horasTotales: totalHoras.toFixed(2),
+            dias,
+            totalCobrado,
+            detalleCobro: detalleCobro.join('\n'),
+            tarifaPorHora,
+            tarifaDiaria,
+            fechaCreacion: new Date().toISOString()
+        };
+
+        await window.firebaseAdapter.addDocument('recibosParqueadero', recibo);
+
+        // Mostrar recibo
+        mostrarReciboVehiculoVigilante(recibo);
+
+        cargarVehiculosActivosVigilante();
+    } catch (error) {
+        console.error('Error procesando salida:', error);
+        showNotification('Error', 'No se pudo procesar la salida', 'error');
+    }
+}
+
+function mostrarReciboVehiculoVigilante(recibo) {
+    const fechaIngreso = new Date(recibo.fechaIngreso);
+    const fechaSalida = new Date(recibo.fechaSalida);
+
+    const modalHTML = `
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" id="modal-recibo-vigilante">
+            <div class="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="text-center mb-6 border-b-2 border-gray-300 pb-4">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">RECIBO DE PARQUEADERO</h2>
+                    <p class="text-sm text-gray-600">Conjunto Residencial</p>
+                    <p class="text-xs text-gray-500 mt-2">Fecha de emisión: ${new Date().toLocaleString('es-CO')}</p>
+                </div>
+
+                <div class="space-y-4 mb-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-1">Placa</p>
+                            <p class="text-xl font-bold text-gray-900">${recibo.placa}</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-1">Tipo de Vehículo</p>
+                            <p class="text-xl font-bold text-gray-900">${recibo.tipoVehiculo}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600 mb-1">Destino</p>
+                        <p class="text-lg font-semibold text-gray-900">${recibo.visitaA}</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="border-2 border-green-200 p-4 rounded-lg">
+                            <p class="text-sm text-green-700 font-medium mb-2">
+                                <i class="fas fa-sign-in-alt mr-1"></i>Hora de Ingreso
+                            </p>
+                            <p class="text-sm text-gray-900">${fechaIngreso.toLocaleDateString('es-CO')}</p>
+                            <p class="text-lg font-bold text-gray-900">${fechaIngreso.toLocaleTimeString('es-CO')}</p>
+                        </div>
+                        <div class="border-2 border-red-200 p-4 rounded-lg">
+                            <p class="text-sm text-red-700 font-medium mb-2">
+                                <i class="fas fa-sign-out-alt mr-1"></i>Hora de Salida
+                            </p>
+                            <p class="text-sm text-gray-900">${fechaSalida.toLocaleDateString('es-CO')}</p>
+                            <p class="text-lg font-bold text-gray-900">${fechaSalida.toLocaleTimeString('es-CO')}</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4">
+                        <p class="text-sm text-yellow-800 font-medium mb-2">
+                            <i class="fas fa-clock mr-1"></i>Tiempo Total
+                        </p>
+                        <p class="text-xl font-bold text-gray-900">
+                            ${recibo.dias > 0 ? `${recibo.dias} día(s) ` : ''}${(parseFloat(recibo.horasTotales) % 24).toFixed(1)} hora(s)
+                        </p>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg border-2 border-gray-200">
+                        <p class="text-sm text-gray-700 font-semibold mb-3">
+                            <i class="fas fa-calculator mr-1"></i>Detalle del Cobro:
+                        </p>
+                        <div class="space-y-1 text-sm text-gray-700">
+                            ${recibo.detalleCobro.split('\n').map(linea => `<p>• ${linea}</p>`).join('')}
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-lg shadow-lg">
+                        <p class="text-sm font-medium mb-2">TOTAL A PAGAR</p>
+                        <p class="text-4xl font-bold">$${recibo.totalCobrado.toLocaleString('es-CO')} COP</p>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-gray-700">
+                        <p class="font-semibold mb-2"><i class="fas fa-info-circle text-blue-600 mr-1"></i>Información de Tarifas:</p>
+                        <ul class="space-y-1 text-xs">
+                            <li>• Primeras 2 horas: GRATIS</li>
+                            <li>• De 2 a 10 horas: $${recibo.tarifaPorHora.toLocaleString('es-CO')} por hora</li>
+                            <li>• 10 horas o más: $${recibo.tarifaDiaria.toLocaleString('es-CO')} (tarifa diaria)</li>
+                            <li>• Días completos: $${recibo.tarifaDiaria.toLocaleString('es-CO')} por día</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="imprimirReciboVigilante()"
+                            class="flex-1 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-semibold">
+                        <i class="fas fa-print mr-2"></i>Imprimir
+                    </button>
+                    <button onclick="cerrarModalReciboVigilante()"
+                            class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 font-semibold">
+                        <i class="fas fa-times mr-2"></i>Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function cerrarModalReciboVigilante() {
+    const modal = document.getElementById('modal-recibo-vigilante');
+    if (modal) modal.remove();
+}
+
+function imprimirReciboVigilante() {
+    window.print();
+}
+
+function mostrarReporteVehiculosVigilante() {
+    showNotification('Info', 'Función de reporte en desarrollo', 'info');
 }
 
 // ========================================
