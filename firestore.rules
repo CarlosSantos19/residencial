@@ -130,10 +130,12 @@ service cloud.firestore {
       allow create: if isSignedIn();
     }
 
-    // Paquetes - Usuarios ven los suyos, vigilantes escriben
+    // Paquetes - Usuarios ven los suyos, vigilantes ven todos y escriben
     match /paquetes/{paqueteId} {
-      allow read: if isSignedIn() && (isOwner(resource.data.usuarioId) || isVigilante());
-      allow write: if isVigilante();
+      allow read: if isSignedIn();
+      allow create: if isVigilante();
+      allow update: if isVigilante() || (isSignedIn() && resource.data.usuarioId == request.auth.uid);
+      allow delete: if isAdmin();
     }
 
     // Parqueaderos - Admin gestiona, usuarios ven el suyo

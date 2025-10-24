@@ -7982,11 +7982,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Verificar si viene desde un QR escaneado
     const urlParams = new URLSearchParams(window.location.search);
     const permisoId = urlParams.get('validar-permiso');
+    const paqueteId = urlParams.get('retirar-paquete');
 
     if (permisoId) {
         // Esperar a que Firebase esté listo
         setTimeout(() => {
             validarPermisoDesdeQR(permisoId);
+        }, 1000);
+    }
+
+    if (paqueteId) {
+        // Esperar a que Firebase esté listo
+        setTimeout(() => {
+            validarPaqueteDesdeQR(paqueteId);
         }, 1000);
     }
 
@@ -8218,15 +8226,27 @@ async function loadPaquetesVigilante() {
                     Registrar Nuevo Paquete
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="paquete-torre" placeholder="Torre"
-                           class="border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-orange-500">
-                    <input type="text" id="paquete-apartamento" placeholder="Apartamento"
-                           class="border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-orange-500">
-                    <input type="text" id="paquete-descripcion" placeholder="Descripción del paquete"
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-user mr-2"></i>Residente Destinatario
+                        </label>
+                        <select id="paquete-residente"
+                                class="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-orange-500"
+                                onchange="seleccionarResidentePaquete()">
+                            <option value="">Cargando residentes...</option>
+                        </select>
+                    </div>
+                    <input type="text" id="paquete-torre" placeholder="Torre" readonly
+                           class="border-2 border-gray-300 rounded-lg px-4 py-2 bg-gray-100">
+                    <input type="text" id="paquete-apartamento" placeholder="Apartamento" readonly
+                           class="border-2 border-gray-300 rounded-lg px-4 py-2 bg-gray-100">
+                    <input type="text" id="paquete-descripcion" placeholder="Descripción del paquete *"
                            class="border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-orange-500">
                     <input type="text" id="paquete-remitente" placeholder="Remitente"
                            class="border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-orange-500">
                     <input type="text" id="paquete-empresa" placeholder="Empresa de envío"
+                           class="border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-orange-500">
+                    <input type="text" id="paquete-guia" placeholder="Número de guía (opcional)"
                            class="border-2 border-gray-300 rounded-lg px-4 py-2 focus:border-orange-500">
                 </div>
                 <button onclick="registrarPaquete()"
@@ -8237,7 +8257,13 @@ async function loadPaquetesVigilante() {
 
             <!-- Lista de Paquetes -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 class="text-xl font-semibold mb-4">Paquetes Registrados</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold">Paquetes Registrados</h3>
+                    <button onclick="abrirEscanerQRPaquete()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-2">
+                        <i class="fas fa-qrcode"></i>
+                        Escanear QR para Entregar
+                    </button>
+                </div>
                 <div id="paquetes-list" class="space-y-3">
                     <p class="text-gray-500">Cargando paquetes...</p>
                 </div>
@@ -8245,46 +8271,88 @@ async function loadPaquetesVigilante() {
         </div>
     `;
 
+    // Cargar lista de residentes
+    cargarResidentesParaPaquetes();
     cargarPaquetesVigilante();
 }
 
+async function cargarResidentesParaPaquetes() {
+    try {
+        const residentes = await window.firebaseAdapter.getCollection('usuarios');
+        const residentesFiltrados = residentes.filter(u => u.rol === 'residente');
+
+        const select = document.getElementById('paquete-residente');
+        select.innerHTML = '<option value="">Seleccione un residente...</option>' +
+            residentesFiltrados.map(r =>
+                `<option value="${r.id}" data-torre="${r.torre || ''}" data-apto="${r.apartamento || ''}" data-nombre="${r.nombre}">
+                    ${r.nombre} - Torre ${r.torre || 'N/A'} - Apto ${r.apartamento || 'N/A'}
+                </option>`
+            ).join('');
+    } catch (error) {
+        console.error('Error cargando residentes:', error);
+    }
+}
+
+function seleccionarResidentePaquete() {
+    const select = document.getElementById('paquete-residente');
+    const option = select.options[select.selectedIndex];
+
+    if (option.value) {
+        document.getElementById('paquete-torre').value = option.dataset.torre || '';
+        document.getElementById('paquete-apartamento').value = option.dataset.apto || '';
+    } else {
+        document.getElementById('paquete-torre').value = '';
+        document.getElementById('paquete-apartamento').value = '';
+    }
+}
+
 async function registrarPaquete() {
+    const selectResidente = document.getElementById('paquete-residente');
+    const residenteId = selectResidente.value;
+    const residenteNombre = selectResidente.options[selectResidente.selectedIndex]?.dataset.nombre;
     const torre = document.getElementById('paquete-torre').value;
     const apartamento = document.getElementById('paquete-apartamento').value;
     const descripcion = document.getElementById('paquete-descripcion').value;
     const remitente = document.getElementById('paquete-remitente').value;
     const empresa = document.getElementById('paquete-empresa').value;
+    const guia = document.getElementById('paquete-guia').value;
 
-    const apartamentoCompleto = torre + ' - Apto ' + apartamento;
-    const nombreResidente = remitente || 'Residente';
-
-    if (!torre || !apartamento || !descripcion) {
-        showNotification('Completa los campos obligatorios', 'error');
+    if (!residenteId || !descripcion) {
+        showNotification('Selecciona un residente y completa la descripción', 'error');
         return;
     }
+
+    const apartamentoCompleto = torre + ' - Apto ' + apartamento;
 
     try {
         const response = await fetchWithAuth('/api/paquetes', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                residenteId: residenteId,
                 apartamento: apartamentoCompleto,
-                nombreResidente,
+                torre: torre,
+                numeroApartamento: apartamento,
+                nombreResidente: residenteNombre,
                 empresa: empresa || 'N/A',
                 descripcion,
-                guia: ''
+                remitente: remitente || 'No especificado',
+                guia: guia || 'N/A'
             })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            showNotification('Paquete registrado correctamente', 'success');
+            showNotification('Paquete registrado correctamente. QR generado.', 'success');
+            // Limpiar formulario
+            document.getElementById('paquete-residente').value = '';
             document.getElementById('paquete-torre').value = '';
             document.getElementById('paquete-apartamento').value = '';
             document.getElementById('paquete-descripcion').value = '';
             document.getElementById('paquete-remitente').value = '';
             document.getElementById('paquete-empresa').value = '';
+            document.getElementById('paquete-guia').value = '';
             cargarPaquetesVigilante();
         } else {
             showNotification(data.mensaje || 'Error al registrar paquete', 'error');
@@ -8481,9 +8549,10 @@ async function loadPaquetes() {
                                         <i class="fas fa-info-circle mr-2"></i>
                                         Este paquete está disponible en portería para ser retirado
                                     </div>
-                                    <button onclick="retirarMiPaquete(${p.id})"
-                                            class="mt-3 w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold">
-                                        <i class="fas fa-check mr-2"></i>Confirmar Retiro
+                                    <button onclick="mostrarQRPaquete('${p.id}')"
+                                            class="mt-3 w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-semibold flex items-center justify-center gap-2">
+                                        <i class="fas fa-qrcode"></i>
+                                        Ver Código QR para Retirar
                                     </button>
                                 </div>
                             `;
@@ -8504,16 +8573,31 @@ async function loadPaquetes() {
                         ${retirados.map(p => {
                             const retiro = new Date(p.fechaEntrega);
                             return `
-                                <div class="border border-gray-200 bg-gray-50 rounded-lg p-4 flex justify-between items-center">
-                                    <div>
+                                <div class="border border-gray-200 bg-gray-50 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-3">
                                         <h4 class="font-semibold text-gray-900">${p.descripcion}</h4>
-                                        <p class="text-sm text-gray-600">
-                                            Retirado el ${retiro.toLocaleDateString('es-CO')} por ${p.entregadoA}
-                                        </p>
+                                        <span class="bg-gray-600 text-white px-3 py-1 rounded-full text-xs">
+                                            <i class="fas fa-check mr-1"></i>Entregado
+                                        </span>
                                     </div>
-                                    <span class="bg-gray-600 text-white px-3 py-1 rounded text-xs">
-                                        <i class="fas fa-check mr-1"></i>Entregado
-                                    </span>
+                                    ${p.fechaEntrega ? `
+                                        <div class="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">
+                                            <p class="text-green-900 font-semibold text-sm mb-1">
+                                                <i class="fas fa-check-circle mr-2"></i>
+                                                Paquete Entregado
+                                            </p>
+                                            <p class="text-green-800 text-xs">
+                                                <i class="fas fa-clock mr-2"></i>
+                                                <span class="font-semibold">Fecha y Hora:</span> ${retiro.toLocaleDateString('es-CO')} a las ${retiro.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                                            </p>
+                                            ${p.entregadoPor ? `
+                                                <p class="text-green-800 text-xs">
+                                                    <i class="fas fa-user-shield mr-2"></i>
+                                                    <span class="font-semibold">Vigilante:</span> ${p.entregadoPor}
+                                                </p>
+                                            ` : ''}
+                                        </div>
+                                    ` : ''}
                                 </div>
                             `;
                         }).join('')}
@@ -9406,10 +9490,22 @@ function renderPermisoCard(permiso, estado) {
                     <span class="font-semibold">Fecha ingreso:</span> ${fechaIngreso.toLocaleDateString('es-CO')} ${permiso.horaIngreso}
                 </p>
                 ${permiso.horaIngresoReal ? `
-                    <p class="text-gray-700">
-                        <i class="fas fa-clock mr-2 text-gray-400"></i>
-                        <span class="font-semibold">Ingresó:</span> ${new Date(permiso.horaIngresoReal).toLocaleString('es-CO')}
-                    </p>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
+                        <p class="text-blue-900 font-semibold mb-1">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Ingreso Autorizado
+                        </p>
+                        <p class="text-blue-800 text-sm">
+                            <i class="fas fa-clock mr-2"></i>
+                            <span class="font-semibold">Fecha y Hora:</span> ${new Date(permiso.horaIngresoReal).toLocaleDateString('es-CO')} a las ${new Date(permiso.horaIngresoReal).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        ${permiso.autorizadoPor ? `
+                            <p class="text-blue-800 text-sm">
+                                <i class="fas fa-user-shield mr-2"></i>
+                                <span class="font-semibold">Vigilante:</span> ${permiso.autorizadoPor}
+                            </p>
+                        ` : ''}
+                    </div>
                 ` : ''}
                 ${permiso.horaSalidaReal ? `
                     <p class="text-gray-700">
@@ -9521,6 +9617,9 @@ async function cargarPermisosVigilante(filtroTipo = '', filtroEstado = '') {
         const ingresados = data.permisos.filter(p => p.estado === 'Ingresado');
         const finalizados = data.permisos.filter(p => p.estado === 'Finalizado');
 
+        // Guardar permisos finalizados en variable global para historial
+        todosLosPermisosFinalizados = finalizados;
+
         container.innerHTML = `
             ${vigentes.length > 0 ? `
                 <div class="bg-white rounded-lg shadow-sm border-2 border-green-200 mb-6">
@@ -9552,14 +9651,34 @@ async function cargarPermisosVigilante(filtroTipo = '', filtroEstado = '') {
 
             ${finalizados.length > 0 ? `
                 <div class="bg-white rounded-lg shadow-sm border-2 border-gray-200">
-                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                         <h3 class="text-xl font-semibold text-gray-900 flex items-center">
                             <i class="fas fa-history mr-2"></i>
-                            Historial Reciente (${finalizados.length})
+                            Historial de Permisos (${finalizados.length})
                         </h3>
+                        <div class="flex gap-2">
+                            <button onclick="toggleHistorialCompleto()" id="btn-toggle-historial" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm">
+                                <i class="fas fa-expand mr-2"></i>
+                                Ver Todo
+                            </button>
+                            <button onclick="exportarHistorialPermisos()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
+                                <i class="fas fa-file-excel mr-2"></i>
+                                Exportar
+                            </button>
+                        </div>
                     </div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        ${finalizados.slice(0, 9).map(p => renderPermisoVigilanteCard(p)).join('')}
+                    <div id="historial-permisos-container" class="p-6">
+                        <div class="grid grid-cols-1 gap-4">
+                            ${finalizados.slice(0, 10).map(p => renderPermisoHistorialCard(p)).join('')}
+                        </div>
+                        ${finalizados.length > 10 ? `
+                            <div class="text-center mt-4 text-gray-600 text-sm">
+                                Mostrando 10 de ${finalizados.length} permisos.
+                                <button onclick="toggleHistorialCompleto()" class="text-blue-600 hover:underline font-semibold">
+                                    Ver todos
+                                </button>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
             ` : ''}
@@ -9714,6 +9833,229 @@ async function registrarSalidaPermiso(id) {
         console.error('Error:', error);
         showNotification('Error al registrar salida', 'error');
     }
+}
+
+// Variable global para almacenar todos los permisos finalizados
+let todosLosPermisosFinalizados = [];
+
+function renderPermisoHistorialCard(permiso) {
+    const tipoIcons = {
+        visitante: { icon: 'fa-user', color: 'blue', label: 'Visitante' },
+        objeto: { icon: 'fa-box', color: 'purple', label: 'Objeto' },
+        trasteo: { icon: 'fa-truck', color: 'orange', label: 'Trasteo' },
+        domicilio: { icon: 'fa-motorcycle', color: 'green', label: 'Domicilio' }
+    };
+
+    const tipoInfo = tipoIcons[permiso.tipo] || { icon: 'fa-question', color: 'gray', label: 'Otro' };
+    const fechaIngreso = new Date(permiso.fechaIngreso);
+    const fechaSolicitud = permiso.fechaSolicitud ? new Date(permiso.fechaSolicitud) : null;
+
+    return `
+        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-gray-50">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3 flex-1">
+                    <div class="bg-${tipoInfo.color}-100 p-2 rounded-lg">
+                        <i class="fas ${tipoInfo.icon} text-${tipoInfo.color}-600 text-lg"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-bold text-gray-900">${tipoInfo.label}</h4>
+                            <span class="bg-gray-600 text-white px-2 py-1 rounded text-xs">
+                                FINALIZADO
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Solicitado: ${fechaSolicitud ? fechaSolicitud.toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+                ${permiso.residenteNombre ? `
+                    <div class="col-span-2 bg-white p-2 rounded border border-blue-200">
+                        <p class="text-xs text-gray-600">
+                            <i class="fas fa-home mr-1 text-blue-600"></i>
+                            <span class="font-semibold">Residente:</span>
+                        </p>
+                        <p class="text-gray-900 font-semibold">${permiso.residenteNombre}</p>
+                        ${permiso.apartamento ? `<p class="text-xs text-gray-600">${permiso.apartamento}</p>` : ''}
+                    </div>
+                ` : ''}
+
+                ${permiso.nombre ? `
+                    <div class="bg-white p-2 rounded">
+                        <p class="text-xs text-gray-600">
+                            <i class="fas fa-user mr-1"></i>Visitante
+                        </p>
+                        <p class="font-semibold text-gray-900">${permiso.nombre}</p>
+                    </div>
+                ` : ''}
+
+                ${permiso.cedula ? `
+                    <div class="bg-white p-2 rounded">
+                        <p class="text-xs text-gray-600">
+                            <i class="fas fa-id-card mr-1"></i>Cédula
+                        </p>
+                        <p class="font-semibold text-gray-900">${permiso.cedula}</p>
+                    </div>
+                ` : ''}
+
+                ${permiso.empresa ? `
+                    <div class="bg-white p-2 rounded">
+                        <p class="text-xs text-gray-600">
+                            <i class="fas fa-building mr-1"></i>Empresa
+                        </p>
+                        <p class="font-semibold text-gray-900">${permiso.empresa}</p>
+                    </div>
+                ` : ''}
+
+                ${permiso.placa ? `
+                    <div class="bg-white p-2 rounded">
+                        <p class="text-xs text-gray-600">
+                            <i class="fas fa-car mr-1"></i>Placa
+                        </p>
+                        <p class="font-semibold text-gray-900">${permiso.placa}</p>
+                    </div>
+                ` : ''}
+            </div>
+
+            <div class="bg-white rounded border border-green-200 p-2 space-y-1 text-xs">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">
+                        <i class="fas fa-sign-in-alt mr-1 text-green-600"></i>Ingreso:
+                    </span>
+                    <span class="font-semibold text-gray-900">
+                        ${permiso.horaIngresoReal ? new Date(permiso.horaIngresoReal).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
+                    </span>
+                </div>
+                ${permiso.autorizadoPor ? `
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">
+                            <i class="fas fa-user-shield mr-1 text-blue-600"></i>Autorizó:
+                        </span>
+                        <span class="font-semibold text-gray-900">${permiso.autorizadoPor}</span>
+                    </div>
+                ` : ''}
+                <div class="flex justify-between">
+                    <span class="text-gray-600">
+                        <i class="fas fa-sign-out-alt mr-1 text-red-600"></i>Salida:
+                    </span>
+                    <span class="font-semibold text-gray-900">
+                        ${permiso.horaSalidaReal ? new Date(permiso.horaSalidaReal).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
+                    </span>
+                </div>
+                ${permiso.horaIngresoReal && permiso.horaSalidaReal ? `
+                    <div class="flex justify-between pt-1 border-t border-gray-200">
+                        <span class="text-gray-600">
+                            <i class="fas fa-clock mr-1 text-purple-600"></i>Duración:
+                        </span>
+                        <span class="font-semibold text-purple-900">
+                            ${calcularDuracion(permiso.horaIngresoReal, permiso.horaSalidaReal)}
+                        </span>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function calcularDuracion(inicio, fin) {
+    const diff = new Date(fin) - new Date(inicio);
+    const horas = Math.floor(diff / (1000 * 60 * 60));
+    const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (horas > 0) {
+        return `${horas}h ${minutos}m`;
+    }
+    return `${minutos}m`;
+}
+
+function toggleHistorialCompleto() {
+    const container = document.getElementById('historial-permisos-container');
+    const btn = document.getElementById('btn-toggle-historial');
+
+    if (!todosLosPermisosFinalizados || todosLosPermisosFinalizados.length === 0) {
+        return;
+    }
+
+    const estaExpandido = btn.innerHTML.includes('Contraer');
+
+    if (estaExpandido) {
+        // Contraer - mostrar solo 10
+        container.innerHTML = `
+            <div class="grid grid-cols-1 gap-4">
+                ${todosLosPermisosFinalizados.slice(0, 10).map(p => renderPermisoHistorialCard(p)).join('')}
+            </div>
+            ${todosLosPermisosFinalizados.length > 10 ? `
+                <div class="text-center mt-4 text-gray-600 text-sm">
+                    Mostrando 10 de ${todosLosPermisosFinalizados.length} permisos.
+                    <button onclick="toggleHistorialCompleto()" class="text-blue-600 hover:underline font-semibold">
+                        Ver todos
+                    </button>
+                </div>
+            ` : ''}
+        `;
+        btn.innerHTML = '<i class="fas fa-expand mr-2"></i>Ver Todo';
+    } else {
+        // Expandir - mostrar todos
+        container.innerHTML = `
+            <div class="grid grid-cols-1 gap-4">
+                ${todosLosPermisosFinalizados.map(p => renderPermisoHistorialCard(p)).join('')}
+            </div>
+            <div class="text-center mt-4 text-gray-600 text-sm">
+                Mostrando todos los ${todosLosPermisosFinalizados.length} permisos
+            </div>
+        `;
+        btn.innerHTML = '<i class="fas fa-compress mr-2"></i>Contraer';
+    }
+}
+
+function exportarHistorialPermisos() {
+    if (!todosLosPermisosFinalizados || todosLosPermisosFinalizados.length === 0) {
+        showNotification('No hay permisos para exportar', 'warning');
+        return;
+    }
+
+    // Preparar datos para CSV
+    const headers = ['Fecha Solicitud', 'Tipo', 'Residente', 'Apartamento', 'Visitante', 'Cédula', 'Empresa', 'Placa', 'Fecha Ingreso', 'Vigilante', 'Fecha Salida', 'Duración'];
+
+    const rows = todosLosPermisosFinalizados.map(p => {
+        const duracion = p.horaIngresoReal && p.horaSalidaReal ? calcularDuracion(p.horaIngresoReal, p.horaSalidaReal) : 'N/A';
+        return [
+            p.fechaSolicitud ? new Date(p.fechaSolicitud).toLocaleString('es-CO') : 'N/A',
+            p.tipo || 'N/A',
+            p.residenteNombre || 'N/A',
+            p.apartamento || 'N/A',
+            p.nombre || 'N/A',
+            p.cedula || 'N/A',
+            p.empresa || 'N/A',
+            p.placa || 'N/A',
+            p.horaIngresoReal ? new Date(p.horaIngresoReal).toLocaleString('es-CO') : 'N/A',
+            p.autorizadoPor || 'N/A',
+            p.horaSalidaReal ? new Date(p.horaSalidaReal).toLocaleString('es-CO') : 'N/A',
+            duracion
+        ];
+    });
+
+    // Crear CSV
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Descargar archivo
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const fecha = new Date().toISOString().split('T')[0];
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `historial_permisos_${fecha}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showNotification('Historial exportado correctamente', 'success');
 }
 
 function loadPermisosAdmin() {
@@ -12683,6 +13025,406 @@ function cerrarValidacionQR() {
 async function confirmarIngresoDesdeQR(permisoId) {
     cerrarValidacionQR();
     await confirmarIngresoQR(permisoId);
+}
+
+// ============================================
+// FUNCIONES DE QR PARA PAQUETES
+// ============================================
+
+async function mostrarQRPaquete(paqueteId) {
+    try {
+        // Obtener información del paquete
+        const paquete = await window.firebaseAdapter.getDocument('paquetes', paqueteId);
+
+        if (!paquete) {
+            showNotification('Paquete no encontrado', 'error');
+            return;
+        }
+
+        // Crear URL con el ID del paquete para deep linking
+        const baseUrl = window.location.origin;
+        const qrUrl = `${baseUrl}/?retirar-paquete=${paqueteId}`;
+
+        // Crear modal con QR
+        const modal = document.createElement('div');
+        modal.id = 'modal-qr-paquete';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+                <div class="text-center mb-6">
+                    <div class="bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-qrcode text-green-600 text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Código QR del Paquete</h2>
+                    <p class="text-gray-600 mb-4">Muestra este código al vigilante para retirar tu paquete</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-600 mb-1">Descripción:</p>
+                        <p class="font-semibold text-gray-900">${paquete.descripcion}</p>
+                    </div>
+                    <div class="mb-4">
+                        <p class="text-sm text-gray-600 mb-1">Apartamento:</p>
+                        <p class="font-semibold text-gray-900">${paquete.apartamento}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Empresa:</p>
+                        <p class="font-semibold text-gray-900">${paquete.empresa}</p>
+                    </div>
+                </div>
+
+                <div id="qrcode-paquete-container" class="flex justify-center mb-6 bg-white p-4 rounded-lg"></div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <p class="text-sm text-blue-800">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        El vigilante escaneará este código para confirmar la entrega del paquete
+                    </p>
+                </div>
+
+                <button onclick="cerrarQRPaquete()"
+                        class="w-full bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
+                    Cerrar
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Generar QR code
+        new QRCode(document.getElementById('qrcode-paquete-container'), {
+            text: qrUrl,
+            width: 256,
+            height: 256,
+            colorDark: '#000000',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+    } catch (error) {
+        console.error('Error mostrando QR del paquete:', error);
+        showNotification('Error al generar código QR', 'error');
+    }
+}
+
+function cerrarQRPaquete() {
+    const modal = document.getElementById('modal-qr-paquete');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Variable global para el escáner de paquetes
+let html5QrCodePaquete = null;
+
+async function abrirEscanerQRPaquete() {
+    const modal = document.createElement('div');
+    modal.id = 'modal-escaner-qr-paquete';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
+            <div class="text-center mb-6">
+                <div class="bg-orange-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-qrcode text-orange-600 text-4xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Escanear QR de Paquete</h2>
+                <p class="text-gray-600">Escanea el código QR del residente para confirmar la entrega</p>
+            </div>
+
+            <div id="reader-paquete" class="mb-6" style="width: 100%;"></div>
+
+            <button onclick="cerrarEscanerQRPaquete()"
+                    class="w-full bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
+                Cancelar
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Iniciar escáner
+    html5QrCodePaquete = new Html5Qrcode("reader-paquete");
+
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+    html5QrCodePaquete.start(
+        { facingMode: "environment" },
+        config,
+        onScanSuccessPaquete,
+        onScanFailurePaquete
+    ).catch(err => {
+        console.error('Error iniciando escáner de paquete:', err);
+        showNotification('No se pudo acceder a la cámara', 'error');
+    });
+}
+
+async function onScanSuccessPaquete(decodedText, decodedResult) {
+    try {
+        // Detener el escáner de forma segura
+        if (html5QrCodePaquete && html5QrCodePaquete.isScanning) {
+            await html5QrCodePaquete.stop();
+        }
+
+        let paqueteId;
+
+        // Verificar si es una URL (nuevo formato) o JSON (formato antiguo)
+        if (decodedText.includes('retirar-paquete=')) {
+            // Es una URL - extraer el ID del paquete
+            const url = new URL(decodedText);
+            paqueteId = url.searchParams.get('retirar-paquete');
+        } else {
+            // Intentar parsear como JSON (formato antiguo)
+            const qrData = JSON.parse(decodedText);
+            paqueteId = qrData.paqueteId;
+        }
+
+        if (!paqueteId) {
+            showNotification('Código QR inválido', 'error');
+            cerrarEscanerQRPaquete();
+            return;
+        }
+
+        // Validar y confirmar entrega
+        await validarYEntregarPaquete(paqueteId);
+
+    } catch (error) {
+        console.error('Error procesando QR de paquete:', error);
+        showNotification('Error al procesar el código QR', 'error');
+        cerrarEscanerQRPaquete();
+    }
+}
+
+function onScanFailurePaquete(error) {
+    // Silenciar errores normales de escaneo
+}
+
+function cerrarEscanerQRPaquete() {
+    if (html5QrCodePaquete) {
+        if (html5QrCodePaquete.isScanning) {
+            html5QrCodePaquete.stop()
+                .then(() => {
+                    console.log('Escáner de paquete detenido correctamente');
+                    html5QrCodePaquete = null;
+                })
+                .catch(err => {
+                    console.error('Error deteniendo escáner de paquete:', err);
+                    html5QrCodePaquete = null;
+                });
+        } else {
+            html5QrCodePaquete = null;
+        }
+    }
+    const modal = document.getElementById('modal-escaner-qr-paquete');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function validarYEntregarPaquete(paqueteId) {
+    try {
+        // Obtener el paquete
+        const paquete = await window.firebaseAdapter.getDocument('paquetes', paqueteId);
+
+        if (!paquete) {
+            showNotification('Paquete no encontrado', 'error');
+            cerrarEscanerQRPaquete();
+            return;
+        }
+
+        if (paquete.estado === 'Entregado') {
+            showNotification('Este paquete ya fue entregado', 'warning');
+            cerrarEscanerQRPaquete();
+            return;
+        }
+
+        // Mostrar confirmación
+        const modal = document.createElement('div');
+        modal.id = 'modal-confirmar-entrega-paquete';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+                <div class="text-center mb-6">
+                    <div class="bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-box text-green-600 text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Confirmar Entrega</h2>
+                    <p class="text-gray-600">¿Confirmar la entrega de este paquete?</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                    <div class="mb-3">
+                        <p class="text-sm text-gray-600">Descripción:</p>
+                        <p class="font-semibold text-gray-900">${paquete.descripcion}</p>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-sm text-gray-600">Para:</p>
+                        <p class="font-semibold text-gray-900">${paquete.nombreResidente}</p>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-sm text-gray-600">Apartamento:</p>
+                        <p class="font-semibold text-gray-900">${paquete.apartamento}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Empresa:</p>
+                        <p class="font-semibold text-gray-900">${paquete.empresa}</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="cerrarConfirmacionEntregaPaquete()"
+                            class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
+                        Cancelar
+                    </button>
+                    <button onclick="confirmarEntregaPaquete('${paqueteId}')"
+                            class="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition">
+                        <i class="fas fa-check mr-2"></i>Confirmar Entrega
+                    </button>
+                </div>
+            </div>
+        `;
+
+        cerrarEscanerQRPaquete();
+        document.body.appendChild(modal);
+
+    } catch (error) {
+        console.error('Error validando paquete:', error);
+        showNotification('Error al validar el paquete', 'error');
+    }
+}
+
+async function confirmarEntregaPaquete(paqueteId) {
+    try {
+        const vigilante = window.firebaseAdapter.currentUser;
+
+        // Actualizar paquete en Firebase
+        await window.firebaseAdapter.updateDocument('paquetes', paqueteId, {
+            estado: 'Entregado',
+            fechaEntrega: new Date().toISOString(),
+            entregadoPor: vigilante.nombre,
+            vigilanteEntregaId: vigilante.id,
+            entregadoA: vigilante.nombre  // Mantenemos compatibilidad
+        });
+
+        cerrarConfirmacionEntregaPaquete();
+        showNotification('Paquete entregado correctamente', 'success');
+
+        // Recargar lista de paquetes si estamos en la vista del vigilante
+        if (typeof cargarPaquetesVigilante === 'function') {
+            cargarPaquetesVigilante();
+        }
+
+    } catch (error) {
+        console.error('Error confirmando entrega:', error);
+        showNotification('No se pudo confirmar la entrega', 'error');
+    }
+}
+
+function cerrarConfirmacionEntregaPaquete() {
+    const modal = document.getElementById('modal-confirmar-entrega-paquete');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Deep linking para paquetes
+async function validarPaqueteDesdeQR(paqueteId) {
+    try {
+        console.log('🔍 Validando paquete desde QR:', paqueteId);
+
+        const currentUser = window.firebaseAdapter?.currentUser;
+
+        if (!currentUser) {
+            // Usuario no autenticado - mostrar info del paquete
+            mostrarValidacionPublicaPaquete(paqueteId);
+            return;
+        }
+
+        // Si es vigilante, mostrar modal de confirmación
+        if (currentUser.rol === 'vigilante') {
+            await validarYEntregarPaquete(paqueteId);
+        } else {
+            // Para otros roles, solo mostrar información
+            mostrarValidacionPublicaPaquete(paqueteId);
+        }
+
+    } catch (error) {
+        console.error('Error validando paquete desde QR:', error);
+        showNotification('Error al validar el paquete', 'error');
+    }
+}
+
+async function mostrarValidacionPublicaPaquete(paqueteId) {
+    try {
+        const paquete = await window.firebaseAdapter.getDocument('paquetes', paqueteId);
+
+        if (!paquete) {
+            mostrarErrorQR('Paquete no encontrado', 'El código QR no corresponde a un paquete válido');
+            return;
+        }
+
+        let estadoHTML = '';
+        let colorFondo = '';
+        let icono = '';
+
+        if (paquete.estado === 'Pendiente') {
+            estadoHTML = 'PAQUETE DISPONIBLE PARA RETIRAR';
+            colorFondo = 'from-blue-500 to-blue-600';
+            icono = 'fa-box';
+        } else if (paquete.estado === 'Entregado') {
+            estadoHTML = 'PAQUETE YA ENTREGADO';
+            colorFondo = 'from-gray-500 to-gray-600';
+            icono = 'fa-check-circle';
+        }
+
+        const modal = document.createElement('div');
+        modal.id = 'modal-validacion-qr';
+        modal.className = 'fixed inset-0 bg-gradient-to-br from-orange-50 to-blue-50 flex items-center justify-center z-50 p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+                <div class="text-center mb-6">
+                    <div class="bg-gradient-to-br ${colorFondo} rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas ${icono} text-white text-5xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">${estadoHTML}</h2>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                    <div class="mb-3">
+                        <p class="text-sm text-gray-600">Descripción:</p>
+                        <p class="font-semibold text-lg text-gray-900">${paquete.descripcion}</p>
+                    </div>
+                    <div class="mb-3">
+                        <p class="text-sm text-gray-600">Apartamento:</p>
+                        <p class="font-semibold text-gray-900">${paquete.apartamento}</p>
+                    </div>
+                    ${paquete.fechaEntrega ? `
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <p class="text-sm text-gray-600 mb-1">Entregado:</p>
+                            <p class="font-semibold text-gray-900">${new Date(paquete.fechaEntrega).toLocaleString('es-CO')}</p>
+                            ${paquete.entregadoPor ? `
+                                <p class="text-sm text-gray-600 mt-2">Por: ${paquete.entregadoPor}</p>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+
+                <button onclick="cerrarValidacionQR()"
+                        class="w-full bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
+                    Cerrar
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Limpiar URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+    } catch (error) {
+        console.error('Error mostrando validación de paquete:', error);
+        mostrarErrorQR('Error', 'No se pudo cargar la información del paquete');
+    }
 }
 
 </script>

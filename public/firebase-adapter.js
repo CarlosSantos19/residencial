@@ -1358,17 +1358,20 @@ window.fetchWithAuth = async (url, options = {}) => {
         if (endpoint === 'paquetes' && method === 'POST') {
             const paqueteData = {
                 ...body,
+                // Si viene residenteId, también guardarlo como usuarioId para compatibilidad
+                usuarioId: body.residenteId || body.usuarioId,
                 fechaLlegada: new Date().toISOString(),
                 fechaRecepcion: new Date().toISOString(),
                 estado: 'Pendiente',  // Mayúscula para coincidir con frontend
-                registradoPor: window.firebaseAdapter.currentUser?.nombre || 'Vigilante'
+                registradoPor: window.firebaseAdapter.currentUser?.nombre || 'Vigilante',
+                recibidoPor: window.firebaseAdapter.currentUser?.nombre || 'Vigilante'
             };
 
             console.log('[DEBUG] POST Paquete - Guardando:', {
                 usuarioId: paqueteData.usuarioId,
+                residenteId: paqueteData.residenteId,
                 apartamento: paqueteData.apartamento,
-                nombreResidente: paqueteData.nombreResidente,
-                tipo: paqueteData.tipo
+                nombreResidente: paqueteData.nombreResidente
             });
 
             const docRef = await addDoc(collection(db, 'paquetes'), paqueteData);
