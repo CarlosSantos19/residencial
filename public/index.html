@@ -3722,24 +3722,22 @@ function loadChat() {
                             </button>
                         </div>
 
-                        <!-- Canal Administrador: Para Residentes y Vigilantes -->
-                        ${currentUser.rol === 'residente' || currentUser.rol === 'vigilante' ? `
-                            <div class="border-b border-gray-100">
-                                <button onclick="switchChatTab('admin')" id="chat-item-admin"
-                                        class="w-full p-4 flex items-center gap-3 hover:bg-green-50 transition-colors chat-item-inactive">
-                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
-                                        <i class="fas fa-user-shield text-white"></i>
-                                    </div>
-                                    <div class="flex-1 text-left">
-                                        <div class="font-semibold text-gray-900">Administrador</div>
-                                        <div class="text-xs text-gray-500">Chat con admin</div>
-                                    </div>
-                                </button>
-                            </div>
-                        ` : ''}
+                        <!-- Canal Administrador: Para todos -->
+                        <div class="border-b border-gray-100">
+                            <button onclick="switchChatTab('admin')" id="chat-item-admin"
+                                    class="w-full p-4 flex items-center gap-3 hover:bg-green-50 transition-colors chat-item-inactive">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+                                    <i class="fas fa-user-shield text-white"></i>
+                                </div>
+                                <div class="flex-1 text-left">
+                                    <div class="font-semibold text-gray-900">Administrador</div>
+                                    <div class="text-xs text-gray-500">${currentUser.rol === 'admin' ? 'Canal de administración' : 'Chat con admin'}</div>
+                                </div>
+                            </button>
+                        </div>
 
-                        <!-- Canal Vigilantes: Solo para Residentes -->
-                        ${currentUser.rol === 'residente' ? `
+                        <!-- Canal Vigilantes: Para Admin y Residentes -->
+                        ${currentUser.rol === 'admin' || currentUser.rol === 'residente' ? `
                             <div class="border-b border-gray-100">
                                 <button onclick="switchChatTab('vigilantes')" id="chat-item-vigilantes"
                                         class="w-full p-4 flex items-center gap-3 hover:bg-orange-50 transition-colors chat-item-inactive">
@@ -3749,6 +3747,22 @@ function loadChat() {
                                     <div class="flex-1 text-left">
                                         <div class="font-semibold text-gray-900">Vigilantes</div>
                                         <div class="text-xs text-gray-500">Chat con seguridad</div>
+                                    </div>
+                                </button>
+                            </div>
+                        ` : ''}
+
+                        <!-- Canal Residentes: Para Admin y Vigilantes -->
+                        ${currentUser.rol === 'admin' || currentUser.rol === 'vigilante' ? `
+                            <div class="border-b border-gray-100">
+                                <button onclick="switchChatTab('residentes')" id="chat-item-residentes"
+                                        class="w-full p-4 flex items-center gap-3 hover:bg-indigo-50 transition-colors chat-item-inactive">
+                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                                        <i class="fas fa-home text-white"></i>
+                                    </div>
+                                    <div class="flex-1 text-left">
+                                        <div class="font-semibold text-gray-900">Residentes</div>
+                                        <div class="text-xs text-gray-500">Chat con residentes</div>
                                     </div>
                                 </button>
                             </div>
