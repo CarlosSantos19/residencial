@@ -115,6 +115,13 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && resource.data.usuarioId == request.auth.uid;
     }
 
+    // Chats Individuales - Cualquier canal tipo "rol-individual"
+    match /chats/{chatType}/mensajes/{mensajeId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && resource.data.usuarioId == request.auth.uid;
+    }
+
     // Chats Privados - Solo participantes
     match /chats/privados/{chatId}/mensajes/{mensajeId} {
       allow read, write: if isSignedIn();
