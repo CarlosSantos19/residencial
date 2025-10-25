@@ -4023,23 +4023,35 @@ function mostrarSelectorResidentes() {
 
 async function loadChatMessages(chatType) {
     try {
-        const response = await fetchWithAuth(`/api/chat/${chatType}`);
-        const data = await response.json();
-
         const messagesArea = document.getElementById('chat-messages-area');
 
-        if (data.success && data.mensajes && data.mensajes.length > 0) {
-            messagesArea.innerHTML = data.mensajes.map(mensaje => {
-                const isOwn = mensaje.usuarioEmail === currentUser.email;
+        // Usar Firebase directamente en lugar del API
+        const collectionPath = `chats/${chatType}/mensajes`;
+        console.log('📨 Cargando mensajes de:', collectionPath);
+
+        const mensajes = await window.firebaseAdapter.getCollection(collectionPath);
+
+        console.log('📨 Mensajes cargados:', mensajes.length);
+
+        if (mensajes && mensajes.length > 0) {
+            // Ordenar por timestamp
+            mensajes.sort((a, b) => {
+                const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                return timeA - timeB;
+            });
+
+            messagesArea.innerHTML = mensajes.map(mensaje => {
+                const isOwn = mensaje.usuarioId === currentUser.id || mensaje.usuarioEmail === currentUser.email;
                 return `
                     <div class="mb-4 ${isOwn ? 'flex justify-end' : 'flex justify-start'} group">
                         <div class="max-w-md ${isOwn ? 'order-2' : 'order-1'} relative">
                             ${!isOwn ? `
                                 <div class="flex items-center gap-2 mb-1 px-1">
                                     <div class="w-6 h-6 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-xs font-semibold">
-                                        ${mensaje.usuario?.charAt(0)?.toUpperCase() || 'U'}
+                                        ${(mensaje.usuario || mensaje.nombreUsuario || 'U').charAt(0).toUpperCase()}
                                     </div>
-                                    <span class="font-semibold text-sm text-gray-700">${mensaje.usuario}</span>
+                                    <span class="font-semibold text-sm text-gray-700">${mensaje.usuario || mensaje.nombreUsuario || 'Usuario'}</span>
                                 </div>
                             ` : ''}
                             <div class="px-4 py-3 rounded-2xl shadow-sm ${
@@ -4047,16 +4059,16 @@ async function loadChatMessages(chatType) {
                                 ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-tr-none'
                                 : 'bg-white border border-gray-200 rounded-tl-none'
                             }">
-                                <div class="text-sm break-words">${mensaje.mensaje}</div>
+                                <div class="text-sm break-words">${mensaje.mensaje || mensaje.texto || ''}</div>
                                 <div class="flex items-center justify-between mt-1">
                                     <div class="text-xs ${isOwn ? 'text-blue-100' : 'text-gray-500'}">
-                                        ${new Date(mensaje.timestamp).toLocaleTimeString('es-CO', {
+                                        ${mensaje.timestamp ? new Date(mensaje.timestamp).toLocaleTimeString('es-CO', {
                                             hour: '2-digit',
                                             minute: '2-digit'
-                                        })}
+                                        }) : ''}
                                     </div>
                                     ${isOwn ? `
-                                        <button onclick="borrarMensajeChat('${mensaje.id || ''}')"
+                                        <button onclick="borrarMensajeChat('${chatType}', '${mensaje.id || ''}')"
                                                 class="opacity-0 group-hover:opacity-100 transition-opacity ml-2 text-xs ${isOwn ? 'text-red-200 hover:text-red-100' : 'text-red-500 hover:text-red-700'}">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -4088,7 +4100,7 @@ async function loadChatMessages(chatType) {
             <div class="text-center py-12 text-red-400">
                 <i class="fas fa-exclamation-triangle text-5xl mb-4"></i>
                 <p class="text-lg font-medium">Error al cargar mensajes</p>
-                <p class="text-sm">Intenta nuevamente</p>
+                <p class="text-sm">${error.message || 'Intenta nuevamente'}</p>
             </div>
         `;
     }
@@ -4129,39 +4141,39 @@ async function enviarMensajeChat() {
     }
 
     try {
-        const response = await fetchWithAuth('/api/chat/enviar', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                tipo: currentChatType,
-                mensaje: mensaje
-            })
-        });
+        // Crear mensaje para Firebase
+        const nuevoMensaje = {
+            mensaje: mensaje,
+            texto: mensaje,
+            usuarioId: currentUser.id,
+            usuarioEmail: currentUser.email,
+            usuario: currentUser.nombre,
+            nombreUsuario: currentUser.nombre,
+            tipo: currentChatType,
+            timestamp: new Date().toISOString(),
+            fecha: new Date().toISOString()
+        };
 
-        const data = await response.json();
+        console.log('📤 Enviando mensaje:', nuevoMensaje);
 
-        if (data.success) {
-            input.value = '';
-            loadChatMessages(currentChatType);
+        // Guardar en Firebase
+        const collectionPath = `chats/${currentChatType}/mensajes`;
+        await window.firebaseAdapter.addDocument(collectionPath, nuevoMensaje);
 
-            // Notificación de éxito
-            addNotification({
-                title: 'Mensaje Enviado',
-                message: `Mensaje enviado al chat ${currentChatType}`,
-                type: 'success'
-            });
-        } else {
-            showNotification('Error', data.mensaje || 'No se pudo enviar el mensaje', 'error');
-        }
+        // Limpiar input
+        input.value = '';
+
+        // Recargar mensajes
+        await loadChatMessages(currentChatType);
+
+        console.log('✅ Mensaje enviado exitosamente');
     } catch (error) {
-        console.error('Error enviando mensaje:', error);
-        showNotification('Error', 'Error de conexión', 'error');
+        console.error('❌ Error enviando mensaje:', error);
+        showNotification('Error', error.message || 'Error al enviar mensaje', 'error');
     }
 }
 
-async function borrarMensajeChat(mensajeId) {
+async function borrarMensajeChat(chatType, mensajeId) {
     if (!mensajeId) {
         showNotification('Error', 'No se puede borrar este mensaje', 'error');
         return;
@@ -4172,27 +4184,21 @@ async function borrarMensajeChat(mensajeId) {
     }
 
     try {
-        const response = await fetchWithAuth(`/api/chat/mensaje/${mensajeId}`, {
-            method: 'DELETE'
-        });
+        // Borrar de Firebase
+        const collectionPath = `chats/${chatType}/mensajes`;
+        await window.firebaseAdapter.deleteDocument(collectionPath, mensajeId);
 
-        const data = await response.json();
+        showNotification('Éxito', 'Mensaje borrado', 'success');
 
-        if (data.success) {
-            showNotification('Éxito', 'Mensaje borrado', 'success');
-
-            // Recargar mensajes del chat actual
-            if (currentChatUserId) {
-                loadChatMessagesWithUser(currentChatUserId);
-            } else {
-                loadChatMessages(currentChatType);
-            }
+        // Recargar mensajes del chat actual
+        if (currentChatUserId) {
+            loadChatMessagesWithUser(currentChatUserId);
         } else {
-            showNotification('Error', data.mensaje || 'No se pudo borrar el mensaje', 'error');
+            loadChatMessages(currentChatType);
         }
     } catch (error) {
         console.error('Error borrando mensaje:', error);
-        showNotification('Error', 'Error de conexión', 'error');
+        showNotification('Error', error.message || 'Error al borrar mensaje', 'error');
     }
 }
 
