@@ -1,26 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "mensajes",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "fecha",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "noticias",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "fechaPublicacion",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "reservas",
       "queryScope": "COLLECTION",
       "fields": [

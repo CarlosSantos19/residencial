@@ -239,5 +239,13 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow update, delete: if isAdmin() || isOwner(resource.data.usuarioId);
     }
+
+    // Notificaciones - Todos pueden leer y crear, solo el destinatario puede marcar como leída
+    match /notificaciones/{notificacionId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn(); // Permite marcar como leída
+      allow delete: if isAdmin();
+    }
   }
 }

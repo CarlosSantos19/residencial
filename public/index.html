@@ -679,13 +679,19 @@ document.addEventListener('DOMContentLoaded', function() {
 }); // Fin DOMContentLoaded
 
 // Mostrar la aplicación
-function showApp() {
+async function showApp() {
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
 
     setupUserInterface();
     loadInitialTab();
+
+    // Cargar notificaciones del usuario desde Firestore
+    await cargarNotificacionesUsuario();
     updateNotificationBadge();
+
+    // Iniciar listener de notificaciones en tiempo real
+    iniciarListenerNotificaciones();
 }
 
 // Configurar interfaz según usuario
@@ -2231,6 +2237,97 @@ function markAsRead(notifId) {
         notif.read = true;
         updateNotificationBadge();
         loadNotificationsList();
+
+        // Marcar como leída en Firestore
+        window.firebaseAdapter.updateDocument('notificaciones', notifId, { leida: true })
+            .catch(err => console.error('Error marcando notificación como leída:', err));
+    }
+}
+
+// Sistema de Notificaciones en Firestore
+async function crearNotificacion(tipo, titulo, mensaje, destinatarios = []) {
+    try {
+        const notificacion = {
+            tipo: tipo, // 'chat', 'paquete', 'reserva', 'pqrs', 'pago', 'permiso', 'incidente', etc.
+            titulo: titulo,
+            mensaje: mensaje,
+            destinatarios: destinatarios, // Array de IDs de usuarios o roles ['admin', 'vigilante', 'residenteId']
+            timestamp: new Date().toISOString(),
+            leida: false,
+            creadaPor: currentUser.id,
+            creadaPorNombre: currentUser.nombre
+        };
+
+        console.log('📬 Creando notificación:', notificacion);
+        await window.firebaseAdapter.addDocument('notificaciones', notificacion);
+        console.log('✅ Notificación creada exitosamente');
+    } catch (error) {
+        console.error('❌ Error creando notificación:', error);
+    }
+}
+
+async function cargarNotificacionesUsuario() {
+    try {
+        const todasNotificaciones = await window.firebaseAdapter.getCollection('notificaciones');
+
+        // Filtrar notificaciones para el usuario actual
+        const notificacionesUsuario = todasNotificaciones.filter(notif => {
+            // Si la notificación es para todos de un rol
+            if (notif.destinatarios.includes(currentUser.rol)) return true;
+
+            // Si la notificación es para el usuario específico
+            if (notif.destinatarios.includes(currentUser.id)) return true;
+
+            // Si es admin, ver todas las notificaciones
+            if (currentUser.rol === 'admin') return true;
+
+            return false;
+        });
+
+        // Ordenar por timestamp descendente (más recientes primero)
+        notificacionesUsuario.sort((a, b) => {
+            const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+            const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+            return timeB - timeA;
+        });
+
+        // Actualizar el array global de notificaciones
+        notifications = notificacionesUsuario.map((notif, index) => ({
+            id: notif.id || index,
+            title: notif.titulo,
+            message: notif.mensaje,
+            timestamp: notif.timestamp,
+            read: notif.leida || false,
+            type: notif.tipo
+        }));
+
+        updateNotificationBadge();
+
+        console.log(`📬 ${notifications.length} notificaciones cargadas`);
+    } catch (error) {
+        console.error('Error cargando notificaciones:', error);
+    }
+}
+
+// Listener en tiempo real para notificaciones (se iniciará después del login)
+let notificacionesListener = null;
+
+function iniciarListenerNotificaciones() {
+    if (notificacionesListener) return; // Ya está activo
+
+    console.log('🔔 Iniciando listener de notificaciones en tiempo real...');
+
+    // Recargar notificaciones cada 30 segundos
+    notificacionesListener = setInterval(async () => {
+        await cargarNotificacionesUsuario();
+    }, 30000); // 30 segundos
+}
+
+function detenerListenerNotificaciones() {
+    if (notificacionesListener) {
+        clearInterval(notificacionesListener);
+        notificacionesListener = null;
+        console.log('🔕 Listener de notificaciones detenido');
     }
 }
 
@@ -2257,9 +2354,13 @@ function toggleTheme() {
 // Función de logout
 function logout() {
     if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+        // Detener listener de notificaciones
+        detenerListenerNotificaciones();
+
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         currentUser = null;
+        notifications = [];
 
         document.getElementById('app').classList.add('hidden');
         document.getElementById('login-screen').classList.remove('hidden');
@@ -4256,6 +4357,42 @@ async function enviarMensajeChat() {
 
         // Guardar en Firebase
         await window.firebaseAdapter.addDocument(collectionPath, nuevoMensaje);
+
+        // Crear notificación para destinatarios
+        let destinatarios = [];
+        let tituloNotif = '';
+        let mensajeNotif = '';
+
+        if (currentChatUserId) {
+            // Chat privado individual
+            destinatarios = [currentChatUserId];
+            tituloNotif = `Nuevo mensaje de ${currentUser.nombre}`;
+            mensajeNotif = mensaje.length > 50 ? mensaje.substring(0, 50) + '...' : mensaje;
+        } else {
+            // Canal de chat
+            if (currentChatType === 'admin') {
+                destinatarios = ['admin'];
+                tituloNotif = `Nuevo mensaje en canal Administrador`;
+                mensajeNotif = `${currentUser.nombre}: ${mensaje.length > 40 ? mensaje.substring(0, 40) + '...' : mensaje}`;
+            } else if (currentChatType === 'vigilantes') {
+                destinatarios = ['vigilante'];
+                tituloNotif = `Nuevo mensaje en canal Vigilantes`;
+                mensajeNotif = `${currentUser.nombre}: ${mensaje.length > 40 ? mensaje.substring(0, 40) + '...' : mensaje}`;
+            } else if (currentChatType === 'residentes') {
+                destinatarios = ['residente'];
+                tituloNotif = `Nuevo mensaje en canal Residentes`;
+                mensajeNotif = `${currentUser.nombre}: ${mensaje.length > 40 ? mensaje.substring(0, 40) + '...' : mensaje}`;
+            } else if (currentChatType === 'general') {
+                destinatarios = ['admin', 'vigilante', 'residente'];
+                tituloNotif = `Nuevo mensaje en chat General`;
+                mensajeNotif = `${currentUser.nombre}: ${mensaje.length > 40 ? mensaje.substring(0, 40) + '...' : mensaje}`;
+            }
+        }
+
+        // Enviar notificación
+        if (destinatarios.length > 0) {
+            await crearNotificacion('chat', tituloNotif, mensajeNotif, destinatarios);
+        }
 
         // Limpiar input
         input.value = '';
