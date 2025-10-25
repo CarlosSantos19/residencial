@@ -4108,24 +4108,89 @@ async function loadChatMessages(chatType) {
 
 async function loadChatMessagesWithUser(userId) {
     try {
-        // Simular carga de mensajes privados con un usuario específico
-        // En producción, esto haría una llamada al backend: /api/chat/privado/${userId}
         const messagesArea = document.getElementById('chat-messages-area');
 
-        messagesArea.innerHTML = `
-            <div class="text-center py-12 text-gray-400">
-                <i class="fas fa-user-friends text-5xl mb-4 opacity-50"></i>
-                <p class="text-lg font-medium">Chat privado</p>
-                <p class="text-sm">Los mensajes con ${currentChatUserName} aparecerán aquí</p>
-            </div>
-        `;
+        // Crear un ID de conversación único combinando los IDs de los usuarios
+        // Ordenamos los IDs alfabéticamente para que siempre sea el mismo ID sin importar quién inicia el chat
+        const conversationId = [currentUser.id, userId].sort().join('_');
+        const collectionPath = `chats/privado-${conversationId}/mensajes`;
 
-        // Scroll al final
-        setTimeout(() => {
-            messagesArea.scrollTop = messagesArea.scrollHeight;
-        }, 100);
+        console.log('📨 Cargando mensajes privados de:', collectionPath);
+
+        const mensajes = await window.firebaseAdapter.getCollection(collectionPath);
+        console.log('📨 Mensajes privados cargados:', mensajes.length);
+
+        if (mensajes && mensajes.length > 0) {
+            // Ordenar por timestamp
+            mensajes.sort((a, b) => {
+                const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+                const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+                return timeA - timeB;
+            });
+
+            messagesArea.innerHTML = mensajes.map(mensaje => {
+                const isOwn = mensaje.usuarioId === currentUser.id || mensaje.usuarioEmail === currentUser.email;
+                return `
+                    <div class="mb-4 ${isOwn ? 'flex justify-end' : 'flex justify-start'} group">
+                        <div class="max-w-md ${isOwn ? 'order-2' : 'order-1'} relative">
+                            ${!isOwn ? `
+                                <div class="flex items-center gap-2 mb-1 px-1">
+                                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-xs font-semibold">
+                                        ${(mensaje.usuario || mensaje.nombreUsuario || 'U').charAt(0).toUpperCase()}
+                                    </div>
+                                    <span class="font-semibold text-sm text-gray-700">${mensaje.usuario || mensaje.nombreUsuario || 'Usuario'}</span>
+                                </div>
+                            ` : ''}
+                            <div class="px-4 py-3 rounded-2xl shadow-sm ${
+                                isOwn
+                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-tr-none'
+                                : 'bg-white border border-gray-200 rounded-tl-none'
+                            }">
+                                <div class="text-sm break-words">${mensaje.mensaje || mensaje.texto || ''}</div>
+                                <div class="flex items-center justify-between mt-1">
+                                    <div class="text-xs ${isOwn ? 'text-blue-100' : 'text-gray-500'}">
+                                        ${mensaje.timestamp ? new Date(mensaje.timestamp).toLocaleTimeString('es-CO', {
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        }) : ''}
+                                    </div>
+                                    ${isOwn ? `
+                                        <button onclick="borrarMensajePrivado('${conversationId}', '${mensaje.id || ''}')"
+                                                class="opacity-0 group-hover:opacity-100 transition-opacity ml-2 text-xs text-red-200 hover:text-red-100">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Scroll al final
+            setTimeout(() => {
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            }, 100);
+        } else {
+            messagesArea.innerHTML = `
+                <div class="text-center py-12 text-gray-400">
+                    <i class="fas fa-user-friends text-5xl mb-4 opacity-50"></i>
+                    <p class="text-lg font-medium">Chat privado</p>
+                    <p class="text-sm">Los mensajes con ${currentChatUserName} aparecerán aquí</p>
+                    <p class="text-xs mt-2">¡Inicia la conversación!</p>
+                </div>
+            `;
+        }
     } catch (error) {
         console.error('Error loading private chat messages:', error);
+        const messagesArea = document.getElementById('chat-messages-area');
+        messagesArea.innerHTML = `
+            <div class="text-center py-12 text-red-400">
+                <i class="fas fa-exclamation-triangle text-5xl mb-4 opacity-50"></i>
+                <p class="text-lg font-medium">Error al cargar mensajes</p>
+                <p class="text-sm">${error.message}</p>
+            </div>
+        `;
     }
 }
 
@@ -4154,17 +4219,39 @@ async function enviarMensajeChat() {
             fecha: new Date().toISOString()
         };
 
+        // Si es un chat privado, incluir información del destinatario
+        if (currentChatUserId) {
+            nuevoMensaje.destinatarioId = currentChatUserId;
+            nuevoMensaje.destinatarioNombre = currentChatUserName;
+        }
+
         console.log('📤 Enviando mensaje:', nuevoMensaje);
 
+        // Determinar la ruta de la colección
+        let collectionPath;
+        if (currentChatUserId) {
+            // Chat privado: crear ID único de conversación
+            const conversationId = [currentUser.id, currentChatUserId].sort().join('_');
+            collectionPath = `chats/privado-${conversationId}/mensajes`;
+        } else {
+            // Chat de canal
+            collectionPath = `chats/${currentChatType}/mensajes`;
+        }
+
+        console.log('📍 Guardando en:', collectionPath);
+
         // Guardar en Firebase
-        const collectionPath = `chats/${currentChatType}/mensajes`;
         await window.firebaseAdapter.addDocument(collectionPath, nuevoMensaje);
 
         // Limpiar input
         input.value = '';
 
         // Recargar mensajes
-        await loadChatMessages(currentChatType);
+        if (currentChatUserId) {
+            await loadChatMessagesWithUser(currentChatUserId);
+        } else {
+            await loadChatMessages(currentChatType);
+        }
 
         console.log('✅ Mensaje enviado exitosamente');
     } catch (error) {
@@ -4198,6 +4285,31 @@ async function borrarMensajeChat(chatType, mensajeId) {
         }
     } catch (error) {
         console.error('Error borrando mensaje:', error);
+        showNotification('Error', error.message || 'Error al borrar mensaje', 'error');
+    }
+}
+
+async function borrarMensajePrivado(conversationId, mensajeId) {
+    if (!mensajeId) {
+        showNotification('Error', 'No se puede borrar este mensaje', 'error');
+        return;
+    }
+
+    if (!confirm('¿Estás seguro de que quieres borrar este mensaje?')) {
+        return;
+    }
+
+    try {
+        // Borrar de Firebase
+        const collectionPath = `chats/privado-${conversationId}/mensajes`;
+        await window.firebaseAdapter.deleteDocument(collectionPath, mensajeId);
+
+        showNotification('Éxito', 'Mensaje borrado', 'success');
+
+        // Recargar mensajes
+        await loadChatMessagesWithUser(currentChatUserId);
+    } catch (error) {
+        console.error('Error borrando mensaje privado:', error);
         showNotification('Error', error.message || 'Error al borrar mensaje', 'error');
     }
 }
